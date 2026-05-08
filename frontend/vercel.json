@@ -2,14 +2,17 @@
   "version": 2,
   "cleanUrls": true,
   "trailingSlash": false,
-  "rewrites": [
+  "routes": [
     {
-      "source": "/api/(.*)",
-      "destination": "https://gitawisdom.onrender.com/api/$1"
+      "src": "/api/(.*)",
+      "dest": "https://gitawisdom.onrender.com/api/$1"
     },
     {
-      "source": "/(.*)",
-      "destination": "/index.html"
+      "handle": "filesystem"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/index.html"
     }
   ],
   "installCommand": "npm install --legacy-peer-deps",
