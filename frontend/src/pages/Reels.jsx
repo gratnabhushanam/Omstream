@@ -222,28 +222,28 @@ export default function Reels() {
                    </div>
 
                    <div className="flex flex-col gap-6 items-center pointer-events-auto">
-                      <button className="flex flex-col items-center group" onClick={() => handleToggleLike(reel)}>
+                      <button className="tv-focusable flex flex-col items-center group" onClick={() => handleToggleLike(reel)}>
                          <div className="w-14 h-14 rounded-[1.5rem] bg-white/5 border border-white/15 flex items-center justify-center backdrop-blur-3xl transition-all group-active:scale-90 group-hover:bg-red-500/20 group-hover:border-red-500/40">
                             <img src="/ram-symbol.svg" className="w-9 h-9 object-contain drop-shadow-[0_0_12px_rgba(255,215,0,0.6)]" alt="Like" />
                          </div>
                          <span className="text-[11px] font-black text-white/90 mt-1 uppercase tracking-widest drop-shadow-md">{reel.likesCount || 0}</span>
                       </button>
 
-                      <button className="flex flex-col items-center group" onClick={() => setExpandedCommentReel(reelId)}>
+                      <button className="tv-focusable flex flex-col items-center group" onClick={() => setExpandedCommentReel(reelId)}>
                          <div className="w-14 h-14 rounded-[1.5rem] bg-white/5 border border-white/15 flex items-center justify-center backdrop-blur-3xl transition-all group-active:scale-90">
                             <img src="/krishna-symbol.svg" className="w-9 h-9 object-contain drop-shadow-[0_0_12px_rgba(0,191,255,0.6)]" alt="Comment" />
                          </div>
                          <span className="text-[11px] font-black text-white/90 mt-1 uppercase tracking-widest drop-shadow-md">{reel.commentsCount || 0}</span>
                       </button>
 
-                      <button className="flex flex-col items-center group" onClick={() => handleToggleSave(reelId)}>
+                      <button className="tv-focusable flex flex-col items-center group" onClick={() => handleToggleSave(reelId)}>
                          <div className={`w-14 h-14 rounded-[1.5rem] flex items-center justify-center backdrop-blur-3xl border transition-all active:scale-90 ${savedReelMap[reelId] ? 'bg-devotion-gold/20 border-devotion-gold/50' : 'bg-white/5 border-white/15'}`}>
                             <Bookmark className={`w-7 h-7 ${savedReelMap[reelId] ? 'text-devotion-gold fill-current' : 'text-white'}`} strokeWidth={2.5} />
                          </div>
                          <span className="text-[11px] font-black text-white/90 mt-1 uppercase tracking-widest drop-shadow-md">{savedReelMap[reelId] ? 'Saved' : 'Save'}</span>
                       </button>
 
-                      <button className="flex flex-col items-center group" onClick={() => handleShare(reel)}>
+                      <button className="tv-focusable flex flex-col items-center group" onClick={() => handleShare(reel)}>
                          <div className="w-14 h-14 rounded-[1.5rem] bg-white/5 border border-white/15 flex items-center justify-center backdrop-blur-3xl transition-all group-active:scale-90">
                             <img src="/hanuman-symbol.svg" className="w-9 h-9 object-contain drop-shadow-[0_0_12px_rgba(255,165,0,0.6)]" alt="Share" />
                          </div>
@@ -262,8 +262,9 @@ export default function Reels() {
               {reels.map((reel, index) => (
                 <div 
                   key={reel._id || reel.id} 
+                  tabIndex={0}
                   onClick={() => { setViewMode('scroll'); setTimeout(() => scrollToReel(index), 100); }}
-                  className="aspect-[9/16] relative rounded-2xl overflow-hidden border border-white/10 cursor-pointer group transition-all duration-300 shadow-2xl preserve-3d"
+                  className="tv-focusable focus:outline-none focus:ring-4 focus:ring-devotion-gold aspect-[9/16] relative rounded-2xl overflow-hidden border border-white/10 cursor-pointer group transition-all duration-300 shadow-2xl preserve-3d"
                   onMouseMove={(e) => {
                     const card = e.currentTarget;
                     const rect = card.getBoundingClientRect();
@@ -297,20 +298,20 @@ export default function Reels() {
             <h1 className="text-xl font-black text-white uppercase tracking-[0.4em] drop-shadow-2xl">Reels</h1>
             <button 
               onClick={() => setViewMode(v => v === 'scroll' ? 'grid' : 'scroll')}
-              className="bg-devotion-gold/20 border border-devotion-gold/40 text-devotion-gold px-3 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-widest backdrop-blur-md active:scale-95 transition-all"
+              className="tv-focusable bg-devotion-gold/20 border border-devotion-gold/40 text-devotion-gold px-3 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-widest backdrop-blur-md active:scale-95 transition-all"
             >
               {viewMode === 'scroll' ? 'Grid' : 'Full'}
             </button>
           </div>
           <div className="flex items-center gap-3">
-             <button onClick={() => setShowNotifications(true)} className="relative w-11 h-11 bg-white/10 backdrop-blur-xl rounded-2xl border border-white/20 flex items-center justify-center shadow-2xl active:scale-90 transition-all">
+             <button onClick={() => setShowNotifications(true)} className="tv-focusable relative w-11 h-11 bg-white/10 backdrop-blur-xl rounded-2xl border border-white/20 flex items-center justify-center shadow-2xl active:scale-90 transition-all">
                 <Bell className="w-5 h-5 text-white" />
                 {unreadCount > 0 && <span className="absolute top-2.5 right-2.5 w-2.5 h-2.5 bg-red-600 rounded-full border-2 border-black animate-pulse" />}
              </button>
-             <Link to="/upload-reel" className="w-11 h-11 bg-white/10 backdrop-blur-xl rounded-2xl border border-white/20 flex items-center justify-center shadow-2xl transition-all active:scale-90">
+             <Link to="/upload-reel" className="tv-focusable w-11 h-11 bg-white/10 backdrop-blur-xl rounded-2xl border border-white/20 flex items-center justify-center shadow-2xl transition-all active:scale-90">
                 <PlusCircle className="w-6 h-6 text-white" />
              </Link>
-             <Link to="/profile" className="w-11 h-11 bg-devotion-gold/10 backdrop-blur-xl rounded-2xl border border-devotion-gold/30 flex items-center justify-center shadow-2xl active:scale-90 transition-all">
+             <Link to="/profile" className="tv-focusable w-11 h-11 bg-devotion-gold/10 backdrop-blur-xl rounded-2xl border border-devotion-gold/30 flex items-center justify-center shadow-2xl active:scale-90 transition-all">
                 <User className="w-5 h-5 text-devotion-gold" />
              </Link>
           </div>
