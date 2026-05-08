@@ -3,7 +3,7 @@
   "routes": [
     {
       "src": "/api/(.*)",
-      "dest": "https://gitawisdom.onrender.com/api/$1"
+      "dest": "https://gita-wisdom-1.onrender.com/api/$1"
     },
     {
       "handle": "filesystem"
