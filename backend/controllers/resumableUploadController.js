@@ -43,6 +43,15 @@ async function handleResumableUpload(req, res) {
       } catch (e) { console.warn('Blob fallback'); }
     }
 
+    if (req.headers['video-only-upload'] === 'true') {
+      return res.status(200).json({
+        message: 'File uploaded and processed',
+        videoUrl,
+        hlsUrl: masterPlaylistUrl,
+        fileName
+      });
+    }
+
     const newVideo = await Video.create({
       title,
       videoUrl,

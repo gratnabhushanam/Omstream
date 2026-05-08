@@ -14,6 +14,7 @@ function AdminDashboardContent() {
   const [, setShowAuthError] = useState(false);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [videoUploadProgress, setVideoUploadProgress] = useState(0);
+  const [trailerUploadProgress, setTrailerUploadProgress] = useState(0);
   const [, setVideoUploadFile] = useState(null);
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
@@ -97,20 +98,21 @@ function AdminDashboardContent() {
   };
 
   // Handle resumable video file upload
-  const handleVideoFileChange = async (e) => {
+  const handleVideoFileChange = async (e, isTrailer = false) => {
     const file = e.target.files[0];
     if (!file) return;
     setVideoUploadFile(file);
-    setVideoUploadProgress(0);
+    const setProgress = isTrailer ? setTrailerUploadProgress : setVideoUploadProgress;
+    setProgress(0);
     try {
       const token = localStorage.getItem('token');
-      const currentTitle = activeTab === 'movies' ? movieForm.title : videoForm.title;
-      const currentDesc = activeTab === 'movies' ? movieForm.description : videoForm.description;
+      const currentTitle = isTrailer ? `${movieForm.title} Trailer` : (activeTab === 'movies' ? movieForm.title : videoForm.title);
+      const currentDesc = isTrailer ? `Trailer for ${movieForm.title}` : (activeTab === 'movies' ? movieForm.description : videoForm.description);
       const currentTags = activeTab === 'movies' ? movieForm.tags : videoForm.tags;
       const currentKids = activeTab === 'movies' ? 'false' : (videoForm.isKids ? 'true' : 'false');
-      const currentCategory = activeTab === 'movies' ? 'movie' : videoForm.category;
+      const currentCategory = isTrailer ? 'trailer' : (activeTab === 'movies' ? 'movie' : videoForm.category);
       const currentCollection = activeTab === 'movies' ? 'Movie Library' : videoForm.collectionTitle;
-      const contentType = activeTab === 'movies' ? 'long' : 'long'; // Movies/Videos are generic long length
+      const contentType = activeTab === 'movies' ? 'long' : 'long'; 
 
       const headers = {
         Authorization: `Bearer ${token}`,
@@ -122,16 +124,23 @@ function AdminDashboardContent() {
         'video-category': encodeURIComponent(currentCategory || ''),
         'video-content-type': contentType,
         'video-source': 'admin',
+        'video-only-upload': isTrailer ? 'true' : 'false',
       };
       
       const result = await resumableUpload({
         file,
         url: '/api/videos/upload/resumable',
         headers,
-        onProgress: setVideoUploadProgress,
+        onProgress: setProgress,
       });
       
-      if (activeTab === 'movies') {
+      if (isTrailer) {
+        if (result && result.videoUrl) {
+          setMovieForm((prev) => ({ ...prev, trailerUrl: result.videoUrl }));
+        } else if (result && result.fileName) {
+          setMovieForm((prev) => ({ ...prev, trailerUrl: `/uploads/reels/${result.fileName}` }));
+        }
+      } else if (activeTab === 'movies') {
         if (result && result.videoUrl) {
           setMovieForm((prev) => ({ ...prev, videoUrl: result.videoUrl, hlsUrl: result.hlsUrl }));
         } else if (result && result.fileName) {
@@ -144,11 +153,11 @@ function AdminDashboardContent() {
           setVideoForm((prev) => ({ ...prev, videoUrl: `/uploads/reels/${result.fileName}` }));
         }
       }
-      setMessage({ type: 'success', text: 'HQ File successfully transferred and processed!' });
+      setMessage({ type: 'success', text: isTrailer ? 'Trailer successfully uploaded!' : 'HQ File successfully transferred and processed!' });
     } catch (err) {
       alert('Video upload failed: ' + err.message);
     } finally {
-      setTimeout(() => setVideoUploadProgress(0), 1000);
+      setTimeout(() => setProgress(0), 1000);
     }
   };
 
@@ -1535,9 +1544,22 @@ function AdminDashboardContent() {
                          <input type="number" className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-5 text-white focus:border-devotion-gold outline-none" placeholder="e.g. 5000" value={movieForm.views} onChange={e => setMovieForm({...movieForm, views: parseInt(e.target.value) || 0})} />
                       </div>
                       <div className="md:col-span-2 space-y-4">
-                         <label className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-devotion-gold ml-2"><LinkIcon className="w-3 h-3"/> Trailer / Teaser URL (Plays in Hero Section)</label>
-                         <input className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-5 text-white focus:border-devotion-gold outline-none" placeholder="YouTube or Direct Video URL" value={movieForm.trailerUrl} onChange={e => setMovieForm({...movieForm, trailerUrl: e.target.value})} />
-                      </div>
+                          <label className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-devotion-gold ml-2"><LinkIcon className="w-3 h-3"/> Trailer / Teaser (Plays in Hero Section)</label>
+                          <div className="flex flex-col gap-3">
+                             <div className="flex gap-2">
+                               <input className="flex-1 bg-white/5 border border-white/10 rounded-2xl px-6 py-5 text-white focus:border-devotion-gold outline-none" placeholder="YouTube or Direct Video URL" value={movieForm.trailerUrl} onChange={e => setMovieForm({...movieForm, trailerUrl: e.target.value})} />
+                               <label className="cursor-pointer bg-devotion-gold/10 border border-devotion-gold/30 text-devotion-gold px-6 py-5 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-devotion-gold/20 transition-all flex items-center gap-2">
+                                  <Upload className="w-4 h-4" /> Upload
+                                  <input type="file" accept="video/*" className="hidden" onChange={e => handleVideoFileChange(e, true)} />
+                               </label>
+                             </div>
+                             {trailerUploadProgress > 0 && (
+                               <div className="w-full bg-white/10 rounded-full h-2">
+                                 <div className="bg-devotion-gold h-2 rounded-full transition-all" style={{ width: `${trailerUploadProgress}%` }}></div>
+                               </div>
+                             )}
+                          </div>
+                       </div>
                       <div className="md:col-span-2 flex items-center gap-4 bg-white/5 p-5 rounded-[2rem] border border-white/10 mb-6">
                          <input type="checkbox" id="isComingSoon" className="w-6 h-6 accent-devotion-gold" checked={movieForm.isComingSoon} onChange={e => setMovieForm({...movieForm, isComingSoon: e.target.checked})} />
                          <label htmlFor="isComingSoon" className="text-sm font-black uppercase tracking-widest text-white cursor-pointer">Mark as "Coming Soon" (Upcoming Movie)</label>
