@@ -29,7 +29,7 @@ function AdminDashboardContent() {
   const [quickFillStoryId, setQuickFillStoryId] = useState(null);
   const [moderationNotes, setModerationNotes] = useState({});
   const [message, setMessage] = useState({ type: '', text: '' });
-  const [movieForm, setMovieForm] = useState({ title: '', description: '', videoUrl: '', trailerUrl: '', thumbnail: '', releaseYear: 2025, ownerHistory: '', tags: '', views: 0, isComingSoon: false });
+  const [movieForm, setMovieForm] = useState({ title: '', description: '', videoUrl: '', trailerUrl: '', thumbnail: '', releaseYear: 2025, ownerHistory: '', tags: '', views: 0, isComingSoon: false, genre: 'Divine', duration: 0 });
   const [storyForm, setStoryForm] = useState({
     title: '',
     titleTelugu: '',
@@ -552,6 +552,8 @@ function AdminDashboardContent() {
       tags: Array.isArray(movie.tags) ? movie.tags.join(', ') : (movie.tags || ''),
       views: movie.views || 0,
       isComingSoon: movie.isComingSoon || false,
+      genre: movie.genre || 'Divine',
+      duration: movie.duration || 0,
     });
     setShowAddModal(true);
   };
@@ -1564,10 +1566,24 @@ function AdminDashboardContent() {
                          <input type="checkbox" id="isComingSoon" className="w-6 h-6 accent-devotion-gold" checked={movieForm.isComingSoon} onChange={e => setMovieForm({...movieForm, isComingSoon: e.target.checked})} />
                          <label htmlFor="isComingSoon" className="text-sm font-black uppercase tracking-widest text-white cursor-pointer">Mark as "Coming Soon" (Upcoming Movie)</label>
                       </div>
-                      <div className="md:col-span-2 space-y-4">
-                         <label className="text-[10px] font-black uppercase tracking-widest text-devotion-gold ml-2">Owner's Selection Insight</label>
-                         <textarea rows="3" className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-5 text-white focus:border-devotion-gold outline-none" placeholder="Why this movie?" value={movieForm.ownerHistory} onChange={e => setMovieForm({...movieForm, ownerHistory: e.target.value})} />
-                      </div>
+                      <div className="space-y-4">
+                          <label className="text-[10px] font-black uppercase tracking-widest text-devotion-gold ml-2">Genre</label>
+                          <select className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-5 text-white focus:border-devotion-gold outline-none" value={movieForm.genre} onChange={e => setMovieForm({...movieForm, genre: e.target.value})}>
+                            <option value="Divine" className="bg-[#0B1F3A]">Divine</option>
+                            <option value="Epic" className="bg-[#0B1F3A]">Epic</option>
+                            <option value="Educational" className="bg-[#0B1F3A]">Educational</option>
+                            <option value="Animation" className="bg-[#0B1F3A]">Animation</option>
+                            <option value="Documentary" className="bg-[#0B1F3A]">Documentary</option>
+                          </select>
+                       </div>
+                       <div className="space-y-4">
+                          <label className="text-[10px] font-black uppercase tracking-widest text-devotion-gold ml-2">Duration (minutes)</label>
+                          <input type="number" className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-5 text-white focus:border-devotion-gold outline-none" value={movieForm.duration} onChange={e => setMovieForm({...movieForm, duration: parseInt(e.target.value) || 0})} />
+                       </div>
+                       <div className="md:col-span-2 space-y-4">
+                          <label className="text-[10px] font-black uppercase tracking-widest text-devotion-gold ml-2">Owner's Selection Insight</label>
+                          <textarea rows="3" className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-5 text-white focus:border-devotion-gold outline-none" placeholder="Why this movie?" value={movieForm.ownerHistory} onChange={e => setMovieForm({...movieForm, ownerHistory: e.target.value})} />
+                       </div>
                    </div>
                  )}
 
