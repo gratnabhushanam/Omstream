@@ -21,6 +21,9 @@ const {
 	toggleSaveReel,
 	getSavedReels,
 	updateVideo,
+	toggleLike,
+	toggleSaveVideo,
+	addComment,
 } = require('../controllers/videoController');
 const { protect, admin } = require('../middleware/authMiddleware');
 const { uploadReelVideo } = require('../middleware/uploadMiddleware');
@@ -54,5 +57,10 @@ router.delete('/user-reels/:id', protect, deleteMyReel);
 router.post('/', protect, admin, addVideo);
 router.patch('/:id', protect, admin, updateVideo);
 router.delete('/:id', protect, admin, deleteVideo);
+
+// Generic Video Interactions
+router.post('/:id/like', protect, toggleLike);
+router.post('/:id/save', protect, toggleSaveVideo);
+router.post('/:id/comments', protect, addComment);
 
 module.exports = router;

@@ -144,55 +144,60 @@ exports.deleteMyReel = async (req, res) => {
   }
 };
 
-exports.toggleUserReelLike = async (req, res) => {
+exports.toggleLike = async (req, res) => {
   try {
     const { id } = req.params;
     const userId = String(req.user.id);
-    const reel = await Video.findOne({ _id: id, isUserReel: true });
-    if (!reel) return res.status(404).json({ message: 'Reel not found' });
+    const video = await Video.findById(id);
+    if (!video) return res.status(404).json({ message: 'Video not found' });
     
-    const likedBy = Array.isArray(reel.likedBy) ? reel.likedBy : [];
-    const hasLiked = likedBy.includes(userId);
+    if (!video.likedBy) video.likedBy = [];
+    const hasLiked = video.likedBy.includes(userId);
     
     if (hasLiked) {
-      reel.likedBy = likedBy.filter(uid => uid !== userId);
+      video.likedBy = video.likedBy.filter(uid => uid !== userId);
     } else {
-      reel.likedBy.push(userId);
+      video.likedBy.push(userId);
     }
 
-    reel.likesCount = reel.likedBy.length;
-    await reel.save();
-    return res.json({ liked: !hasLiked, reel: mapVideo(reel) });
+    video.likesCount = video.likedBy.length;
+    await video.save();
+    return res.json({ liked: !hasLiked, video: mapVideo(video) });
   } catch (error) {
     return res.status(500).json({ message: error.message });
   }
 };
 
-exports.addUserReelComment = async (req, res) => {
+exports.toggleUserReelLike = exports.toggleLike;
+
+exports.addComment = async (req, res) => {
   try {
     const { id } = req.params;
     const text = String(req.body.text || '').trim();
     if (!text) return res.status(400).json({ message: 'Text required' });
 
-    const reel = await Video.findOne({ _id: id, isUserReel: true });
-    if (!reel) return res.status(404).json({ message: 'Reel not found' });
+    const video = await Video.findById(id);
+    if (!video) return res.status(404).json({ message: 'Video not found' });
 
     const comment = {
-      id: Date.now(),
+      id: Date.now().toString(),
       userId: req.user.id,
       userName: req.user.name || 'Seeker',
       text,
       createdAt: new Date()
     };
     
-    reel.comments.push(comment);
-    reel.commentsCount = reel.comments.length;
-    await reel.save();
-    return res.status(201).json(mapVideo(reel));
+    if (!video.comments) video.comments = [];
+    video.comments.push(comment);
+    video.commentsCount = video.comments.length;
+    await video.save();
+    return res.status(201).json(mapVideo(video));
   } catch (error) {
     return res.status(500).json({ message: error.message });
   }
 };
+
+exports.addUserReelComment = exports.addComment;
 
 exports.deleteVideo = async (req, res) => {
   try {
@@ -212,32 +217,34 @@ exports.getUserReels = async (req, res) => {
   }
 };
 
-exports.toggleSaveReel = async (req, res) => {
+exports.toggleSaveVideo = async (req, res) => {
   try {
     const user = await User.findById(req.user.id);
     if (!user.savedReels) user.savedReels = [];
     
-    const reelId = req.params.id;
-    const isSaved = user.savedReels.includes(reelId);
+    const videoId = req.params.id;
+    const isSaved = user.savedReels.includes(videoId);
     
-    if (isSaved) user.savedReels = user.savedReels.filter(id => id !== reelId);
-    else user.savedReels.push(reelId);
+    if (isSaved) user.savedReels = user.savedReels.filter(id => id !== videoId);
+    else user.savedReels.push(videoId);
     
     await user.save();
     
-    const reel = await Video.findById(reelId);
-    if (reel) {
-      if (!reel.savedBy) reel.savedBy = [];
-      if (!isSaved) reel.savedBy.push(String(req.user.id));
-      else reel.savedBy = reel.savedBy.filter(id => id !== String(req.user.id));
-      await reel.save();
+    const video = await Video.findById(videoId);
+    if (video) {
+      if (!video.savedBy) video.savedBy = [];
+      if (!isSaved) video.savedBy.push(String(req.user.id));
+      else video.savedBy = video.savedBy.filter(id => id !== String(req.user.id));
+      await video.save();
     }
     
-    res.json({ isSaved: !isSaved, savedReels: user.savedReels });
+    res.json({ isSaved: !isSaved, savedVideos: user.savedReels });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
+
+exports.toggleSaveReel = exports.toggleSaveVideo;
 exports.getSavedReels = async (req, res) => {
   try {
     const { userId } = req.params;

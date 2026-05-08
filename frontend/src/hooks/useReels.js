@@ -147,6 +147,32 @@ export const useReels = () => {
     localStorage.setItem(REELS_SOUND_PREF_KEY, String(soundEnabled));
   }, [soundEnabled]);
 
+  useEffect(() => {
+    if (user?.savedReels) {
+      const map = {};
+      user.savedReels.forEach(id => { map[String(id)] = true; });
+      setSavedReelMap(map);
+    }
+  }, [user]);
+
+  const handleToggleSave = async (reelId) => {
+    try {
+      const token = localStorage.getItem('token');
+      const res = await axios.post(`${ENV.API_BASE_URL}/api/videos/${reelId}/save`, {}, {
+        headers: { Authorization: `Bearer ${token}`, 'x-api-key': ENV.API_KEY }
+      });
+      const isSavedNow = res.data.isSaved;
+      setSavedReelMap(prev => ({ ...prev, [String(reelId)]: isSavedNow }));
+      // Also update the local user object to keep it in sync
+      if (user) {
+        const newSaved = isSavedNow 
+          ? [...(user.savedReels || []), String(reelId)]
+          : (user.savedReels || []).filter(id => String(id) !== String(reelId));
+        setUser({ ...user, savedReels: newSaved });
+      }
+    } catch (e) { console.error('Save error:', e); }
+  };
+
   const handleToggleLike = async (reel) => {
     const reelId = reel._id || reel.id;
     const normalizedId = String(reelId);
@@ -164,10 +190,10 @@ export const useReels = () => {
     // Backend sync for user reels
     try {
       const token = localStorage.getItem('token');
-      const res = await axios.post(`${ENV.API_BASE_URL}/api/videos/user-reels/${reelId}/like`, {}, {
+      const res = await axios.post(`${ENV.API_BASE_URL}/api/videos/${reelId}/like`, {}, {
         headers: { Authorization: `Bearer ${token}`, 'x-api-key': ENV.API_KEY }
       });
-      setReels(prev => prev.map(r => (String(r._id || r.id) === normalizedId ? res.data.reel : r)));
+      setReels(prev => prev.map(r => (String(r._id || r.id) === normalizedId ? res.data.video : r)));
       setLikePopReelId(normalizedId);
       setTimeout(() => setLikePopReelId(''), 700);
     } catch (e) { console.error(e); }
@@ -197,10 +223,10 @@ export const useReels = () => {
     setSubmittingCommentId(reelId);
     try {
       const token = localStorage.getItem('token');
-      const res = await axios.post(`${ENV.API_BASE_URL}/api/videos/user-reels/${reelId}/comment`, { text }, {
+      const res = await axios.post(`${ENV.API_BASE_URL}/api/videos/${reelId}/comments`, { text }, {
         headers: { Authorization: `Bearer ${token}`, 'x-api-key': ENV.API_KEY }
       });
-      setReels(prev => prev.map(r => (String(r._id || r.id) === String(reelId) ? res.data.reel : r)));
+      setReels(prev => prev.map(r => (String(r._id || r.id) === String(reelId) ? res.data : r)));
       setCommentInputs(prev => ({ ...prev, [reelId]: '' }));
     } catch (e) {
       console.error('Comment error:', e);
@@ -217,7 +243,7 @@ export const useReels = () => {
       const res = await axios.delete(`${ENV.API_BASE_URL}/api/videos/user-reels/${reelId}/comment/${commentId}`, {
         headers: { Authorization: `Bearer ${token}`, 'x-api-key': ENV.API_KEY }
       });
-      setReels(prev => prev.map(r => (String(r._id || r.id) === String(reelId) ? res.data.reel : r)));
+      setReels(prev => prev.map(r => (String(r._id || r.id) === String(reelId) ? res.data : r)));
     } catch (e) { console.error(e); }
   };
 
@@ -229,7 +255,7 @@ export const useReels = () => {
     soundEnabled, setSoundEnabled, likePopReelId, pausedReelId, reelsFeedRef,
     showNotifications, setShowNotifications, unreadCount, handleMarkAsRead, notifications,
     canViewCommenterProfile, handleToggleLike, setActiveReelId, setPausedReelId,
-    handleVideoSurfaceTap, fetchReels, handleCommentSubmit, handleDeleteComment,
+    handleVideoSurfaceTap, fetchReels, handleCommentSubmit, handleDeleteComment, handleToggleSave,
     handleShare: async (reel) => {
       try {
         const text = `${reel.title}\n${reel.description || ''}`;

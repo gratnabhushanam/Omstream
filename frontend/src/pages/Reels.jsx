@@ -19,7 +19,7 @@ export default function Reels() {
     viewMode, setViewMode,
     soundEnabled, setSoundEnabled, likePopReelId, pausedReelId, reelsFeedRef,
     canViewCommenterProfile, handleToggleLike, handleShare, setActiveReelId, 
-    setPausedReelId, handleVideoSurfaceTap, fetchReels, handleCommentSubmit, handleDeleteComment,
+    setPausedReelId, handleVideoSurfaceTap, fetchReels, handleCommentSubmit, handleDeleteComment, handleToggleSave,
     showNotifications, setShowNotifications, unreadCount, handleMarkAsRead, notifications
   } = useReels();
 
