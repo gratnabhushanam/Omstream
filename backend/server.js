@@ -74,7 +74,10 @@ const createRateLimiter = ({ windowMs, maxRequests, isMatch }) => {
   };
 };
 
-app.use(helmet());
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: "cross-origin" },
+  crossOriginEmbedderPolicy: false,
+}));
 
 // Only apply global CORS to API routes
 app.use('/api', cors({

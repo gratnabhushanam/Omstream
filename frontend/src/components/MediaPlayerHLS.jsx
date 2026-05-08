@@ -142,6 +142,13 @@ export default function MediaPlayer({
     const videoId = getYoutubeVideoId(cdnVideoUrl);
     const params = new URLSearchParams(youtubeParams);
     if (loop && videoId && !params.has('playlist')) params.set('playlist', videoId);
+    
+    // Auto-inject playback controls based on props
+    if (effectiveShouldPlay) params.set('autoplay', '1');
+    if (muted || (effectiveShouldPlay && instagramMode)) params.set('mute', '1');
+    params.set('playsinline', '1');
+    params.set('controls', controls ? '1' : '0');
+
     return (
       <div ref={containerRef} className={`relative bg-black overflow-hidden ${className}`}>
         <iframe className="w-full h-full absolute inset-0" src={`${embedUrl}?${params.toString()}`} title={title} frameBorder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowFullScreen />
