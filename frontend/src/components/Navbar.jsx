@@ -45,7 +45,7 @@ export default function Navbar() {
     <nav className="sticky top-0 w-full z-50 bg-[#06101E]/95 backdrop-blur-2xl border-b border-white/5 shadow-2xl tv:h-24 transition-all duration-500">
       <div className="max-w-[1920px] mx-auto px-4 sm:px-8 lg:px-12 pl-safe pr-safe">
         <div className="flex items-center justify-between h-16 tv:h-24">
-          <Link to="/home" className="group flex items-center gap-2 sm:gap-3 hover:opacity-80 transition-all flex-shrink-0">
+          <Link to="/home" tabIndex={0} className="tv-focusable focus:outline-none focus:ring-4 focus:ring-devotion-gold rounded-2xl group flex items-center gap-2 sm:gap-3 hover:opacity-80 transition-all flex-shrink-0">
             <div className="w-8 h-8 sm:w-9 sm:h-9 tv:w-14 tv:h-14 rounded-xl overflow-hidden flex items-center justify-center bg-devotion-gold/10 border border-devotion-gold/30 shadow-[0_0_20px_rgba(255,215,0,0.1)] group-hover:shadow-[0_0_30px_rgba(255,215,0,0.3)] transition-all">
               <img src="/logo-om-v2.png" alt="Logo" className="w-full h-full object-cover scale-90 group-hover:scale-105 transition-transform" />
             </div>
@@ -60,7 +60,8 @@ export default function Navbar() {
               <Link 
                 key={link.name} 
                 to={link.path} 
-                className={`flex items-center px-3 xl:px-4 py-2 rounded-xl font-black text-[10px] tv:text-sm uppercase tracking-[0.18em] transition-all duration-300 ${isActive(link.path) ? 'bg-devotion-gold/15 text-devotion-gold border border-devotion-gold/30 shadow-[0_0_20px_rgba(255,215,0,0.15)]' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}
+                tabIndex={0}
+                className={`tv-focusable flex items-center px-3 xl:px-4 py-2 tv:px-6 tv:py-4 rounded-xl font-black text-[10px] tv:text-base uppercase tracking-[0.18em] transition-all duration-300 ${isActive(link.path) ? 'bg-devotion-gold/15 text-devotion-gold border border-devotion-gold/30 shadow-[0_0_20px_rgba(255,215,0,0.15)]' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}
               >
                 {link.icon}
                 {link.name}
@@ -69,15 +70,15 @@ export default function Navbar() {
             
             <div className="h-6 w-px bg-white/10 mx-2 xl:mx-4"></div>
             
-            <button onClick={handleInstallClick} className="group relative px-5 py-2 bg-gradient-to-br from-devotion-gold to-[#FFB800] text-[#06101E] text-[10px] tv:text-xs font-black uppercase tracking-widest rounded-xl hover:shadow-[0_0_25px_rgba(255,215,0,0.4)] transition-all flex items-center gap-2 overflow-hidden active:scale-95">
-               <Download className="w-4 h-4 group-hover:translate-y-0.5 transition-transform" /> GET APP
+            <button onClick={handleInstallClick} className="tv-focusable group relative px-5 py-2 tv:px-8 tv:py-4 bg-gradient-to-br from-devotion-gold to-[#FFB800] text-[#06101E] text-[10px] tv:text-sm font-black uppercase tracking-widest rounded-xl hover:shadow-[0_0_25px_rgba(255,215,0,0.4)] transition-all flex items-center gap-2 overflow-hidden active:scale-95">
+               <Download className="w-4 h-4 tv:w-5 tv:h-5 group-hover:translate-y-0.5 transition-transform" /> GET APP
             </button>
           
             {user && (
               <div className="relative ml-2">
-                <button onClick={toggleNotifications} className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all ${showNotifications ? 'bg-devotion-gold/20 text-devotion-gold' : 'text-gray-400 hover:bg-white/5 hover:text-white'} active:scale-110`}>
-                  <Bell className="w-5 h-5" />
-                  {unreadCount > 0 && <span className="absolute top-2 right-2 w-2.5 h-2.5 bg-red-600 rounded-full border-2 border-[#06101E] animate-pulse shadow-[0_0_8px_rgba(220,38,38,0.5)]"></span>}
+                <button onClick={toggleNotifications} className={`tv-focusable w-10 h-10 tv:w-14 tv:h-14 rounded-xl flex items-center justify-center transition-all ${showNotifications ? 'bg-devotion-gold/20 text-devotion-gold' : 'text-gray-400 hover:bg-white/5 hover:text-white'} active:scale-110`}>
+                  <Bell className="w-5 h-5 tv:w-6 tv:h-6" />
+                  {unreadCount > 0 && <span className="absolute top-2 right-2 w-2.5 h-2.5 tv:w-3.5 tv:h-3.5 bg-red-600 rounded-full border-2 border-[#06101E] animate-pulse shadow-[0_0_8px_rgba(220,38,38,0.5)]"></span>}
                 </button>
                 {showNotifications && (
                   <>
@@ -89,17 +90,17 @@ export default function Navbar() {
             )}
             
             {user ? (
-              <Link to="/profile" className="flex items-center gap-3 pl-4 border-l border-white/10 ml-2 group">
-                <div className="w-10 h-10 rounded-xl overflow-hidden border border-white/10 group-hover:border-devotion-gold/50 transition-colors">
-                  {user.profilePicture ? <img src={user.profilePicture} alt="" className="w-full h-full object-cover" /> : <div className="w-full h-full bg-devotion-gold/10 flex items-center justify-center text-devotion-gold font-black text-xs uppercase">{getInitials(user.name)}</div>}
+              <Link to="/profile" className="tv-focusable focus:outline-none focus:ring-4 focus:ring-devotion-gold rounded-2xl flex items-center gap-3 pl-4 border-l border-white/10 ml-2 group">
+                <div className="w-10 h-10 tv:w-14 tv:h-14 rounded-xl overflow-hidden border border-white/10 group-hover:border-devotion-gold/50 transition-colors">
+                  {user.profilePicture ? <img src={user.profilePicture} alt="" className="w-full h-full object-cover" /> : <div className="w-full h-full bg-devotion-gold/10 flex items-center justify-center text-devotion-gold font-black text-xs tv:text-sm uppercase">{getInitials(user.name)}</div>}
                 </div>
                 <div className="hidden xl:flex flex-col">
-                  <span className="text-[10px] font-black text-white group-hover:text-devotion-gold transition-colors uppercase tracking-widest truncate max-w-[100px]">{user.name}</span>
-                  <span className="text-[8px] font-bold text-gray-500 uppercase tracking-widest">Devotee</span>
+                  <span className="text-[10px] tv:text-xs font-black text-white group-hover:text-devotion-gold transition-colors uppercase tracking-widest truncate max-w-[100px] tv:max-w-[150px]">{user.name}</span>
+                  <span className="text-[8px] tv:text-[10px] font-bold text-gray-500 uppercase tracking-widest">Devotee</span>
                 </div>
               </Link>
             ) : (
-              <Link to="/login" className="px-6 py-2 border border-devotion-gold/30 text-devotion-gold hover:bg-devotion-gold hover:text-devotion-darkBlue rounded-xl font-black text-[10px] uppercase tracking-widest transition-all active:scale-95 ml-2 shadow-[0_0_20px_rgba(255,215,0,0.05)]">LOGIN</Link>
+              <Link to="/login" className="tv-focusable px-6 py-2 tv:px-8 tv:py-4 border border-devotion-gold/30 text-devotion-gold hover:bg-devotion-gold hover:text-devotion-darkBlue rounded-xl font-black text-[10px] tv:text-sm uppercase tracking-widest transition-all active:scale-95 ml-2 shadow-[0_0_20px_rgba(255,215,0,0.05)]">LOGIN</Link>
             )}
           </div>
 

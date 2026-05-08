@@ -67,7 +67,8 @@ export default function Mentor() {
           <div className="bg-devotion-darkBlue/40 backdrop-blur-md p-1 rounded-full border border-devotion-gold/20 flex w-full max-w-md shadow-2xl">
             <button
               onClick={() => setActiveTab('curated')}
-              className={`flex-1 py-3 px-6 rounded-full text-xs font-black uppercase tracking-widest transition-all ${
+              tabIndex={0}
+              className={`tv-focusable focus:outline-none focus:ring-4 focus:ring-devotion-gold flex-1 py-3 px-6 rounded-full text-xs tv:text-sm font-black uppercase tracking-widest transition-all ${
                 activeTab === 'curated' 
                   ? 'bg-gradient-to-r from-[#B66A2A] to-[#E6C38A] text-[#06101E] shadow-[0_0_20px_rgba(230,195,138,0.4)]' 
                   : 'text-gray-400 hover:text-devotion-gold'
@@ -77,7 +78,8 @@ export default function Mentor() {
             </button>
             <button
               onClick={() => setActiveTab('ai')}
-              className={`flex-1 py-3 px-6 rounded-full text-xs font-black uppercase tracking-widest transition-all ${
+              tabIndex={0}
+              className={`tv-focusable focus:outline-none focus:ring-4 focus:ring-devotion-gold flex-1 py-3 px-6 rounded-full text-xs tv:text-sm font-black uppercase tracking-widest transition-all ${
                 activeTab === 'ai' 
                   ? 'bg-gradient-to-r from-blue-500 to-cyan-400 text-white shadow-[0_0_20px_rgba(59,130,246,0.4)]' 
                   : 'text-gray-400 hover:text-cyan-400'
@@ -160,8 +162,9 @@ export default function Mentor() {
           {problems.map(problem => (
             <button
               key={problem.id}
+              tabIndex={0}
               onClick={() => fetchSolution(problem.id)}
-              className={`flex flex-col items-center justify-center p-6 md:p-8 tv:p-12 rounded-[2rem] tv:rounded-[3rem] transition-all duration-300 ease-out transform active:scale-95 border tv-focusable preserve-3d ${selectedProblem === problem.id ? 'bg-gradient-to-br ' + problem.color + ' text-white scale-[1.03] shadow-[0_0_40px_rgba(255,215,0,0.18)] border-white/30' : 'bg-glass-gradient backdrop-blur-3xl text-gray-300 hover:text-devotion-gold border-white/5 hover:border-devotion-gold/40 shadow-xl'}`}
+              className={`tv-focusable focus:outline-none focus:ring-4 focus:ring-devotion-gold flex flex-col items-center justify-center p-6 md:p-8 tv:p-12 rounded-[2rem] tv:rounded-[3rem] transition-all duration-300 ease-out transform active:scale-95 border preserve-3d ${selectedProblem === problem.id ? 'bg-gradient-to-br ' + problem.color + ' text-white scale-[1.03] shadow-[0_0_40px_rgba(255,215,0,0.18)] border-white/30' : 'bg-glass-gradient backdrop-blur-3xl text-gray-300 hover:text-devotion-gold border-white/5 hover:border-devotion-gold/40 shadow-xl'}`}
               onMouseMove={(e) => {
                 const card = e.currentTarget;
                 const rect = card.getBoundingClientRect();
@@ -229,19 +232,19 @@ export default function Mentor() {
                   <div className="mb-4 flex bg-devotion-darkBlue/60 rounded-full p-1 border border-white/10 backdrop-blur-md w-fit">
                     <button
                       onClick={() => setLanguage('english')}
-                      className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${language === 'english' ? 'bg-devotion-gold text-devotion-darkBlue shadow-lg' : 'text-gray-400 hover:text-white'}`}
+                      className={`tv-focusable px-4 py-1.5 tv:px-6 tv:py-3 rounded-full text-[10px] tv:text-sm font-black uppercase tracking-widest transition-all ${language === 'english' ? 'bg-devotion-gold text-devotion-darkBlue shadow-lg' : 'text-gray-400 hover:text-white'}`}
                     >
                       English
                     </button>
                     <button
                       onClick={() => setLanguage('hindi')}
-                      className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${language === 'hindi' ? 'bg-devotion-gold text-devotion-darkBlue shadow-lg' : 'text-gray-400 hover:text-white'}`}
+                      className={`tv-focusable px-4 py-1.5 tv:px-6 tv:py-3 rounded-full text-[10px] tv:text-sm font-black uppercase tracking-widest transition-all ${language === 'hindi' ? 'bg-devotion-gold text-devotion-darkBlue shadow-lg' : 'text-gray-400 hover:text-white'}`}
                     >
                       Hindi
                     </button>
                     <button
                       onClick={() => setLanguage('telugu')}
-                      className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${language === 'telugu' ? 'bg-devotion-gold text-devotion-darkBlue shadow-lg' : 'text-gray-400 hover:text-white'}`}
+                      className={`tv-focusable px-4 py-1.5 tv:px-6 tv:py-3 rounded-full text-[10px] tv:text-sm font-black uppercase tracking-widest transition-all ${language === 'telugu' ? 'bg-devotion-gold text-devotion-darkBlue shadow-lg' : 'text-gray-400 hover:text-white'}`}
                     >
                       తెలుగు
                     </button>
@@ -279,9 +282,9 @@ export default function Mentor() {
                     <button
                       onClick={toggleAudio}
                       disabled={!canPlayAudio}
-                      className={`${canPlayAudio ? 'bg-white/5 hover:bg-white/10 border-white/10 text-white' : 'bg-gray-800 text-gray-500 cursor-not-allowed opacity-50'} flex items-center gap-3 px-8 py-4 rounded-2xl transition-all font-black text-xs uppercase tracking-widest`}
+                      className={`tv-focusable ${canPlayAudio ? 'bg-white/5 hover:bg-white/10 border-white/10 text-white' : 'bg-gray-800 text-gray-500 cursor-not-allowed opacity-50'} flex items-center gap-3 px-8 py-4 tv:px-10 tv:py-5 rounded-2xl transition-all font-black text-xs tv:text-sm uppercase tracking-widest`}
                     >
-                      {isPlaying ? <Pause className="w-5 h-5" /> : <Volume2 className="w-5 h-5" />}
+                      {isPlaying ? <Pause className="w-5 h-5 tv:w-7 tv:h-7" /> : <Volume2 className="w-5 h-5 tv:w-7 tv:h-7" />}
                       {isPlaying ? 'Stop Chant' : canPlayAudio ? 'Listen Chant' : 'Auto Narrate'}
                     </button>
                     
@@ -289,7 +292,7 @@ export default function Mentor() {
                     <select
                       value={voiceCharacter}
                       onChange={(e) => setVoiceCharacter(e.target.value)}
-                      className="px-4 py-4 rounded-2xl bg-devotion-darkBlue/60 border border-devotion-gold/30 text-white font-black text-xs uppercase tracking-widest hover:border-devotion-gold/60 transition-all focus:outline-none focus:border-devotion-gold"
+                      className="tv-focusable px-4 py-4 tv:px-6 tv:py-5 rounded-2xl bg-devotion-darkBlue/60 border border-devotion-gold/30 text-white font-black text-xs tv:text-sm uppercase tracking-widest hover:border-devotion-gold/60 transition-all focus:outline-none focus:border-devotion-gold"
                     >
                       <option value="krishna">🔵 Krishna Voice</option>
                       <option value="ram">🌟 Ram Voice</option>
@@ -299,16 +302,16 @@ export default function Mentor() {
                   </div>
                   <button
                     onClick={handleToggleSaveVerse}
-                    className={`flex items-center gap-3 border px-8 py-4 rounded-2xl transition-all font-black text-xs uppercase tracking-widest ${isCurrentVerseSaved ? 'bg-devotion-gold/20 border-devotion-gold/50 text-devotion-gold' : 'bg-white/5 hover:bg-white/10 border-white/10 text-white'}`}
+                    className={`tv-focusable flex items-center gap-3 border px-8 py-4 tv:px-10 tv:py-5 rounded-2xl transition-all font-black text-xs tv:text-sm uppercase tracking-widest ${isCurrentVerseSaved ? 'bg-devotion-gold/20 border-devotion-gold/50 text-devotion-gold' : 'bg-white/5 hover:bg-white/10 border-white/10 text-white'}`}
                   >
-                    <Bookmark className="w-5 h-5 text-devotion-gold" /> {isCurrentVerseSaved ? 'Saved Verse' : 'Save Verse'}
+                    <Bookmark className="w-5 h-5 tv:w-7 tv:h-7 text-devotion-gold" /> {isCurrentVerseSaved ? 'Saved Verse' : 'Save Verse'}
                   </button>
                   <button 
                     onClick={() => setShowVideo(true)}
                     disabled={!solution.recommendedVideo}
-                    className={`flex items-center gap-3 px-8 py-4 rounded-2xl transition-all font-black text-xs uppercase tracking-widest shadow-2xl ${solution.recommendedVideo ? 'bg-gradient-to-r from-devotion-gold to-[#FF9F1C] text-devotion-darkBlue hover:scale-105 shadow-[0_10px_30px_rgba(255,215,0,0.2)]' : 'bg-gray-800 text-gray-500 cursor-not-allowed opacity-50'}`}
+                    className={`tv-focusable flex items-center gap-3 px-8 py-4 tv:px-10 tv:py-5 rounded-2xl transition-all font-black text-xs tv:text-sm uppercase tracking-widest shadow-2xl ${solution.recommendedVideo ? 'bg-gradient-to-r from-devotion-gold to-[#FF9F1C] text-devotion-darkBlue hover:scale-105 shadow-[0_10px_30px_rgba(255,215,0,0.2)]' : 'bg-gray-800 text-gray-500 cursor-not-allowed opacity-50'}`}
                   >
-                    <PlayCircle className="w-6 h-6" fill="currentColor" /> Recommended Video
+                    <PlayCircle className="w-6 h-6 tv:w-8 tv:h-8" fill="currentColor" /> Recommended Video
                   </button>
                 </div>
               </div>
@@ -357,7 +360,7 @@ export default function Mentor() {
                     <div
                       key={sloka.id}
                       onClick={() => handleNavigateToContent(sloka, 'sloka')}
-                      className="bg-devotion-darkBlue/40 backdrop-blur-md p-6 rounded-2xl border border-white/5 transition-all cursor-pointer group shadow-xl preserve-3d"
+                      className="tv-focusable focus:outline-none focus:ring-4 focus:ring-devotion-gold bg-devotion-darkBlue/40 backdrop-blur-md p-6 rounded-2xl border border-white/5 transition-all cursor-pointer group shadow-xl preserve-3d"
                       onMouseMove={(e) => {
                         const card = e.currentTarget;
                         const rect = card.getBoundingClientRect();

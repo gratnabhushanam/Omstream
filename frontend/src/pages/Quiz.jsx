@@ -147,7 +147,7 @@ export default function Quiz() {
         <div className="text-center z-10 bg-white/5 backdrop-blur-xl border border-white/10 p-12 rounded-3xl">
           <BrainCircuit className="w-16 h-16 text-[#FFD700] mx-auto mb-6 opacity-80" />
           <p className="text-[#FFD700] font-bold text-2xl mb-4">No quiz available right now.</p>
-          <button onClick={() => navigate('/quizzes')} className="mt-4 bg-[#FFD700] text-[#06101E] px-8 py-3 rounded-full font-bold uppercase tracking-widest hover:brightness-110 shadow-[0_0_20px_rgba(255,215,0,0.3)]">
+          <button onClick={() => navigate('/quizzes')} className="tv-focusable mt-4 bg-[#FFD700] text-[#06101E] px-8 py-3 rounded-full font-bold uppercase tracking-widest hover:brightness-110 shadow-[0_0_20px_rgba(255,215,0,0.3)]">
             Explore Quizzes
           </button>
         </div>
@@ -208,7 +208,7 @@ export default function Quiz() {
 
             <button
               onClick={() => navigate('/quizzes')}
-              className="bg-gradient-to-r from-[#FFD700] to-[#FF9F1C] text-[#06101E] px-10 py-4 rounded-full font-black text-lg tracking-widest uppercase hover:shadow-[0_0_30px_rgba(255,215,0,0.5)] hover:scale-105 transition-all flex items-center gap-3 mx-auto"
+              className="tv-focusable bg-gradient-to-r from-[#FFD700] to-[#FF9F1C] text-[#06101E] px-10 py-4 rounded-full font-black text-lg tracking-widest uppercase hover:shadow-[0_0_30px_rgba(255,215,0,0.5)] hover:scale-105 transition-all flex items-center gap-3 mx-auto"
             >
               <RefreshCcw className="w-5 h-5" />
               More Quizzes
@@ -256,9 +256,10 @@ export default function Quiz() {
                 return (
                   <button
                     key={index}
+                    tabIndex={0}
                     onClick={() => selectedAnswer === null && handleAnswerOptionClick(optionText, index)}
                     disabled={selectedAnswer !== null}
-                    className={`border p-6 rounded-2xl text-left text-lg font-medium transition-all duration-300 flex justify-between items-center group relative overflow-hidden preserve-3d ${buttonStyle}`}
+                    className={`tv-focusable focus:outline-none focus:ring-4 focus:ring-[#FFD700] border p-6 rounded-2xl text-left text-lg font-medium transition-all duration-300 flex justify-between items-center group relative overflow-hidden preserve-3d ${buttonStyle}`}
                     onMouseMove={(e) => {
                       if (selectedAnswer !== null) return;
                       const card = e.currentTarget;
