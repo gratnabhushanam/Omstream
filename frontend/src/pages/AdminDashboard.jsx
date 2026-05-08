@@ -215,8 +215,13 @@ function AdminDashboardContent() {
         setData(prev => ({ ...prev, quizSets: Array.isArray(quizSets) ? quizSets : [] }));
       }
     } catch (error) {
-      const errorMsg = error.response?.data?.message || error.response?.data?.error || 'Failed to fetch admin data';
-      setMessage({ type: 'error', text: `${errorMsg}. Please check your connection or try again later.` });
+      if (error.response?.status === 401) {
+        setMessage({ type: 'error', text: 'Session expired or unauthorized. Please log in again.' });
+        setTimeout(() => navigate('/login'), 3000);
+      } else {
+        const errorMsg = error.response?.data?.message || error.response?.data?.error || 'System error while fetching admin records';
+        setMessage({ type: 'error', text: `${errorMsg}. Please check your backend connection.` });
+      }
       console.error('Error fetching admin data:', error);
     }
   };
@@ -780,39 +785,39 @@ function AdminDashboardContent() {
                    ))}
                 </div>
 
-                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mt-12 mb-12">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
+                {data.stats && (
+                  <>
                     <div className="bg-white/5 border border-white/10 rounded-[3rem] p-12 backdrop-blur-3xl">
-                       <h3 className="text-xl font-serif font-black text-white mb-6 uppercase tracking-widest text-center">Content Distribution</h3>
-                       <div className="h-[300px] w-full">
-                         <ResponsiveContainer width="100%" height="100%">
-                           <PieChart>
-                             <Pie
-                               data={[
-                                 { name: 'Movies', value: data.stats.totalMovies || 0 },
-                                 { name: 'Stories', value: data.stats.totalStories || 0 },
-                                 { name: 'Videos', value: data.stats.totalVideos || 0 },
-                               ]}
-                               cx="50%"
-                               cy="50%"
-                               innerRadius={60}
-                               outerRadius={100}
-                               paddingAngle={5}
-                               dataKey="value"
-                             >
-                               <Cell fill="#fbbf24" />
-                               <Cell fill="#fb923c" />
-                               <Cell fill="#4ade80" />
-                             </Pie>
-                             <RechartsTooltip contentStyle={{ backgroundColor: '#0f172a', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px' }} />
-                           </PieChart>
-                         </ResponsiveContainer>
+                       <h3 className="text-xl font-serif font-black text-white mb-6 uppercase tracking-widest text-center">Engagement Mix</h3>
+                       <div className="h-[300px] w-full flex items-center justify-center">
+                          <ResponsiveContainer width="99%" height="100%">
+                            <PieChart>
+                              <Pie
+                                data={[
+                                  { name: 'Users', value: data.stats.totalUsers || 0 },
+                                  { name: 'Movies', value: data.stats.totalMovies || 0 },
+                                  { name: 'Stories', value: data.stats.totalStories || 0 },
+                                ]}
+                                innerRadius={80}
+                                outerRadius={110}
+                                paddingAngle={8}
+                                dataKey="value"
+                              >
+                                <Cell fill="#fbbf24" />
+                                <Cell fill="#fb923c" />
+                                <Cell fill="#4ade80" />
+                              </Pie>
+                              <RechartsTooltip contentStyle={{ backgroundColor: '#0f172a', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px' }} />
+                            </PieChart>
+                          </ResponsiveContainer>
                        </div>
                     </div>
 
                     <div className="bg-white/5 border border-white/10 rounded-[3rem] p-12 backdrop-blur-3xl">
                        <h3 className="text-xl font-serif font-black text-white mb-6 uppercase tracking-widest text-center">Platform Overview</h3>
-                       <div className="h-[300px] w-full">
-                         <ResponsiveContainer width="100%" height="100%">
+                       <div className="h-[300px] w-full flex items-center justify-center">
+                         <ResponsiveContainer width="99%" height="100%">
                            <BarChart
                              data={[
                                { name: 'Users', count: data.stats.totalUsers || 0 },
@@ -829,31 +834,35 @@ function AdminDashboardContent() {
                          </ResponsiveContainer>
                        </div>
                     </div>
-                 </div>
+                  </>
+                )}
+              </div>
 
-                 <div className="bg-white/5 border border-white/10 rounded-[3rem] p-12 backdrop-blur-3xl">
-                   <h3 className="text-2xl font-serif font-black text-white mb-10 uppercase tracking-widest flex items-center gap-4">
-                      <Users className="text-devotion-gold" /> Recent Seeker Signups
-                   </h3>
-                   <div className="space-y-4">
-                      {data.stats.recentUsers.map(user => (
-                        <div key={user.id || user._id || user.email} className="flex items-center justify-between p-6 bg-white/5 rounded-2xl border border-white/5 hover:border-devotion-gold/30 transition-all">
-                           <div className="flex items-center gap-6">
-                              <div className="w-12 h-12 rounded-full bg-devotion-gold/20 flex items-center justify-center text-devotion-gold font-black">
-                                 {user.name[0].toUpperCase()}
-                              </div>
-                              <div>
-                                 <h5 className="font-bold text-white">{user.name}</h5>
-                                 <p className="text-xs text-gray-500">{user.email}</p>
-                              </div>
-                           </div>
-                           <span className="text-[10px] font-black uppercase tracking-widest text-gray-600">
-                              {new Date(user.createdAt).toLocaleDateString()}
-                           </span>
-                        </div>
-                      ))}
-                   </div>
+              {data.stats && data.stats.recentUsers && (
+                <div className="bg-white/5 border border-white/10 rounded-[3rem] p-12 backdrop-blur-3xl">
+                  <h3 className="text-2xl font-serif font-black text-white mb-10 uppercase tracking-widest flex items-center gap-4">
+                     <Users className="text-devotion-gold" /> Recent Seeker Signups
+                  </h3>
+                  <div className="space-y-4">
+                     {data.stats.recentUsers.map(user => (
+                       <div key={user.id || user._id || user.email} className="flex items-center justify-between p-6 bg-white/5 rounded-2xl border border-white/5 hover:border-devotion-gold/30 transition-all">
+                          <div className="flex items-center gap-6">
+                             <div className="w-12 h-12 rounded-full bg-devotion-gold/20 flex items-center justify-center text-devotion-gold font-black">
+                                {user.name ? user.name[0].toUpperCase() : '?'}
+                             </div>
+                             <div>
+                                <h5 className="font-bold text-white">{user.name}</h5>
+                                <p className="text-xs text-gray-500">{user.email}</p>
+                             </div>
+                          </div>
+                          <span className="text-[10px] font-black uppercase tracking-widest text-gray-600">
+                             {user.createdAt ? new Date(user.createdAt).toLocaleDateString() : 'N/A'}
+                          </span>
+                       </div>
+                     ))}
+                  </div>
                 </div>
+              )}
 
                  <div className="bg-white/5 border border-white/10 rounded-[3rem] p-12 backdrop-blur-3xl mt-8">
                     <div className="flex items-center justify-between mb-8">
