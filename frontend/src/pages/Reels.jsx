@@ -123,7 +123,7 @@ export default function Reels() {
   }
 
   return (
-    <div className="h-[100dvh] w-full bg-black relative overflow-hidden overscroll-none touch-none">
+    <div className="h-[100dvh] w-full bg-black relative overflow-hidden overscroll-none touch-pan-y">
       
       {/* Dynamic Backgrounds */}{REELS_BACKGROUND_SCENES.map((image, index) => (
         <div
@@ -223,24 +223,31 @@ export default function Reels() {
 
                    <div className="flex flex-col gap-6 items-center pointer-events-auto">
                       <button className="flex flex-col items-center group" onClick={() => handleToggleLike(reel)}>
-                         <div className="w-14 h-14 rounded-[1.5rem] bg-white/5 border border-white/10 flex items-center justify-center backdrop-blur-2xl transition-all group-active:scale-90 group-hover:bg-red-500/10 group-hover:border-red-500/30">
-                            <img src="/ram-symbol.svg" className="w-8 h-8 object-contain drop-shadow-[0_0_8px_rgba(255,215,0,0.5)]" alt="Like" />
+                         <div className="w-14 h-14 rounded-[1.5rem] bg-white/5 border border-white/15 flex items-center justify-center backdrop-blur-3xl transition-all group-active:scale-90 group-hover:bg-red-500/20 group-hover:border-red-500/40">
+                            <img src="/ram-symbol.svg" className="w-9 h-9 object-contain drop-shadow-[0_0_12px_rgba(255,215,0,0.6)]" alt="Like" />
                          </div>
-                         <span className="text-[10px] font-black text-white/60 mt-1 uppercase tracking-widest">{reel.likesCount || 0}</span>
+                         <span className="text-[11px] font-black text-white/90 mt-1 uppercase tracking-widest drop-shadow-md">{reel.likesCount || 0}</span>
                       </button>
 
                       <button className="flex flex-col items-center group" onClick={() => setExpandedCommentReel(reelId)}>
-                         <div className="w-14 h-14 rounded-[1.5rem] bg-white/5 border border-white/10 flex items-center justify-center backdrop-blur-2xl transition-all group-active:scale-90">
-                            <img src="/krishna-symbol.svg" className="w-8 h-8 object-contain drop-shadow-[0_0_8px_rgba(0,191,255,0.5)]" alt="Comment" />
+                         <div className="w-14 h-14 rounded-[1.5rem] bg-white/5 border border-white/15 flex items-center justify-center backdrop-blur-3xl transition-all group-active:scale-90">
+                            <img src="/krishna-symbol.svg" className="w-9 h-9 object-contain drop-shadow-[0_0_12px_rgba(0,191,255,0.6)]" alt="Comment" />
                          </div>
-                         <span className="text-[10px] font-black text-white/60 mt-1 uppercase tracking-widest">{reel.commentsCount || 0}</span>
+                         <span className="text-[11px] font-black text-white/90 mt-1 uppercase tracking-widest drop-shadow-md">{reel.commentsCount || 0}</span>
+                      </button>
+
+                      <button className="flex flex-col items-center group" onClick={() => handleToggleSave(reelId)}>
+                         <div className={`w-14 h-14 rounded-[1.5rem] flex items-center justify-center backdrop-blur-3xl border transition-all active:scale-90 ${savedReelMap[reelId] ? 'bg-devotion-gold/20 border-devotion-gold/50' : 'bg-white/5 border-white/15'}`}>
+                            <Bookmark className={`w-7 h-7 ${savedReelMap[reelId] ? 'text-devotion-gold fill-current' : 'text-white'}`} strokeWidth={2.5} />
+                         </div>
+                         <span className="text-[11px] font-black text-white/90 mt-1 uppercase tracking-widest drop-shadow-md">{savedReelMap[reelId] ? 'Saved' : 'Save'}</span>
                       </button>
 
                       <button className="flex flex-col items-center group" onClick={() => handleShare(reel)}>
-                         <div className="w-14 h-14 rounded-[1.5rem] bg-white/5 border border-white/10 flex items-center justify-center backdrop-blur-2xl transition-all group-active:scale-90">
-                            <img src="/hanuman-symbol.svg" className="w-8 h-8 object-contain drop-shadow-[0_0_8px_rgba(255,165,0,0.5)]" alt="Share" />
+                         <div className="w-14 h-14 rounded-[1.5rem] bg-white/5 border border-white/15 flex items-center justify-center backdrop-blur-3xl transition-all group-active:scale-90">
+                            <img src="/hanuman-symbol.svg" className="w-9 h-9 object-contain drop-shadow-[0_0_12px_rgba(255,165,0,0.6)]" alt="Share" />
                          </div>
-                         <span className="text-[10px] font-black text-white/60 mt-1 uppercase tracking-widest">Share</span>
+                         <span className="text-[11px] font-black text-white/90 mt-1 uppercase tracking-widest drop-shadow-md">Share</span>
                       </button>
                    </div>
                 </div>

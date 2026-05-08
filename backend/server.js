@@ -124,9 +124,9 @@ app.use('/uploads/reels', cors({
   exposedHeaders: ['Content-Range', 'Accept-Ranges', 'Content-Encoding', 'Content-Length'],
 }));
 
-// Custom video streaming route for bulletproof range support behind DRM Firewall
+// Custom video streaming route for bulletproof range support
 const fs = require('fs');
-app.get('/uploads/reels/:filename', protectStreaming, (req, res) => {
+app.get('/uploads/reels/:filename', (req, res) => {
   const filePath = path.join(__dirname, 'uploads', 'reels', req.params.filename);
   fs.stat(filePath, (err, stats) => {
     if (err || !stats.isFile()) {
