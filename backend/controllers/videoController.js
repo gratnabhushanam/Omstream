@@ -238,7 +238,22 @@ exports.toggleSaveReel = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
-
+exports.getSavedReels = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const user = await User.findById(userId);
+    if (!user) return res.status(404).json({ message: 'User not found' });
+    
+    const reels = await Video.find({
+      _id: { $in: user.savedReels || [] },
+      moderationStatus: 'approved'
+    }).sort({ createdAt: -1 });
+    
+    res.json(reels.map(mapVideo));
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
 
 
 exports.uploadUserReel = async (req, res) => {
