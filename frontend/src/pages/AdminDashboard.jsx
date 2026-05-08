@@ -49,7 +49,7 @@ function AdminDashboardContent() {
     thumbnail: '',
     tags: '',
   });
-  const [videoForm, setVideoForm] = useState({ title: '', description: '', videoUrl: '', category: 'reels', collectionTitle: 'Bhagavad Gita', isKids: false, tags: '', quizSetId: '', views: 0 });
+  const [videoForm, setVideoForm] = useState({ title: '', description: '', videoUrl: '', trailerUrl: '', category: 'reels', collectionTitle: 'Bhagavad Gita', isKids: false, tags: '', quizSetId: '', views: 0 });
   // Quiz builder state for video upload
   const [videoQuizList, setVideoQuizList] = useState([]);
   const [videoQuizDraft, setVideoQuizDraft] = useState({
@@ -491,7 +491,7 @@ function AdminDashboardContent() {
       thumbnail: '',
       tags: '',
     });
-    setVideoForm({ title: '', description: '', videoUrl: '', category: 'reels', collectionTitle: 'Bhagavad Gita', isKids: false, tags: '', quizSetId: '', views: 0 });
+    setVideoForm({ title: '', description: '', videoUrl: '', trailerUrl: '', category: 'reels', collectionTitle: 'Bhagavad Gita', isKids: false, tags: '', quizSetId: '', views: 0 });
     setQuizSetForm({ title: '', description: '', category: 'General', difficulty: 'medium', timeLimit: 0, thumbnail: '', tags: '', isPublished: false, questions: [] });
     setEditingQuizSetId(null);
     setQuizForm({
@@ -1517,6 +1517,24 @@ function AdminDashboardContent() {
                  {/* MOVIE FORM */}
                  {activeTab === 'movies' && (
                    <div className="grid grid-cols-1 md:grid-cols-2 gap-10 overflow-x-auto">
+                       {/* Quick Guide Banner */}
+                       <div className="md:col-span-2 bg-devotion-gold/5 border border-devotion-gold/20 rounded-2xl p-5 mb-2">
+                         <p className="text-[10px] font-black uppercase tracking-widest text-devotion-gold mb-3">📋 Upload Guide</p>
+                         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs text-gray-300">
+                           <div className="flex items-start gap-2">
+                             <span className="text-devotion-gold font-black mt-0.5">1.</span>
+                             <div><strong className="text-white">Main Movie File</strong><br/>Upload via file upload or paste a YouTube/MP4 URL. This is the full movie viewers watch.</div>
+                           </div>
+                           <div className="flex items-start gap-2">
+                             <span className="text-devotion-gold font-black mt-0.5">2.</span>
+                             <div><strong className="text-white">Trailer / Teaser</strong><br/>Short 1-3 min clip. Auto-plays as the hero background. Use YouTube short URL or upload.</div>
+                           </div>
+                           <div className="flex items-start gap-2">
+                             <span className="text-red-400 font-black mt-0.5">⚠️</span>
+                             <div><strong className="text-white">Jio/Hotstar/Netflix</strong><br/>Cannot be embedded. Paste the link as Video URL — users will see a 'Watch on Platform' button.</div>
+                           </div>
+                         </div>
+                       </div>
                       <div className="space-y-4">
                          <label className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-devotion-gold ml-2"><FileText className="w-3 h-3"/> Movie Title</label>
                          <input required className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-5 text-white focus:border-devotion-gold outline-none" placeholder="e.g. Shri Krishna" value={movieForm.title} onChange={e => setMovieForm({...movieForm, title: e.target.value})} />
@@ -1848,6 +1866,14 @@ function AdminDashboardContent() {
                            />
                          )}
                        </div>
+                        <div className="md:col-span-2 space-y-4">
+                           <label className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-devotion-gold ml-2">?? Trailer / Teaser URL (Kids Hero Preview)</label>
+                           <div className="flex gap-2">
+                             <input className="flex-1 bg-white/5 border border-devotion-gold/30 rounded-2xl px-6 py-5 text-white focus:border-devotion-gold outline-none" placeholder="YouTube teaser or direct video link" value={videoForm.trailerUrl || ''} onChange={e => setVideoForm({...videoForm, trailerUrl: e.target.value})} />
+                             <label className="cursor-pointer bg-devotion-gold/10 border border-devotion-gold/30 text-devotion-gold px-6 py-5 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-devotion-gold/20 transition-all flex items-center gap-2 flex-shrink-0"><Upload className="w-4 h-4" /> Upload<input type="file" accept="video/*" className="hidden" onChange={e => handleVideoFileChange(e, true)} /></label>
+                           </div>
+                           <p className="text-[10px] text-gray-500 ml-2">Optional: Teaser for upcoming Kids episodes shown in Kids hero section.</p>
+                        </div>
                        <div className="flex items-center gap-4 pt-10">
                           <div className="flex-1 space-y-4">
                              <label className="text-[10px] font-black uppercase tracking-widest text-devotion-gold ml-2">Initial Views (Promotion)</label>
