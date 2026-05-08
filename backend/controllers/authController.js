@@ -85,6 +85,22 @@ exports.registerUser = async (req, res) => {
   } catch (error) { res.status(500).json({ message: error.message }); }
 };
 
+exports.resendRegistrationOtp = async (req, res) => {
+  try {
+    const { email } = req.body;
+    const safeEmail = normalizeEmail(email);
+    const pending = pendingRegistrations.get(safeEmail);
+    if (!pending) return res.status(404).json({ message: 'No registration in progress' });
+
+    const otp = createOtp();
+    pending.otp = otp;
+    pending.expiresAt = getOtpExpiryTime();
+    
+    const delivery = await sendOtpEmail({ email: safeEmail, name: pending.name, otp });
+    res.json({ message: 'OTP resent', previewCode: delivery.previewCode });
+  } catch (error) { res.status(500).json({ message: error.message }); }
+};
+
 exports.verifyRegistrationOtp = async (req, res) => {
   try {
     const { email, otp } = req.body;
@@ -176,6 +192,49 @@ exports.addKarmaPoints = async (req, res) => {
     await user.save();
     res.json({ points: user.benefits.points });
   } catch (error) { res.status(500).json({ message: error.message }); }
+};
+
+exports.updateStreak = async (req, res) => {
+  try {
+    const user = await findPersistentUserById(req.user.id);
+    if (!user) return res.status(404).json({ message: 'User not found' });
+    user.streak = (user.streak || 0) + 1;
+    await user.save();
+    res.json({ streak: user.streak });
+  } catch (error) { res.status(500).json({ message: error.message }); }
+};
+
+exports.requestPasswordResetOtp = async (req, res) => {
+  try {
+    const { email } = req.body;
+    const user = await findPersistentUserByEmail(normalizeEmail(email));
+    if (!user) return res.status(404).json({ message: 'User not found' });
+
+    const otp = createOtp();
+    pendingPasswordResets.set(normalizeEmail(email), { otp, expiresAt: getOtpExpiryTime() });
+    
+    const delivery = await sendOtpEmail({ email: user.email, name: user.name, otp });
+    res.json({ message: 'Reset OTP sent', previewCode: delivery.previewCode });
+  } catch (error) { res.status(500).json({ message: error.message }); }
+};
+
+exports.verifyPasswordResetOtp = async (req, res) => {
+  try {
+    const { email, otp, newPassword } = req.body;
+    const safeEmail = normalizeEmail(email);
+    const pending = pendingPasswordResets.get(safeEmail);
+    if (!pending || pending.otp !== otp || pending.expiresAt < Date.now()) return res.status(400).json({ message: 'Invalid or expired OTP' });
+
+    const user = await findPersistentUserByEmail(safeEmail);
+    user.password = await bcrypt.hash(newPassword, 10);
+    await user.save();
+    pendingPasswordResets.delete(safeEmail);
+    res.json({ message: 'Password reset successful' });
+  } catch (error) { res.status(500).json({ message: error.message }); }
+};
+
+exports.getEmailHealth = async (req, res) => {
+  res.json({ status: 'healthy', provider: process.env.EMAIL_PROVIDER || 'smtp' });
 };
 
 // Admin bootstraps

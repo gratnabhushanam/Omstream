@@ -239,11 +239,64 @@ exports.toggleSaveReel = async (req, res) => {
   }
 };
 
-exports.getSavedReels = async (req, res) => {
-  try {
-    const videos = await Video.find({ savedBy: String(req.params.userId) }).sort({ createdAt: -1 });
     res.json(videos.map(mapVideo));
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
+};
+
+exports.uploadUserReel = async (req, res) => {
+  try {
+    const { title, description } = req.body;
+    if (!req.file) return res.status(400).json({ message: 'Video file required' });
+
+    const videoUrl = `${req.protocol}://${req.get('host')}/uploads/reels/${req.file.filename}`;
+    const reel = await Video.create({
+      title: title || 'My Reel',
+      description: description || '',
+      videoUrl,
+      isUserReel: true,
+      uploadedBy: req.user.id,
+      moderationStatus: 'pending'
+    });
+    res.status(201).json(mapVideo(reel));
+  } catch (error) { res.status(500).json({ message: error.message }); }
+};
+
+exports.shareUserReel = async (req, res) => {
+  try {
+    const reel = await Video.findById(req.params.id);
+    if (!reel) return res.status(404).json({ message: 'Reel not found' });
+    reel.sharesCount = (reel.sharesCount || 0) + 1;
+    await reel.save();
+    res.json({ shares: reel.sharesCount });
+  } catch (error) { res.status(500).json({ message: error.message }); }
+};
+
+exports.deleteUserReelComment = async (req, res) => {
+  try {
+    const reel = await Video.findById(req.params.id);
+    if (!reel) return res.status(404).json({ message: 'Reel not found' });
+    reel.comments = reel.comments.filter(c => String(c._id) !== String(req.params.commentId));
+    reel.commentsCount = reel.comments.length;
+    await reel.save();
+    res.json(mapVideo(reel));
+  } catch (error) { res.status(500).json({ message: error.message }); }
+};
+
+exports.updateMyReel = async (req, res) => {
+  try {
+    const reel = await Video.findOne({ _id: req.params.id, uploadedBy: req.user.id });
+    if (!reel) return res.status(404).json({ message: 'Reel not found' });
+    Object.assign(reel, req.body);
+    await reel.save();
+    res.json(mapVideo(reel));
+  } catch (error) { res.status(500).json({ message: error.message }); }
+};
+
+exports.updateVideo = async (req, res) => {
+  try {
+    const video = await Video.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    res.json(mapVideo(video));
+  } catch (error) { res.status(500).json({ message: error.message }); }
 };
