@@ -107,17 +107,28 @@ export default function Mentor() {
                       🦚
                     </div>
                   )}
-                  <div className={`max-w-[75%] p-5 rounded-3xl ${
+                  <div className={`max-w-[85%] p-6 rounded-3xl ${
                     msg.role === 'user' 
-                      ? 'bg-devotion-darkBlue border border-blue-500/30 text-white rounded-br-sm' 
-                      : 'bg-black/40 border border-cyan-500/20 text-cyan-50 font-serif leading-relaxed text-[15px] rounded-bl-sm shadow-xl'
+                      ? 'bg-devotion-darkBlue border border-blue-500/30 text-white rounded-br-sm shadow-[0_10px_30px_rgba(59,130,246,0.1)]' 
+                      : 'bg-gradient-to-br from-[#0B1F3A] to-[#050B14] border border-cyan-500/40 text-cyan-50 font-serif leading-relaxed text-[15px] sm:text-[17px] rounded-bl-sm shadow-[0_0_50px_rgba(34,211,238,0.15)] relative overflow-hidden'
                   }`}>
+                    {msg.role === 'ai' && (
+                      <div className="absolute inset-0 pointer-events-none opacity-20 bg-[radial-gradient(circle_at_center,rgba(34,211,238,0.2),transparent_70%)] animate-pulse"></div>
+                    )}
                     {/* Render markdown roughly by splitting double asterisks/newlines */}
-                    {msg.content.split('\n').map((line, i) => (
-                      <p key={i} className="mb-2 last:mb-0">
-                        {line.split('**').map((part, j) => j % 2 === 1 ? <strong key={j} className="text-cyan-300">{part}</strong> : part)}
-                      </p>
-                    ))}
+                    <div className="relative z-10">
+                      {msg.content.split('\n').map((line, i) => (
+                        <p key={i} className="mb-3 last:mb-0 leading-relaxed">
+                          {line.split('**').map((part, j) => (
+                            j % 2 === 1 
+                              ? <strong key={j} className="text-cyan-300 font-bold drop-shadow-[0_0_10px_rgba(34,211,238,0.3)]">{part}</strong> 
+                              : part.split('_').map((subPart, k) => (
+                                  k % 2 === 1 ? <em key={k} className="text-devotion-gold italic font-medium">{subPart}</em> : subPart
+                                ))
+                          ))}
+                        </p>
+                      ))}
+                    </div>
                   </div>
                 </div>
               ))}
