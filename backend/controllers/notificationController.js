@@ -14,7 +14,7 @@ exports.getUserNotifications = async (req, res) => {
 exports.markNotificationRead = async (req, res) => {
   try {
     const userId = String(req.user.id);
-    await Notification.updateOne({ _id: req.params.id, userId }, { $set: { isRead: true } });
+    await Notification.updateOne({ _id: req.params.id, userId }, { $set: { isRead: true, read: true } });
     res.json({ success: true });
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -24,7 +24,7 @@ exports.markNotificationRead = async (req, res) => {
 exports.markAllNotificationsRead = async (req, res) => {
   try {
     const userId = String(req.user.id);
-    await Notification.updateMany({ userId, isRead: false }, { $set: { isRead: true } });
+    await Notification.updateMany({ userId, isRead: false }, { $set: { isRead: true, read: true } });
     res.json({ success: true });
   } catch (error) {
     res.status(500).json({ message: error.message });

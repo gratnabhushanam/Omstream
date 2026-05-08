@@ -7,9 +7,7 @@ const sendDailySlokaNotifications = async () => {
   console.log('Running daily sloka notification job...');
   try {
     // Find all users who have notifications enabled
-    const users = await User.findAll({
-      attributes: ['id', 'email', 'settings', 'pushSubscriptions']
-    });
+    const users = await User.find({}, 'email settings pushSubscriptions');
 
     if (!users || users.length === 0) return;
 

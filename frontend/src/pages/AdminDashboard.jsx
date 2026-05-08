@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ErrorBoundary } from '../components/ErrorBoundary';
 import axios from 'axios';
-import { Database, Upload, Users, BookOpen, Video, LogOut, Settings, Film, Plus, X, Check, AlertCircle, Image as ImageIcon, Link as LinkIcon, FileText, Flame, Trash2, Pencil, Menu } from 'lucide-react';
+import { Database, Upload, Users, BookOpen, Video, LogOut, Settings, Film, Plus, X, Check, AlertCircle, Image as ImageIcon, Link as LinkIcon, FileText, Flame, Trash2, Pencil, Menu, Eye } from 'lucide-react';
 import { resumableUpload } from '../utils/resumableUpload';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
@@ -945,7 +945,7 @@ function AdminDashboardContent() {
                             </div>
                           )}
                           <h4 className="text-white font-bold text-lg mb-2">{movie.title}</h4>
-                          <p className="text-xs text-gray-400 mb-3">{movie.releaseYear || 'N/A'} • {(movie.tags || []).join(', ') || 'No tags'}</p>
+                          <p className="text-xs text-gray-400 mb-3">{movie.releaseYear || 'N/A'} • {(movie.tags || []).join(', ') || 'No tags'} • <span className="text-devotion-gold inline-flex items-center gap-1"><Eye className="w-3 h-3" /> {movie.views || 0}</span></p>
                           <p className="text-sm text-gray-300 line-clamp-2 mb-4">{movie.description || 'No description'}</p>
                           <div className="mt-auto flex gap-2">
                             <button
@@ -1180,7 +1180,7 @@ function AdminDashboardContent() {
                             </div>
                           )}
                           <h4 className="text-white font-bold text-lg mb-2">{video.title}</h4>
-                          <p className="text-xs text-gray-400 mb-3">{video.collectionTitle || 'Bhagavad Gita'} • {video.category || 'General'} • {video.isKids ? 'Kids' : 'All Ages'}</p>
+                          <p className="text-xs text-gray-400 mb-3">{video.collectionTitle || 'Bhagavad Gita'} • {video.category || 'General'} • {video.isKids ? 'Kids' : 'All Ages'} • <span className="text-devotion-gold inline-flex items-center gap-1"><Eye className="w-3 h-3" /> {video.views || 0}</span></p>
                           <p className="text-sm text-gray-300 line-clamp-2 mb-4">{video.description || 'No description'}</p>
                           <div className="mt-auto flex gap-2">
                             <button
@@ -1293,7 +1293,7 @@ function AdminDashboardContent() {
                              </div>
                              <div>
                                 <p className="text-[10px] font-black text-devotion-gold uppercase tracking-widest">{reel.uploadedBy?.name || reel.uploaderName || reel.uploader?.name || 'Unknown Seeker'}</p>
-                                <p className="text-[9px] text-gray-500 uppercase">{reel.uploadedBy?.email || reel.uploaderEmail || reel.uploader?.email || 'No email'}</p>
+                                <p className="text-[9px] text-gray-500 uppercase">{reel.uploadedBy?.email || reel.uploaderEmail || reel.uploader?.email || 'No email'} • <span className="text-devotion-gold inline-flex items-center gap-1"><Eye className="w-2 h-2" /> {reel.views || 0}</span></p>
                              </div>
                           </div>
                           <p className="text-sm text-gray-300 line-clamp-2 mb-4">{reel.description || 'No description provided'}</p>

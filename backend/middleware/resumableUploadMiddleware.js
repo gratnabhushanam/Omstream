@@ -39,7 +39,7 @@ function resumableUploadMiddleware(req, res, next) {
   req.pipe(writeStream);
   
   writeStream.on('finish', () => {
-    // If last chunk, assemble file
+    if (chunkIndex === totalChunks - 1) {
       // Assembly using non-blocking async streams
       const assembleChunks = async () => {
         try {
