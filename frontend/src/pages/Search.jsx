@@ -106,8 +106,14 @@ export default function Search() {
                <div className="p-2 bg-white/5 rounded-lg">{icon}</div>
                <div className="flex flex-col">
                   <span className="text-[10px] uppercase font-black tracking-widest text-gray-500">{type}</span>
-                  {type === 'movie' && item.isComingSoon && (
-                    <span className="text-[8px] bg-devotion-gold/10 text-devotion-gold px-2 py-0.5 rounded-full font-black uppercase tracking-tighter border border-devotion-gold/30 mt-1">Coming Soon</span>
+                  {type === 'movie' && (
+                    <div className="flex flex-wrap gap-2 items-center mt-1">
+                      <span className="text-[8px] bg-white/5 text-gray-400 px-2 py-0.5 rounded-full font-black uppercase tracking-tighter border border-white/10">{item.genre || 'Divine'}</span>
+                      {item.duration > 0 && <span className="text-[8px] text-gray-500 font-bold uppercase tracking-widest">{item.duration} min</span>}
+                      {item.isComingSoon && (
+                        <span className="text-[8px] bg-devotion-gold/10 text-devotion-gold px-2 py-0.5 rounded-full font-black uppercase tracking-tighter border border-devotion-gold/30">Coming Soon</span>
+                      )}
+                    </div>
                   )}
                </div>
             </div>
