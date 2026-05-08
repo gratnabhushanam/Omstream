@@ -74,9 +74,23 @@ export default function Satsangs() {
                   <button
                     key={group._id}
                     onClick={() => setActiveGroupId(group._id)}
-                    className={`w-full text-left p-4 rounded-2xl transition-all border ${activeGroupId === group._id ? 'bg-gradient-to-r from-devotion-gold/20 to-devotion-gold/5 border-devotion-gold/50 shadow-lg' : 'bg-white/5 border-transparent hover:bg-white/10'}`}
+                    className={`w-full text-left p-4 rounded-2xl transition-all border preserve-3d ${activeGroupId === group._id ? 'bg-gradient-to-r from-devotion-gold/20 to-devotion-gold/5 border-devotion-gold/50 shadow-lg' : 'bg-white/5 border-transparent hover:bg-white/10'}`}
+                    onMouseMove={(e) => {
+                      const card = e.currentTarget;
+                      const rect = card.getBoundingClientRect();
+                      const x = e.clientX - rect.left;
+                      const y = e.clientY - rect.top;
+                      const centerX = rect.width / 2;
+                      const centerY = rect.height / 2;
+                      const rotateX = ((y - centerY) / centerY) * -5;
+                      const rotateY = ((x - centerX) / centerX) * 5;
+                      card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) translateZ(10px)`;
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.transform = 'perspective(1000px) rotateX(0) rotateY(0) translateZ(0)';
+                    }}
                   >
-                     <h4 className={`font-bold ${activeGroupId === group._id ? 'text-devotion-gold' : 'text-white'}`}>{group.name}</h4>
+                     <h4 className={`font-bold ${activeGroupId === group._id ? 'text-devotion-gold' : 'text-white'}`} style={{ transform: 'translateZ(20px)' }}>{group.name}</h4>
                      <p className="text-[10px] text-gray-500 mt-1 uppercase tracking-wider">{group.category}</p>
                      {(user?.role === 'admin' || (user && group.createdBy && String(user.id || user._id) === String(group.createdBy))) && (
                         <button

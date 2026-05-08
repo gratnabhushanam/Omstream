@@ -270,10 +270,24 @@ function TeaserCard({ video, isFavorite, toggleFavorite, onSelect, index }) {
     <div
       className="relative cursor-pointer group rounded-[3.5rem] overflow-hidden shadow-2xl border border-white/5
                  h-[480px] sm:h-[540px] md:h-[620px]
-                 transition-all duration-500 hover:scale-[1.03] hover:shadow-[0_40px_100px_rgba(0,0,0,0.6)]"
+                 transition-all duration-300 ease-out preserve-3d"
       onClick={() => onSelect(video)}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
+      onMouseMove={(e) => {
+        const card = e.currentTarget;
+        const rect = card.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        const centerX = rect.width / 2;
+        const centerY = rect.height / 2;
+        const rotateX = ((y - centerY) / centerY) * -10;
+        const rotateY = ((x - centerX) / centerX) * 10;
+        card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale3d(1.02, 1.02, 1.02)`;
+      }}
+      onMouseOut={(e) => {
+        e.currentTarget.style.transform = 'perspective(1000px) rotateX(0) rotateY(0) scale3d(1, 1, 1)';
+      }}
     >
       <div className="absolute inset-0 bg-black">
         <img src={thumbUrl} alt={video.title} className={`w-full h-full object-cover opacity-80 transition-transform duration-[2s] ease-out ${isHovered ? 'scale-110' : 'scale-100'}`} />
@@ -297,7 +311,7 @@ function TeaserCard({ video, isFavorite, toggleFavorite, onSelect, index }) {
            <Play className="w-10 h-10 ml-1.5 fill-current" />
         </div>
         
-        <h3 className="text-3xl md:text-5xl font-serif font-black text-white mb-4 leading-none tracking-tighter uppercase drop-shadow-2xl">
+        <h3 className="text-3xl md:text-5xl font-serif font-black text-white mb-4 leading-none tracking-tighter uppercase drop-shadow-2xl" style={{ transform: 'translateZ(50px)' }}>
           {video.title}
         </h3>
         

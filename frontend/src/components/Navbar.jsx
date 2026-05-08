@@ -103,15 +103,15 @@ export default function Navbar() {
             )}
           </div>
 
-          <div className="lg:hidden flex items-center gap-2 sm:gap-3 flex-shrink-0">
+          <div className="lg:hidden flex items-center gap-1.5 sm:gap-3 flex-shrink-0">
             {user && (
-              <button onClick={toggleNotifications} className="relative w-10 h-10 flex items-center justify-center text-devotion-gold bg-devotion-gold/10 rounded-xl border border-devotion-gold/20 active:scale-110 transition-all shadow-[0_0_15px_rgba(255,215,0,0.1)]">
-                <Bell className="w-5 h-5" />
-                {unreadCount > 0 && <span className="absolute top-2 right-2 w-2.5 h-2.5 bg-red-600 rounded-full border-2 border-[#06101E] animate-pulse shadow-[0_0_10px_rgba(220,38,38,0.6)]" />}
+              <button onClick={toggleNotifications} className="relative w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center text-devotion-gold bg-devotion-gold/10 rounded-xl border border-devotion-gold/20 active:scale-110 transition-all shadow-[0_0_15px_rgba(255,215,0,0.1)]">
+                <Bell className="w-4 h-4 sm:w-5 sm:h-5" />
+                {unreadCount > 0 && <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-600 rounded-full border-2 border-[#06101E] animate-pulse shadow-[0_0_10px_rgba(220,38,38,0.6)]" />}
               </button>
             )}
-            <button onClick={() => setIsOpen(!isOpen)} className="w-10 h-10 flex items-center justify-center text-devotion-gold bg-white/5 rounded-xl border border-white/10 active:scale-90 transition-all">
-              {isOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+            <button onClick={() => setIsOpen(!isOpen)} className="w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center text-devotion-gold bg-white/5 rounded-xl border border-white/10 active:scale-90 transition-all">
+              {isOpen ? <X className="w-5 h-5 sm:w-6 sm:h-6" /> : <Menu className="w-5 h-5 sm:w-6 sm:h-6" />}
             </button>
           </div>
         </div>

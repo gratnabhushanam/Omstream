@@ -309,7 +309,23 @@ export default function Sloka() {
             <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-devotion-gold"></div>
           </div>
         ) : sloka && (
-          <div className="bg-glass-gradient backdrop-blur-3xl rounded-[3rem] border border-devotion-gold/30 overflow-hidden shadow-[0_0_100px_rgba(0,0,0,0.4)] transition-all duration-700 hover:border-devotion-gold/60 group">
+          <div 
+            className="bg-glass-gradient backdrop-blur-3xl rounded-[3rem] border border-devotion-gold/30 overflow-hidden shadow-[0_0_100px_rgba(0,0,0,0.4)] transition-all duration-300 ease-out preserve-3d"
+            onMouseMove={(e) => {
+              const card = e.currentTarget;
+              const rect = card.getBoundingClientRect();
+              const x = e.clientX - rect.left;
+              const y = e.clientY - rect.top;
+              const centerX = rect.width / 2;
+              const centerY = rect.height / 2;
+              const rotateX = ((y - centerY) / centerY) * -5;
+              const rotateY = ((x - centerX) / centerX) * 5;
+              card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = 'perspective(1000px) rotateX(0) rotateY(0)';
+            }}
+          >
             
             <div className="flex justify-between items-center bg-devotion-darkBlue/40 px-10 py-6 border-b border-devotion-gold/20">
               <span className="text-devotion-gold font-black tracking-[0.2em] text-xs uppercase">
@@ -344,7 +360,7 @@ export default function Sloka() {
               </div>
 
               <div className="mb-12 relative z-10">
-                <p className="text-3xl md:text-5xl text-white font-serif leading-[1.6] whitespace-pre-line drop-shadow-2xl">
+                <p className="text-3xl md:text-5xl text-white font-serif leading-[1.6] whitespace-pre-line drop-shadow-2xl" style={{ transform: 'translateZ(60px)' }}>
                   {sloka.sanskrit}
                 </p>
               </div>

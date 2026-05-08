@@ -253,9 +253,23 @@ function MovieCard({ video, onSelect, index }) {
     <div
       className="relative cursor-pointer group rounded-[2.5rem] overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.5)] border border-white/5
                  h-[420px] sm:h-[480px] md:h-[560px]
-                 transition-all duration-500 hover:scale-[1.03] hover:shadow-[0_30px_80px_rgba(0,0,0,0.8)]"
+                 transition-all duration-300 ease-out preserve-3d"
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
+      onMouseMove={(e) => {
+        const card = e.currentTarget;
+        const rect = card.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        const centerX = rect.width / 2;
+        const centerY = rect.height / 2;
+        const rotateX = ((y - centerY) / centerY) * -10;
+        const rotateY = ((x - centerX) / centerX) * 10;
+        card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale3d(1.02, 1.02, 1.02)`;
+      }}
+      onMouseOut={(e) => {
+        e.currentTarget.style.transform = 'perspective(1000px) rotateX(0) rotateY(0) scale3d(1, 1, 1)';
+      }}
       onClick={() => onSelect(video)}
     >
       {/* Thumbnail */}
@@ -291,7 +305,7 @@ function MovieCard({ video, onSelect, index }) {
         <div className={`w-14 h-14 bg-white/10 backdrop-blur-2xl rounded-2xl flex items-center justify-center border border-white/20 mb-6 transition-all duration-500 ${isHovered ? 'bg-devotion-gold text-black border-devotion-gold scale-110 rotate-[10deg] shadow-[0_0_40px_rgba(255,215,0,0.4)]' : 'text-devotion-gold'}`}>
           <Play className="w-6 h-6 ml-1 fill-current" />
         </div>
-        <h3 className="text-3xl md:text-4xl font-serif font-black text-white mb-2 leading-[0.9] drop-shadow-2xl tracking-tighter uppercase transition-transform group-hover:-translate-y-2">
+        <h3 className="text-3xl md:text-4xl font-serif font-black text-white mb-2 leading-[0.9] drop-shadow-2xl tracking-tighter uppercase transition-transform group-hover:-translate-y-2" style={{ transform: 'translateZ(50px)' }}>
           {video.title}
         </h3>
         <p className="text-gray-400 text-sm mb-6 line-clamp-2 opacity-0 group-hover:opacity-100 transition-all duration-500 translate-y-4 group-hover:translate-y-0 italic font-serif">

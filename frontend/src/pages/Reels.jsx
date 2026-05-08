@@ -256,7 +256,21 @@ export default function Reels() {
                 <div 
                   key={reel._id || reel.id} 
                   onClick={() => { setViewMode('scroll'); setTimeout(() => scrollToReel(index), 100); }}
-                  className="aspect-[9/16] relative rounded-2xl overflow-hidden border border-white/10 cursor-pointer group hover:scale-105 transition-all duration-300 shadow-2xl"
+                  className="aspect-[9/16] relative rounded-2xl overflow-hidden border border-white/10 cursor-pointer group transition-all duration-300 shadow-2xl preserve-3d"
+                  onMouseMove={(e) => {
+                    const card = e.currentTarget;
+                    const rect = card.getBoundingClientRect();
+                    const x = e.clientX - rect.left;
+                    const y = e.clientY - rect.top;
+                    const centerX = rect.width / 2;
+                    const centerY = rect.height / 2;
+                    const rotateX = ((y - centerY) / centerY) * -10;
+                    const rotateY = ((x - centerX) / centerX) * 10;
+                    card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale3d(1.05, 1.05, 1.05)`;
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.transform = 'perspective(1000px) rotateX(0) rotateY(0) scale3d(1, 1, 1)';
+                  }}
                 >
                   <img src={reel.thumbnail || '/krishna-line-art.svg'} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" alt="" />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-60 group-hover:opacity-100 transition-opacity" />

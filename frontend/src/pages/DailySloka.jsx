@@ -122,14 +122,30 @@ export default function DailySloka() {
         </div>
 
         {/* Main Sloka Card */}
-        <div className="bg-glass-gradient backdrop-blur-3xl rounded-[2rem] sm:rounded-[3rem] p-6 sm:p-10 md:p-16 tv:p-20 border border-devotion-gold/30 shadow-[0_0_100px_rgba(0,0,0,0.4)] mb-12 animate-fade-in-up relative overflow-hidden group">
+        <div 
+          className="bg-glass-gradient backdrop-blur-3xl rounded-[2rem] sm:rounded-[3rem] p-6 sm:p-10 md:p-16 tv:p-20 border border-devotion-gold/30 shadow-[0_0_100px_rgba(0,0,0,0.4)] mb-12 animate-fade-in-up relative overflow-hidden group transition-all duration-300 ease-out preserve-3d"
+          onMouseMove={(e) => {
+            const card = e.currentTarget;
+            const rect = card.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            const centerX = rect.width / 2;
+            const centerY = rect.height / 2;
+            const rotateX = ((y - centerY) / centerY) * -5;
+            const rotateY = ((x - centerX) / centerX) * 5;
+            card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.transform = 'perspective(1000px) rotateX(0) rotateY(0)';
+          }}
+        >
           <div className="absolute top-0 right-0 opacity-5 text-[15rem] -rotate-12 translate-x-20 translate-y-20 select-none pointer-events-none">🕉️</div>
 
           <div className="relative z-10">
             {/* Sanskrit */}
-            <div className="mb-10 text-center">
+        <div className="mb-10 text-center">
               <p className="text-[10px] font-black uppercase tracking-[0.4em] text-devotion-gold mb-4">Sacred Verse</p>
-              <p className="text-3xl md:text-5xl font-serif text-white leading-relaxed italic mb-6 drop-shadow-lg">
+              <p className="text-3xl md:text-5xl font-serif text-white leading-relaxed italic mb-6 drop-shadow-lg" style={{ transform: 'translateZ(60px)' }}>
                 {(dailySloka.sanskrit || '').split('\n').map((line, i) => (
                   <span key={i} className="block mb-2">
                     {line}
@@ -137,7 +153,7 @@ export default function DailySloka() {
                 ))}
               </p>
               <div className="h-px bg-gradient-to-r from-transparent via-devotion-gold/40 to-transparent mb-8"></div>
-              <p className="text-sm md:text-base text-gray-400">
+              <p className="text-sm md:text-base text-gray-400" style={{ transform: 'translateZ(30px)' }}>
                 {dailySloka.chapter && dailySloka.verse && `Chapter ${dailySloka.chapter}, Verse ${dailySloka.verse}`}
               </p>
             </div>
