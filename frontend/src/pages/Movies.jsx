@@ -78,7 +78,7 @@ export default function Movies() {
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-devotion-gold/30 bg-devotion-gold/5 backdrop-blur-xl mb-6 text-devotion-gold text-[9px] font-black tracking-[0.4em] uppercase">
             <Sparkles className="w-3.5 h-3.5 animate-pulse" /> Divine Cinema
           </div>
-          <h1 className="text-6xl md:text-9xl font-serif font-black text-white mb-4 tracking-tighter uppercase leading-none drop-shadow-2xl">
+          <h1 className="text-6xl md:text-9xl tv:text-[10rem] font-serif font-black text-white mb-4 tracking-tighter uppercase leading-none drop-shadow-2xl">
             Pure <span className="text-devotion-gold italic font-light tracking-normal opacity-90">Wisdom</span>
           </h1>
           <p className="text-lg md:text-2xl text-gray-400 font-serif italic max-w-2xl mx-auto leading-relaxed opacity-60">"Stories of valor, devotion, and the eternal spirit."</p>
@@ -141,8 +141,8 @@ function MovieModal({ movie, onClose }) {
          <div className="pointer-events-auto">
             <span className="text-devotion-gold text-[10px] font-black uppercase tracking-[0.3em] bg-devotion-gold/10 px-3 py-1 rounded-full border border-devotion-gold/20">Now Playing</span>
          </div>
-         <button onClick={onClose} className="pointer-events-auto bg-black/60 backdrop-blur-md text-white w-11 h-11 rounded-2xl flex items-center justify-center border border-white/10 hover:bg-red-500/40 transition-all active:scale-90 shadow-2xl">
-            <X className="w-6 h-6" />
+         <button onClick={onClose} className="tv-focusable pointer-events-auto bg-black/60 backdrop-blur-md text-white w-11 h-11 tv:w-16 tv:h-16 rounded-2xl flex items-center justify-center border border-white/10 hover:bg-red-500/40 transition-all active:scale-90 shadow-2xl">
+            <X className="w-6 h-6 tv:w-8 tv:h-8" />
          </button>
       </div>
 
@@ -160,8 +160,8 @@ function MovieModal({ movie, onClose }) {
             playLimitSeconds={120}
           />
         </div>
-        <button onClick={handleFullscreen} className="absolute bottom-6 right-6 bg-devotion-gold/20 backdrop-blur-md text-devotion-gold p-3 rounded-2xl border border-devotion-gold/40 hover:bg-devotion-gold hover:text-black transition-all z-20 active:scale-95 shadow-2xl">
-          <Maximize className="w-5 h-5" />
+        <button onClick={handleFullscreen} className="tv-focusable absolute bottom-6 right-6 tv:bottom-10 tv:right-10 bg-devotion-gold/20 backdrop-blur-md text-devotion-gold p-3 tv:p-5 rounded-2xl border border-devotion-gold/40 hover:bg-devotion-gold hover:text-black transition-all z-20 active:scale-95 shadow-2xl">
+          <Maximize className="w-5 h-5 tv:w-8 tv:h-8" />
         </button>
       </div>
 
@@ -178,7 +178,7 @@ function MovieModal({ movie, onClose }) {
               <span className="bg-devotion-gold text-[#06101E] px-4 py-1 rounded-xl font-black text-[10px] tracking-widest uppercase shadow-[0_10px_25px_rgba(255,215,0,0.3)]">PREMIUM VIEW</span>
               <span className="text-white/40 text-[10px] tracking-[0.4em] uppercase font-black">{movie.releaseYear || 'ORIGINAL'}</span>
             </div>
-            <h2 className="text-5xl md:text-8xl font-black text-white tracking-tighter uppercase font-serif drop-shadow-2xl mb-8 leading-[0.9]">
+            <h2 className="text-5xl md:text-8xl tv:text-[8rem] font-black text-white tracking-tighter uppercase font-serif drop-shadow-2xl mb-8 leading-[0.9]">
               {movie.title}
             </h2>
             <div className="max-w-2xl border-l-4 border-devotion-gold/40 pl-8">
@@ -201,10 +201,10 @@ function MovieModal({ movie, onClose }) {
             <div className="space-y-8">
                <div className="bg-gradient-to-br from-devotion-gold/10 to-transparent border border-devotion-gold/20 rounded-[3rem] p-10 space-y-8 shadow-2xl">
                   <div className="flex flex-col gap-4">
-                    <button onClick={handleFullscreen} className="w-full bg-devotion-gold text-[#06101E] px-8 py-6 rounded-2xl font-black tracking-[0.2em] transition-all text-xs uppercase flex items-center justify-center gap-4 shadow-[0_20px_45px_rgba(255,215,0,0.3)] hover:scale-[1.02] active:scale-95">
+                    <button onClick={handleFullscreen} className="tv-focusable w-full bg-devotion-gold text-[#06101E] px-8 py-6 tv:py-8 rounded-2xl font-black tracking-[0.2em] transition-all text-xs tv:text-base uppercase flex items-center justify-center gap-4 shadow-[0_20px_45px_rgba(255,215,0,0.3)] hover:scale-[1.02] active:scale-95">
                       <Maximize className="w-6 h-6" /> FULL CINEMA MODE
                     </button>
-                    <button onClick={onClose} className="w-full bg-white/5 hover:bg-white/10 text-white border border-white/10 px-8 py-6 rounded-2xl font-black tracking-[0.2em] transition-all text-xs uppercase active:scale-95">
+                    <button onClick={onClose} className="tv-focusable w-full bg-white/5 hover:bg-white/10 text-white border border-white/10 px-8 py-6 tv:py-8 rounded-2xl font-black tracking-[0.2em] transition-all text-xs tv:text-base uppercase active:scale-95">
                       BACK TO LIBRARY
                     </button>
                   </div>
@@ -251,9 +251,10 @@ function MovieCard({ video, onSelect, index }) {
 
   return (
     <div
+      tabIndex={0}
       className="relative cursor-pointer group rounded-[2.5rem] overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.5)] border border-white/5
-                 h-[420px] sm:h-[480px] md:h-[560px]
-                 transition-all duration-300 ease-out preserve-3d"
+                 h-[420px] sm:h-[480px] md:h-[560px] tv:h-[700px]
+                 transition-all duration-300 ease-out preserve-3d tv-focusable focus:outline-none focus:ring-4 focus:ring-devotion-gold"
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
       onMouseMove={(e) => {
