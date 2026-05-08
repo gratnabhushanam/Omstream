@@ -273,67 +273,102 @@ function RowMovieCard({ video, onSelect }) {
 function MovieModal({ movie, onClose }) {
   const videoRef = useRef(null);
 
-  const handleFullscreen = () => {
-    const el = videoRef.current?.querySelector('video') || videoRef.current;
-    if (!el) return;
-    try {
-      if (el.requestFullscreen) el.requestFullscreen();
-      else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen();
-      else if (el.webkitEnterFullscreen) el.webkitEnterFullscreen();
-      if (screen.orientation?.lock) screen.orientation.lock('landscape').catch(() => {});
-    } catch {}
-  };
-
   return (
-    <div className="fixed inset-0 z-[100] bg-[#050B14]/95 backdrop-blur-3xl flex flex-col overflow-y-auto pl-safe pr-safe animate-in fade-in zoom-in duration-300">
-      <div className="sticky top-0 w-full z-[120] flex items-center justify-end px-6 py-4 pointer-events-none">
-         <button onClick={onClose} className="tv-focusable pointer-events-auto bg-black/80 text-white w-12 h-12 tv:w-16 tv:h-16 rounded-full flex items-center justify-center border border-white/20 hover:bg-white/20 transition-all active:scale-90 shadow-2xl">
-            <X className="w-6 h-6 tv:w-8 tv:h-8" />
+    <div className="fixed inset-0 z-[100] bg-[#02060B] flex flex-col overflow-y-auto pl-safe pr-safe no-scrollbar animate-in fade-in zoom-in duration-300">
+      {/* Top Header Controls */}
+      <div className="absolute top-0 w-full z-[130] flex items-center justify-between px-6 py-6 pointer-events-none">
+         <div className="pointer-events-auto">
+            <span className="bg-devotion-gold text-devotion-darkBlue px-5 py-2 rounded-2xl font-black text-[10px] tracking-widest uppercase shadow-2xl border border-white/20">Divine Cinema</span>
+         </div>
+         <button onClick={onClose} className="tv-focusable pointer-events-auto bg-black/40 backdrop-blur-xl text-white w-14 h-14 tv:w-20 tv:h-20 rounded-[2rem] flex items-center justify-center border border-white/20 hover:bg-red-500/40 transition-all active:scale-90 shadow-2xl">
+            <X className="w-7 h-7 tv:w-10 tv:h-10" />
          </button>
       </div>
 
-      <div ref={videoRef} className="relative w-full bg-black flex-shrink-0 z-10 shadow-2xl mx-auto max-w-7xl md:rounded-3xl overflow-hidden mt-0 md:-mt-16">
-        <div className="w-full aspect-video relative">
+      {/* Video Player Section */}
+      <div ref={videoRef} className="relative w-full bg-black flex-shrink-0 z-10 shadow-[0_20px_100px_rgba(0,0,0,1)]">
+        <div className="w-full aspect-video">
           <MediaPlayerHLS
             url={movie.videoUrl || movie.youtubeUrl || movie.url}
             hlsUrl={movie.hlsUrl}
             title={movie.title}
-            className="w-full h-full object-contain"
-            youtubeParams="autoplay=1&rel=0&modestbranding=1"
-            autoPlay
-            controls
+            className="w-full h-full"
+            autoPlay={true}
+            controls={true}
             playLimitSeconds={120}
           />
         </div>
+        <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-transparent to-transparent pointer-events-none z-0" />
       </div>
 
-      <div className="w-full max-w-7xl mx-auto px-6 py-12 relative z-20 space-y-6">
-         <div className="flex flex-col md:flex-row md:items-start justify-between gap-8">
-            <div className="flex-1 space-y-4">
-              <div className="flex items-center gap-3 text-sm md:text-base font-bold">
-                 <span className="text-green-500">98% Match</span>
-                 <span className="text-gray-400">{movie.releaseYear || new Date().getFullYear()}</span>
-                 <span className="bg-white/10 px-2 py-0.5 rounded text-gray-300 border border-white/20 text-xs">HD</span>
-              </div>
-              <h2 className="text-4xl md:text-6xl font-black text-white">{movie.title}</h2>
-              <p className="text-gray-300 text-lg leading-relaxed max-w-3xl">
-                {movie.desc || movie.description || 'A journey through divine narratives and spiritual wisdom.'}
-              </p>
+      {/* Detailed Info Section (Spiritual Aesthetic) */}
+      <div className="w-full min-h-screen bg-[#FFFDF5] px-6 py-12 md:p-24 relative overflow-hidden text-devotion-darkBlue">
+        <div className="absolute inset-0 z-0 opacity-[0.05] pointer-events-none bg-[url('/scene-krishna.svg')] bg-repeat bg-[length:400px_400px]" />
+        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-devotion-gold/10 rounded-full blur-[120px] -mr-40 -mt-40" />
+        
+        <div className="max-w-5xl mx-auto relative z-10 space-y-16">
+          <div className="border-b-2 border-devotion-gold/10 pb-12">
+            <div className="flex flex-wrap items-center gap-4 mb-8">
+               <span className="text-green-600 font-black text-sm uppercase tracking-widest">98% Match</span>
+               <span className="text-gray-500 font-bold">{movie.releaseYear || '2025'}</span>
+               <span className="bg-devotion-gold/10 px-3 py-1 rounded-lg text-devotion-gold font-black text-xs border border-devotion-gold/20">ULTRA HD</span>
             </div>
             
-            <div className="w-full md:w-1/3 space-y-4 text-sm text-gray-400">
-               <p><span className="text-gray-500">Cast:</span> Divine Ensembles, Sages</p>
-               <p><span className="text-gray-500">Genres:</span> {movie.tags?.join(', ') || movie.genre || 'Spiritual, Epic'}</p>
-               <p><span className="text-gray-500">This movie is:</span> Inspiring, Devotional</p>
-               
-               {movie.ownerHistory && (
-                 <div className="mt-8 border-t border-white/10 pt-6">
-                    <h3 className="text-white font-bold mb-2">Divine History</h3>
-                    <p className="italic">{movie.ownerHistory}</p>
-                 </div>
-               )}
-            </div>
-         </div>
+            <h2 className="text-5xl md:text-8xl tv:text-[8rem] font-serif font-black text-[#5C2B11] mb-8 drop-shadow-sm tracking-tight leading-[0.9] uppercase">
+              {movie.title}
+            </h2>
+            
+            <p className="text-[#6D4224] text-2xl md:text-3xl font-serif italic leading-relaxed opacity-90 border-l-8 border-devotion-gold pl-8">
+              {movie.desc || movie.description || 'A journey through divine narratives and spiritual wisdom.'}
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-12 pt-8">
+             <div className="lg:col-span-2 space-y-12">
+                {/* Spiritual Insights / Moral */}
+                <div className="bg-white rounded-[3.5rem] p-12 shadow-[0_30px_70px_rgba(0,0,0,0.08)] border-2 border-devotion-gold/5">
+                   <div className="flex items-center gap-5 mb-8">
+                      <div className="w-14 h-14 bg-devotion-gold/10 rounded-3xl flex items-center justify-center">
+                         <Sparkles className="w-8 h-8 text-devotion-gold" />
+                      </div>
+                      <span className="text-[11px] font-black text-[#8B4513] uppercase tracking-[0.4em]">Spiritual Insight</span>
+                   </div>
+                   <p className="text-3xl md:text-4xl font-serif font-black italic text-[#5C2B11] leading-tight">
+                      {movie.ownerHistory || "This sacred narrative reveals the eternal connection between the soul and the divine."}
+                   </p>
+                </div>
+
+                {/* Cast & Credits */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
+                   <div className="space-y-2">
+                      <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Directed By</p>
+                      <p className="text-xl font-bold text-[#5C2B11]">Divine Visionaries</p>
+                   </div>
+                   <div className="space-y-2">
+                      <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Featured Genre</p>
+                      <p className="text-xl font-bold text-[#5C2B11]">{movie.tags?.join(', ') || movie.genre || 'Spiritual, Epic'}</p>
+                   </div>
+                </div>
+             </div>
+
+             <div className="space-y-8">
+                {/* Watch Next Card */}
+                <div className="bg-gradient-to-br from-devotion-gold to-[#FFB800] rounded-[3rem] p-8 text-devotion-darkBlue shadow-2xl">
+                   <h4 className="text-xl font-black uppercase tracking-widest mb-4">Divine Bounty</h4>
+                   <p className="text-sm font-serif italic mb-8 opacity-80">Share the wisdom and earn spiritual points for every chapter watched.</p>
+                   <button className="w-full py-4 bg-devotion-darkBlue text-white rounded-2xl font-black uppercase tracking-widest text-[10px] hover:scale-105 transition-all">
+                      Share Wisdom
+                   </button>
+                </div>
+
+                <div className="p-8 border-2 border-dashed border-devotion-gold/20 rounded-[3rem]">
+                   <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-4">Content Rating</p>
+                   <p className="text-lg font-bold text-[#5C2B11]">U - Universal Wisdom</p>
+                   <p className="text-xs text-gray-500 mt-2">Suitable for all seeking souls.</p>
+                </div>
+             </div>
+          </div>
+        </div>
       </div>
     </div>
   );
