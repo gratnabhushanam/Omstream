@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useLocation } from 'react-router-dom';
-import MediaPlayer from '../components/MediaPlayer';
+import MediaPlayerHLS from '../components/MediaPlayerHLS';
 import VideoCard from '../components/VideoCard';
 
 export default function Videos() {
@@ -121,8 +121,9 @@ export default function Videos() {
 
             <div className="space-y-5">
               <div className="overflow-hidden rounded-2xl border border-white/10 bg-black">
-                <MediaPlayer
+                <MediaPlayerHLS
                   url={activeVideo.videoUrl || activeVideo.url}
+                  hlsUrl={activeVideo.hlsUrl}
                   title={activeVideo.title}
                   className="w-full aspect-video"
                   youtubeParams="autoplay=1&rel=0&modestbranding=1"

@@ -11,7 +11,8 @@ const MovieSchema = new mongoose.Schema({
   releaseDate: { type: Date },
   isPremium: { type: Boolean, default: false },
   trailerUrl: { type: String },
-  hlsUrl: { type: String }
+  hlsUrl: { type: String },
+  views: { type: Number, default: 0 }
 }, {
   timestamps: true,
   strict: false

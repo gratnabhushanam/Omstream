@@ -28,7 +28,7 @@ function AdminDashboardContent() {
   const [quickFillStoryId, setQuickFillStoryId] = useState(null);
   const [moderationNotes, setModerationNotes] = useState({});
   const [message, setMessage] = useState({ type: '', text: '' });
-  const [movieForm, setMovieForm] = useState({ title: '', description: '', videoUrl: '', thumbnail: '', releaseYear: 2025, ownerHistory: '', tags: '' });
+  const [movieForm, setMovieForm] = useState({ title: '', description: '', videoUrl: '', thumbnail: '', releaseYear: 2025, ownerHistory: '', tags: '', views: 0 });
   const [storyForm, setStoryForm] = useState({
     title: '',
     titleTelugu: '',
@@ -48,7 +48,7 @@ function AdminDashboardContent() {
     thumbnail: '',
     tags: '',
   });
-  const [videoForm, setVideoForm] = useState({ title: '', description: '', videoUrl: '', category: 'reels', collectionTitle: 'Bhagavad Gita', isKids: false, tags: '', quizSetId: '' });
+  const [videoForm, setVideoForm] = useState({ title: '', description: '', videoUrl: '', category: 'reels', collectionTitle: 'Bhagavad Gita', isKids: false, tags: '', quizSetId: '', views: 0 });
   // Quiz builder state for video upload
   const [videoQuizList, setVideoQuizList] = useState([]);
   const [videoQuizDraft, setVideoQuizDraft] = useState({
@@ -457,7 +457,7 @@ function AdminDashboardContent() {
   };
 
   const resetForms = () => {
-    setMovieForm({ title: '', description: '', videoUrl: '', thumbnail: '', releaseYear: 2025, ownerHistory: '', tags: '' });
+    setMovieForm({ title: '', description: '', videoUrl: '', thumbnail: '', releaseYear: 2025, ownerHistory: '', tags: '', views: 0 });
     setStoryForm({
       title: '',
       titleTelugu: '',
@@ -477,7 +477,7 @@ function AdminDashboardContent() {
       thumbnail: '',
       tags: '',
     });
-    setVideoForm({ title: '', description: '', videoUrl: '', category: 'reels', collectionTitle: 'Bhagavad Gita', isKids: false, tags: '', quizSetId: '' });
+    setVideoForm({ title: '', description: '', videoUrl: '', category: 'reels', collectionTitle: 'Bhagavad Gita', isKids: false, tags: '', quizSetId: '', views: 0 });
     setQuizSetForm({ title: '', description: '', category: 'General', difficulty: 'medium', timeLimit: 0, thumbnail: '', tags: '', isPublished: false, questions: [] });
     setEditingQuizSetId(null);
     setQuizForm({
@@ -536,6 +536,7 @@ function AdminDashboardContent() {
       releaseYear: movie.releaseYear || 2025,
       ownerHistory: movie.ownerHistory || '',
       tags: Array.isArray(movie.tags) ? movie.tags.join(', ') : (movie.tags || ''),
+      views: movie.views || 0,
     });
     setShowAddModal(true);
   };
@@ -554,6 +555,7 @@ function AdminDashboardContent() {
       collectionTitle: video.collectionTitle || 'Bhagavad Gita',
       isKids: video.isKids || false,
       tags: Array.isArray(video.tags) ? video.tags.join(', ') : (video.tags || ''),
+      views: video.views || 0,
     });
     setShowAddModal(true);
   };
@@ -1518,6 +1520,10 @@ function AdminDashboardContent() {
                          <label className="text-[10px] font-black uppercase tracking-widest text-devotion-gold ml-2">Release Year</label>
                          <input type="number" className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-5 text-white focus:border-devotion-gold outline-none" value={movieForm.releaseYear} onChange={e => setMovieForm({...movieForm, releaseYear: e.target.value})} />
                       </div>
+                      <div className="space-y-4">
+                         <label className="text-[10px] font-black uppercase tracking-widest text-devotion-gold ml-2">Initial Views (Promotion)</label>
+                         <input type="number" className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-5 text-white focus:border-devotion-gold outline-none" placeholder="e.g. 5000" value={movieForm.views} onChange={e => setMovieForm({...movieForm, views: parseInt(e.target.value) || 0})} />
+                      </div>
                       <div className="md:col-span-2 space-y-4">
                          <label className="text-[10px] font-black uppercase tracking-widest text-devotion-gold ml-2">Owner's Selection Insight</label>
                          <textarea rows="3" className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-5 text-white focus:border-devotion-gold outline-none" placeholder="Why this movie?" value={movieForm.ownerHistory} onChange={e => setMovieForm({...movieForm, ownerHistory: e.target.value})} />
@@ -1782,10 +1788,16 @@ function AdminDashboardContent() {
                            />
                          )}
                        </div>
-                      <div className="flex items-center gap-4 pt-10">
-                         <input type="checkbox" className="w-6 h-6 rounded bg-white/5 border-white/10 text-devotion-gold" checked={videoForm.isKids} onChange={e => setVideoForm({...videoForm, isKids: e.target.checked})} />
-                         <label className="text-[10px] font-black uppercase tracking-widest text-devotion-gold">Show in Kids Mode?</label>
-                      </div>
+                       <div className="flex items-center gap-4 pt-10">
+                          <div className="flex-1 space-y-4">
+                             <label className="text-[10px] font-black uppercase tracking-widest text-devotion-gold ml-2">Initial Views (Promotion)</label>
+                             <input type="number" className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-5 text-white focus:border-devotion-gold outline-none" placeholder="e.g. 5000" value={videoForm.views} onChange={e => setVideoForm({...videoForm, views: parseInt(e.target.value) || 0})} />
+                          </div>
+                          <div className="flex items-center gap-4">
+                             <input type="checkbox" className="w-6 h-6 rounded bg-white/5 border-white/10 text-devotion-gold" checked={videoForm.isKids} onChange={e => setVideoForm({...videoForm, isKids: e.target.checked})} />
+                             <label className="text-[10px] font-black uppercase tracking-widest text-devotion-gold">Show in Kids Mode?</label>
+                          </div>
+                       </div>
                     </div>
                    {/* Embedded Quiz Linker for Video */}
                    <div className="mt-10 bg-[#0B1F3A] rounded-2xl p-6 border border-devotion-gold/30">

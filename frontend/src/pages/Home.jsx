@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Play, Flame, Trophy, Award, ArrowRight, Book, Sparkles, Heart, Star, Film, BrainCircuit } from 'lucide-react';
+import HomeHeroVideo from '../components/HomeHeroVideo';
 
 function HomeCard({ to, badge, icon: Icon, title, description, content, isKids }) {
   const [isHovered, setIsHovered] = useState(false);
@@ -76,6 +77,10 @@ export default function Home() {
   return (
     <div className="min-h-screen text-white relative overflow-hidden bg-[#06101E]">
       {/* Background radial */}
+      {/* Cinematic Hero Video Background */}
+      <HomeHeroVideo />
+
+      {/* Background radial fallback */}
       <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(circle_at_top,rgba(230,195,138,0.12),transparent_34%)]"></div>
 
       {/* Hero */}

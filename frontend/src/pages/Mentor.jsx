@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Target, AlertTriangle, MessageSquarePlus, Wind, Zap, PlayCircle, BookOpen, X, Bookmark, Volume2, Pause, ChevronRight, FileText, Film } from 'lucide-react';
-import MediaPlayer from '../components/MediaPlayer';
+import MediaPlayerHLS from '../components/MediaPlayerHLS';
 import { useMentor } from '../hooks/useMentor';
 
 export default function Mentor() {
@@ -339,8 +339,9 @@ export default function Mentor() {
                   >
                     <X className="w-6 h-6" />
                   </button>
-                  <MediaPlayer
+                  <MediaPlayerHLS
                     url={solution.recommendedVideo.videoUrl || solution.recommendedVideo.youtubeUrl || solution.recommendedVideo.url}
+                    hlsUrl={solution.recommendedVideo.hlsUrl}
                     title={solution.recommendedVideo.title}
                     className="w-full h-full object-cover bg-black"
                     youtubeParams="autoplay=1&rel=0&modestbranding=1"

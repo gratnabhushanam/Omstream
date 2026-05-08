@@ -3,8 +3,8 @@ import { Link, useLocation } from 'react-router-dom';
 import { BookOpen, Book, Menu, X, BrainCircuit, User, Star, Zap, Heart, Search, Film, Shield, Users, Bell, Download, CheckCheck, Info, Megaphone, Gift, Sparkles, ChevronRight } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useInstallPrompt } from '../hooks/useInstallPrompt';
-import { useNotifications } from '../hooks/useNotifications';
 import { DesktopNotificationPanel, MobileNotificationSheet } from './Notifications';
+import { useNotifications } from '../context/NotificationContext';
 
 
 export default function Navbar() {

@@ -54,7 +54,7 @@ exports.getReels = async (req, res) => {
       isUserReel: { $ne: true },
       category: 'reels',
       moderationStatus: 'approved',
-    }).sort({ createdAt: -1 });
+    }).sort({ views: -1, createdAt: -1 });
     res.json(reels.map(mapVideo));
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -78,7 +78,7 @@ exports.getVideos = async (req, res) => {
     const videos = await Video.find({
       isUserReel: { $ne: true },
       moderationStatus: 'approved',
-    }).sort({ createdAt: -1 });
+    }).sort({ views: -1, createdAt: -1 });
     res.json(videos.map(mapVideo));
   } catch (error) {
     res.status(500).json({ message: error.message });

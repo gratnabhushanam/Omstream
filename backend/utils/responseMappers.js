@@ -15,11 +15,17 @@ const mapMovie = (movie) => {
   const plain = withMongoStyleId(movie);
   if (!plain) return plain;
 
+  const fixUrl = (url) => {
+    if (!url) return url;
+    return url.replace(/http:\/\/localhost:8888/g, 'https://gitawisdom.onrender.com');
+  };
+
   return {
     ...plain,
-    videoUrl: plain.videoUrl || plain.youtubeUrl,
-    youtubeUrl: plain.youtubeUrl || plain.videoUrl,
-    url: plain.videoUrl || plain.youtubeUrl,
+    videoUrl: fixUrl(plain.videoUrl || plain.youtubeUrl),
+    youtubeUrl: fixUrl(plain.youtubeUrl || plain.videoUrl),
+    url: fixUrl(plain.videoUrl || plain.youtubeUrl),
+    hlsUrl: fixUrl(plain.hlsUrl),
   };
 };
 

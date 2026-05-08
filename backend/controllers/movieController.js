@@ -4,7 +4,7 @@ const { mapMovie } = require('../utils/responseMappers');
 
 exports.getMovies = async (req, res) => {
   try {
-    const movies = await Movie.find({}).sort({ releaseYear: -1, createdAt: -1 });
+    const movies = await Movie.find({}).sort({ views: -1, releaseYear: -1, createdAt: -1 });
     return res.json(movies.map(mapMovie));
   } catch (error) {
     res.status(500).json({ message: error.message });

@@ -11,6 +11,9 @@ import OtaSyncService from './services/OtaSyncService';
 import { useRegisterSW } from 'virtual:pwa-register/react';
 import './styles/app-shell.css';
 import LayoutWrapper from './components/LayoutWrapper';
+import { NotificationProvider } from './context/NotificationContext';
+import ImmersiveNotification from './components/ImmersiveNotification';
+import { useNotifications } from './context/NotificationContext';
 
 const Home = lazy(() => import('./pages/Home'));
 const Stories = lazy(() => import('./pages/Stories'));
@@ -41,6 +44,7 @@ const NotFound = lazy(() => import('./pages/NotFound'));
 function AppShell() {
   const location = useLocation();
   const { user, loading: authLoading } = useAuth();
+  const { immersiveNotification, setImmersiveNotification } = useNotifications();
   const [minSplashTimeReached, setMinSplashTimeReached] = useState(false);
 
   useEffect(() => {
@@ -120,6 +124,19 @@ function AppShell() {
         
         {!isAuthRoute && <Footer />}
         {!isAuthRoute && <BottomNav />}
+        
+        {/* Global Immersive Notification Overlay */}
+        <ImmersiveNotification 
+          notification={immersiveNotification} 
+          onClose={() => setImmersiveNotification(null)}
+          onAction={(n) => {
+            // Mark as read and maybe navigate
+            setImmersiveNotification(null);
+            if (n.data?.url) {
+              window.location.href = n.data.url;
+            }
+          }}
+        />
       </div>
     </div>
   );
@@ -152,9 +169,11 @@ function App() {
 
   return (
     <AuthProvider>
-      <Router>
-        <AppShell />
-      </Router>
+      <NotificationProvider>
+        <Router>
+          <AppShell />
+        </Router>
+      </NotificationProvider>
     </AuthProvider>
   );
 }

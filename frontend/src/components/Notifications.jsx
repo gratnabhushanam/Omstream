@@ -8,25 +8,27 @@ const NOTIF_ICON_MAP = {
   default: { icon: Megaphone, color: 'text-gray-400',   bg: 'bg-white/5',       border: 'border-white/10' },
 };
 
-export function NotificationItem({ n }) {
+export function NotificationItem({ n, onClick }) {
   const isUnread = !n.isRead && !n.read;
   const { icon: Icon, color, bg, border } = NOTIF_ICON_MAP[n.type] || NOTIF_ICON_MAP.default;
   const timeAgo = n.createdAt ? new Date(n.createdAt).toLocaleDateString('en-IN', { day:'numeric', month:'short', hour:'2-digit', minute:'2-digit' }) : '';
 
   return (
-    <div className={`flex items-start gap-4 p-5 rounded-[1.8rem] mb-3 border transition-all duration-300 group cursor-pointer ${isUnread ? `${bg} ${border} shadow-xl scale-[1.01]` : 'bg-white/[0.03] border-white/5 hover:bg-white/[0.06]'}`}>
-      <div className={`flex-shrink-0 w-12 h-12 rounded-2xl flex items-center justify-center border transition-transform group-hover:scale-110 ${isUnread ? `${bg} ${border} shadow-inner` : 'bg-white/5 border-white/10'}`}>
-        <Icon className={`w-6 h-6 ${isUnread ? color : 'text-gray-500'}`} />
+    <div 
+      onClick={onClick}
+      className={`flex items-start gap-4 p-5 rounded-[1.8rem] mb-3 border transition-all duration-300 group cursor-pointer ${isUnread ? `${bg} ${border} shadow-xl scale-[1.01]` : 'bg-white/[0.03] border-white/5 hover:bg-white/[0.06] opacity-80'}`}
+    >
+      <div className={`flex-shrink-0 w-12 h-12 rounded-2xl flex items-center justify-center border transition-all duration-500 group-hover:scale-110 group-hover:rotate-6 ${isUnread ? `${bg} ${border} shadow-inner` : 'bg-white/5 border-white/10'}`}>
+        <Icon className={`w-6 h-6 transition-all duration-500 ${isUnread ? color : 'text-gray-500'} group-hover:scale-125`} />
       </div>
       <div className="flex-1 min-w-0 pt-0.5">
         <div className="flex justify-between items-start mb-1.5">
-          <p className={`text-[13px] font-black leading-tight tracking-tight uppercase ${isUnread ? 'text-white' : 'text-gray-400'}`}>
+          <p className={`text-[13px] font-black leading-tight tracking-tight uppercase transition-colors ${isUnread ? 'text-white' : 'text-gray-400 group-hover:text-white'}`}>
             {n.title || 'Divine Update'}
           </p>
-          {timeAgo && <p className="text-[9px] text-gray-700 font-black uppercase tracking-widest whitespace-nowrap ml-2">{timeAgo}</p>}
+          {timeAgo && <p className="text-[9px] text-gray-700 font-black uppercase tracking-widest whitespace-nowrap ml-2 opacity-60">{timeAgo}</p>}
         </div>
-        {/* Improved visibility for body text */}
-        <p className={`text-sm leading-relaxed font-semibold ${isUnread ? 'text-gray-100' : 'text-gray-400'}`}>
+        <p className={`text-sm leading-relaxed font-semibold transition-colors ${isUnread ? 'text-gray-100' : 'text-gray-500 group-hover:text-gray-300'}`}>
           {n.body || n.message || n.text}
         </p>
         <div className="flex items-center justify-end mt-3">
@@ -113,6 +115,26 @@ export function MobileNotificationSheet({ notifications, unreadCount, handleMark
           </div>
         ) : (
           <div className="space-y-4 animate-in slide-in-from-bottom-4 duration-500">
+            {/* Featured Section for high-priority alerts */}
+            {notifications.find(n => !n.read && (n.type === 'promo' || n.type === 'content')) && (
+              <div className="mb-8 p-8 rounded-[2.5rem] bg-gradient-to-br from-devotion-gold/20 to-transparent border border-devotion-gold/30 shadow-2xl relative overflow-hidden group">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-devotion-gold/10 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none" />
+                <p className="text-[10px] font-black text-devotion-gold uppercase tracking-[0.4em] mb-4 flex items-center gap-2">
+                   <Sparkles className="w-3 h-3" /> Featured Wisdom
+                </p>
+                <h4 className="text-2xl font-serif font-black text-white mb-3 uppercase tracking-tight">
+                  {notifications.find(n => !n.read && (n.type === 'promo' || n.type === 'content')).title}
+                </h4>
+                <p className="text-gray-300 text-sm font-medium italic mb-6 leading-relaxed">
+                  {notifications.find(n => !n.read && (n.type === 'promo' || n.type === 'content')).body}
+                </p>
+                <button className="px-6 py-3 bg-devotion-gold text-devotion-darkBlue rounded-xl font-black text-[10px] uppercase tracking-widest active:scale-95 transition-all shadow-xl">
+                  REVEAL NOW
+                </button>
+              </div>
+            )}
+
+            <p className="text-[9px] font-black text-white/20 uppercase tracking-[0.5em] mb-4 px-2">All Divine Notifications</p>
             {notifications.map(n => <NotificationItem key={n._id || n.id} n={n} />)}
           </div>
         )}
