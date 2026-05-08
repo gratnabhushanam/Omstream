@@ -239,6 +239,52 @@ export default function MediaPlayer({
     return `${h > 0 ? h + ':' : ''}${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
   };
 
+  // Detect DRM / external platform URLs that cannot be embedded
+  const DRM_PLATFORMS = [
+    { pattern: /jiocinema\.com/i, name: 'JioCinema', icon: '🎬', color: '#0065FF' },
+    { pattern: /hotstar\.com/i, name: 'Disney+ Hotstar', icon: '⭐', color: '#0E0F13' },
+    { pattern: /disneyplus\.com/i, name: 'Disney+', icon: '🏰', color: '#0E0F13' },
+    { pattern: /netflix\.com/i, name: 'Netflix', icon: '🎥', color: '#E50914' },
+    { pattern: /primevideo\.com/i, name: 'Prime Video', icon: '🔵', color: '#00A8E1' },
+    { pattern: /amazon\.com\/prime/i, name: 'Prime Video', icon: '🔵', color: '#00A8E1' },
+    { pattern: /sonyliv\.com/i, name: 'SonyLIV', icon: '📺', color: '#0A0A5E' },
+    { pattern: /zee5\.com/i, name: 'ZEE5', icon: '🟣', color: '#7B2CF7' },
+    { pattern: /mxplayer\.in/i, name: 'MX Player', icon: '▶️', color: '#FF6B35' },
+    { pattern: /voot\.com/i, name: 'Voot', icon: '🟠', color: '#FF5500' },
+    { pattern: /aha\.video/i, name: 'aha', icon: '🔴', color: '#D92121' },
+  ];
+
+  const rawUrl = secureVideoUrl || cdnVideoUrl || url || '';
+  const drmPlatform = DRM_PLATFORMS.find(p => p.pattern.test(rawUrl));
+
+  if (drmPlatform) {
+    return (
+      <div ref={containerRef} className={`relative bg-gradient-to-br from-[#06101E] to-[#0B1F3A] overflow-hidden flex flex-col items-center justify-center gap-6 ${className}`}>
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(255,215,0,0.06),transparent_70%)]"></div>
+        <div className="relative z-10 text-center px-8 space-y-5">
+          <div className="text-6xl">{drmPlatform.icon}</div>
+          <div>
+            <p className="text-xs font-black uppercase tracking-[0.3em] text-devotion-gold mb-2">Available on</p>
+            <h3 className="text-2xl font-black text-white">{drmPlatform.name}</h3>
+          </div>
+          <p className="text-sm text-gray-400 max-w-xs mx-auto leading-relaxed">
+            This content is protected by DRM and cannot be played here. Click below to watch it directly on the platform.
+          </p>
+          <a
+            href={rawUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-3 bg-gradient-to-r from-devotion-gold to-[#FFB800] text-devotion-darkBlue px-8 py-4 rounded-2xl font-black text-sm uppercase tracking-widest hover:scale-105 transition-all shadow-[0_10px_30px_rgba(255,215,0,0.3)]"
+          >
+            <Play className="w-5 h-5 fill-current" />
+            Watch on {drmPlatform.name}
+          </a>
+          {title && <p className="text-xs text-gray-600 uppercase tracking-widest mt-2">{title}</p>}
+        </div>
+      </div>
+    );
+  }
+
   if (isYoutubeUrl(secureVideoUrl || cdnVideoUrl)) {
     const embedUrl = getYoutubeEmbedUrl(secureVideoUrl || cdnVideoUrl);
     const videoId = getYoutubeVideoId(cdnVideoUrl);

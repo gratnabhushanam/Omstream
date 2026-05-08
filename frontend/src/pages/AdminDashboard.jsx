@@ -1522,17 +1522,21 @@ function AdminDashboardContent() {
                          <input required className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-5 text-white focus:border-devotion-gold outline-none" placeholder="e.g. Shri Krishna" value={movieForm.title} onChange={e => setMovieForm({...movieForm, title: e.target.value})} />
                       </div>
                       <div className="space-y-4">
-                         <label className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-devotion-gold ml-2"><LinkIcon className="w-3 h-3"/> Direct File Upload (HQ Netflix/Hotstar Range)</label>
-                         <div className="flex flex-col gap-3">
-                           <input type="file" accept="video/*" onChange={handleVideoFileChange} className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 text-white file:mr-4 file:rounded-xl file:border-0 file:bg-devotion-gold file:px-4 file:py-2 file:text-xs file:font-black file:text-devotion-darkBlue" />
-                           {videoUploadProgress > 0 && (
-                             <div className="w-full bg-white/10 rounded-full h-2 mt-2">
-                               <div className="bg-devotion-gold h-2 rounded-full transition-all" style={{ width: `${videoUploadProgress}%` }}></div>
-                             </div>
-                           )}
-                           <input className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-3 text-white text-xs mt-2 opacity-50" placeholder="Or paste link directly..." value={movieForm.videoUrl} onChange={e => setMovieForm({...movieForm, videoUrl: e.target.value})} />
-                         </div>
-                      </div>
+                          <label className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-devotion-gold ml-2"><LinkIcon className="w-3 h-3"/> Direct File Upload (HQ Netflix/Hotstar Range)</label>
+                          <div className="flex flex-col gap-3">
+                            <input type="file" accept="video/*" onChange={handleVideoFileChange} className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 text-white file:mr-4 file:rounded-xl file:border-0 file:bg-devotion-gold file:px-4 file:py-2 file:text-xs file:font-black file:text-devotion-darkBlue" />
+                            {videoUploadProgress > 0 && (
+                              <div className="w-full bg-white/10 rounded-full h-2 mt-2">
+                                <div className="bg-devotion-gold h-2 rounded-full transition-all" style={{ width: `${videoUploadProgress}%` }}></div>
+                              </div>
+                            )}
+                          </div>
+                       </div>
+                       <div className="space-y-4">
+                          <label className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-devotion-gold ml-2"><LinkIcon className="w-3 h-3"/> Video URL (YouTube, Direct MP4, or HLS)</label>
+                          <input className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-5 text-white focus:border-devotion-gold outline-none" placeholder="https://youtu.be/... or https://...mp4" value={movieForm.videoUrl} onChange={e => setMovieForm({...movieForm, videoUrl: e.target.value})} />
+                          <p className="text-[10px] text-gray-500 ml-2">⚠️ Jio/Hotstar/Netflix links cannot be embedded — use YouTube, direct MP4, or upload a file instead.</p>
+                       </div>
                       <div className="space-y-4">
                          <label className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-devotion-gold ml-2"><ImageIcon className="w-3 h-3"/> Thumbnail Link</label>
                          <input className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-5 text-white focus:border-devotion-gold outline-none" placeholder="https://image..." value={movieForm.thumbnail} onChange={e => setMovieForm({...movieForm, thumbnail: e.target.value})} />
