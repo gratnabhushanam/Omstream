@@ -30,12 +30,6 @@
   ],
   "screenshots": [
     {
-      "src": "/screenshot-640x480.png",
-      "sizes": "640x480",
-      "type": "image/png",
-      "form_factor": "narrow"
-    },
-    {
       "src": "/screenshot-1280x800.png",
       "sizes": "1280x800",
       "type": "image/png",
@@ -48,10 +42,10 @@
       "name": "Daily Sloka",
       "short_name": "Sloka",
       "description": "View today's spiritual verse",
-      "url": "/sloka",
+      "url": "/daily-sloka",
       "icons": [
         {
-          "src": "/icon-sloka-192.png",
+          "src": "/logo-om-v2.png",
           "sizes": "192x192"
         }
       ]
@@ -63,32 +57,22 @@
       "url": "/stories",
       "icons": [
         {
-          "src": "/icon-chapters-192.png",
+          "src": "/logo-om-v2.png",
           "sizes": "192x192"
         }
       ]
     },
     {
-      "name": "Reels",
-      "short_name": "Reels",
-      "description": "Watch spiritual content",
-      "url": "/reels",
+      "name": "Movies",
+      "short_name": "Movies",
+      "description": "Watch Divine Cinema",
+      "url": "/movies",
       "icons": [
         {
-          "src": "/icon-reels-192.png",
+          "src": "/logo-om-v2.png",
           "sizes": "192x192"
         }
       ]
     }
-  ],
-  "share_target": {
-    "action": "/share",
-    "method": "POST",
-    "enctype": "multipart/form-data",
-    "params": {
-      "title": "title",
-      "text": "text",
-      "url": "url"
-    }
-  }
+  ]
 }
