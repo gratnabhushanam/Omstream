@@ -299,7 +299,7 @@ export default function Sloka() {
           <div className="inline-block px-4 py-1 rounded-full border border-devotion-gold/30 bg-devotion-gold/10 backdrop-blur-md mb-6 text-devotion-gold text-[10px] font-black tracking-[0.3em] shadow-[0_0_15px_rgba(255,215,0,0.1)] uppercase">
             Divine Wisdom for Today
           </div>
-          <h1 className="text-6xl md:text-8xl font-serif font-black text-devotion-gold drop-shadow-[0_10px_10px_rgba(0,0,0,0.5)] tracking-tighter">
+          <h1 className="text-6xl md:text-8xl tv:text-[8rem] font-serif font-black text-devotion-gold drop-shadow-[0_10px_10px_rgba(0,0,0,0.5)] tracking-tighter">
             Daily <span className="text-white opacity-90 italic font-light drop-shadow-none tracking-normal">Sloka</span>
           </h1>
         </div>
@@ -335,19 +335,19 @@ export default function Sloka() {
               <div className="flex bg-devotion-darkBlue/60 rounded-full p-1 border border-white/10 backdrop-blur-md">
                 <button 
                   onClick={() => setLanguage('english')}
-                  className={`px-6 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${language === 'english' ? 'bg-devotion-gold text-devotion-darkBlue shadow-lg' : 'text-gray-400 hover:text-white'}`}
+                  className={`tv-focusable px-6 py-1.5 tv:px-8 tv:py-3 rounded-full text-[10px] tv:text-sm font-black uppercase tracking-widest transition-all ${language === 'english' ? 'bg-devotion-gold text-devotion-darkBlue shadow-lg' : 'text-gray-400 hover:text-white'}`}
                 >
                   English
                 </button>
                 <button 
                   onClick={() => setLanguage('hindi')}
-                  className={`px-6 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${language === 'hindi' ? 'bg-devotion-gold text-devotion-darkBlue shadow-lg' : 'text-gray-400 hover:text-white'}`}
+                  className={`tv-focusable px-6 py-1.5 tv:px-8 tv:py-3 rounded-full text-[10px] tv:text-sm font-black uppercase tracking-widest transition-all ${language === 'hindi' ? 'bg-devotion-gold text-devotion-darkBlue shadow-lg' : 'text-gray-400 hover:text-white'}`}
                 >
                   Hindi
                 </button>
                 <button 
                   onClick={() => setLanguage('telugu')}
-                  className={`px-6 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${language === 'telugu' ? 'bg-devotion-gold text-devotion-darkBlue shadow-lg' : 'text-gray-400 hover:text-white'}`}
+                  className={`tv-focusable px-6 py-1.5 tv:px-8 tv:py-3 rounded-full text-[10px] tv:text-sm font-black uppercase tracking-widest transition-all ${language === 'telugu' ? 'bg-devotion-gold text-devotion-darkBlue shadow-lg' : 'text-gray-400 hover:text-white'}`}
                 >
                   తెలుగు
                 </button>
@@ -360,14 +360,14 @@ export default function Sloka() {
               </div>
 
               <div className="mb-12 relative z-10">
-                <p className="text-3xl md:text-5xl text-white font-serif leading-[1.6] whitespace-pre-line drop-shadow-2xl" style={{ transform: 'translateZ(60px)' }}>
+                <p className="text-3xl md:text-5xl tv:text-7xl text-white font-serif leading-[1.6] whitespace-pre-line drop-shadow-2xl" style={{ transform: 'translateZ(60px)' }}>
                   {sloka.sanskrit}
                 </p>
               </div>
               
               <div className="mt-16 relative z-10">
                 <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-12 text-8xl text-devotion-gold/10 font-serif select-none italic">"</div>
-                <p className={`text-xl md:text-3xl text-gray-200 font-light leading-relaxed px-4 italic font-serif ${language === 'telugu' ? 'font-telugu leading-[2]' : ''}`}>
+                <p className={`text-xl md:text-3xl tv:text-5xl text-gray-200 font-light leading-relaxed px-4 italic font-serif ${language === 'telugu' ? 'font-telugu leading-[2]' : ''}`}>
                   {getMeaningByLanguage(sloka, language)}
                 </p>
               </div>
@@ -377,26 +377,26 @@ export default function Sloka() {
               <button 
                 onClick={toggleAudio}
                 disabled={!canPlayAudio}
-                className={`${canPlayAudio ? 'text-devotion-gold hover:text-white' : 'text-gray-600 cursor-not-allowed'} transition-all flex items-center gap-3 font-black uppercase tracking-[0.2em] text-[10px] transform hover:scale-105`}
+                className={`tv-focusable ${canPlayAudio ? 'text-devotion-gold hover:text-white' : 'text-gray-600 cursor-not-allowed'} transition-all flex items-center gap-3 font-black uppercase tracking-[0.2em] text-[10px] tv:text-sm transform hover:scale-105`}
               >
-                {isPlaying ? <Pause className="w-6 h-6 fill-current animate-pulse" /> : <Volume2 className="w-6 h-6" />}
+                {isPlaying ? <Pause className="w-6 h-6 tv:w-8 tv:h-8 fill-current animate-pulse" /> : <Volume2 className="w-6 h-6 tv:w-8 tv:h-8" />}
                 {isPlaying ? 'STOP CHANTING' : activeAudioUrl ? 'LISTEN CHANT' : 'AUTO NARRATE'}
               </button>
               
               <button
                 onClick={handleSaveVerse}
                 disabled={bookmarkLoading}
-                className="text-gray-400 hover:text-devotion-gold transition-all flex items-center gap-3 font-black uppercase tracking-[0.2em] text-[10px] transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="tv-focusable text-gray-400 hover:text-devotion-gold transition-all flex items-center gap-3 font-black uppercase tracking-[0.2em] text-[10px] tv:text-sm transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                <Bookmark className="w-6 h-6" />
+                <Bookmark className="w-6 h-6 tv:w-8 tv:h-8" />
                 {bookmarkLoading ? 'SAVING...' : isBookmarked ? 'SAVED' : 'SAVE VERSE'}
               </button>
               
               <button
                 onClick={handleShareVerse}
-                className="text-gray-400 hover:text-devotion-gold transition-all flex items-center gap-3 font-black uppercase tracking-[0.2em] text-[10px] transform hover:scale-105"
+                className="tv-focusable text-gray-400 hover:text-devotion-gold transition-all flex items-center gap-3 font-black uppercase tracking-[0.2em] text-[10px] tv:text-sm transform hover:scale-105"
               >
-                <Share2 className="w-6 h-6" />
+                <Share2 className="w-6 h-6 tv:w-8 tv:h-8" />
                 SHARE WISDOM
               </button>
             </div>

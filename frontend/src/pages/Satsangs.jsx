@@ -39,7 +39,7 @@ export default function Satsangs() {
       
       <div className="max-w-7xl tv:max-w-[1800px] mx-auto relative z-10">
         <div className="mb-8 sm:mb-10 text-center">
-            <h1 className="text-3xl sm:text-4xl md:text-5xl tv:text-7xl font-black font-serif text-devotion-gold tracking-tight mb-4">Satsangs</h1>
+            <h1 className="text-3xl sm:text-4xl md:text-5xl tv:text-[8rem] font-black font-serif text-devotion-gold tracking-tight mb-4">Satsangs</h1>
             <p className="text-gray-400 font-medium max-w-2xl tv:max-w-4xl mx-auto text-sm sm:text-base tv:text-xl">Join spiritual communities, ask deep questions, and share your wisdom with fellow seekers on the path.</p>
         </div>
 
@@ -52,9 +52,9 @@ export default function Satsangs() {
               {user && (
                 <button 
                   onClick={() => setShowCreateModal(true)}
-                  className="bg-devotion-gold text-devotion-darkBlue hover:bg-yellow-400 font-black text-[10px] uppercase tracking-widest px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition-colors"
+                  className="tv-focusable bg-devotion-gold text-devotion-darkBlue hover:bg-yellow-400 font-black text-[10px] tv:text-sm uppercase tracking-widest px-3 py-1.5 tv:px-5 tv:py-2.5 rounded-lg flex items-center gap-1.5 transition-colors"
                 >
-                  <Plus className="w-3 h-3" /> Create
+                  <Plus className="w-3 h-3 tv:w-5 tv:h-5" /> Create
                 </button>
               )}
             </div>
@@ -73,8 +73,9 @@ export default function Satsangs() {
                 {groups.map(group => (
                   <button
                     key={group._id}
+                    tabIndex={0}
                     onClick={() => setActiveGroupId(group._id)}
-                    className={`w-full text-left p-4 rounded-2xl transition-all border preserve-3d ${activeGroupId === group._id ? 'bg-gradient-to-r from-devotion-gold/20 to-devotion-gold/5 border-devotion-gold/50 shadow-lg' : 'bg-white/5 border-transparent hover:bg-white/10'}`}
+                    className={`tv-focusable focus:outline-none focus:ring-4 focus:ring-devotion-gold w-full text-left p-4 tv:p-6 rounded-2xl transition-all border preserve-3d ${activeGroupId === group._id ? 'bg-gradient-to-r from-devotion-gold/20 to-devotion-gold/5 border-devotion-gold/50 shadow-lg' : 'bg-white/5 border-transparent hover:bg-white/10'}`}
                     onMouseMove={(e) => {
                       const card = e.currentTarget;
                       const rect = card.getBoundingClientRect();
@@ -126,7 +127,7 @@ export default function Satsangs() {
                       <button 
                         type="submit"
                         disabled={!postContent.trim()}
-                        className="absolute bottom-4 right-4 bg-devotion-gold text-devotion-darkBlue px-6 py-2 rounded-xl font-bold uppercase tracking-widest text-xs hover:bg-yellow-400 transition-colors disabled:opacity-50"
+                        className="tv-focusable absolute bottom-4 right-4 bg-devotion-gold text-devotion-darkBlue px-6 py-2 tv:px-8 tv:py-3 rounded-xl font-bold uppercase tracking-widest text-xs tv:text-sm hover:bg-yellow-400 transition-colors disabled:opacity-50"
                       >
                         Post
                       </button>
@@ -176,16 +177,16 @@ export default function Satsangs() {
                             <div className="flex items-center gap-6 pt-4 border-t border-white/10">
                                <button 
                                  onClick={() => handleLike(post._id)}
-                                 className={`flex items-center gap-2 text-xs font-bold transition-colors ${post.likes?.includes(user?.id || user?._id) ? 'text-red-400' : 'text-gray-400 hover:text-red-400'}`}
+                                 className={`tv-focusable flex items-center gap-2 text-xs tv:text-sm font-bold transition-colors ${post.likes?.includes(user?.id || user?._id) ? 'text-red-400' : 'text-gray-400 hover:text-red-400'}`}
                                >
-                                  <Heart className={`w-4 h-4 ${post.likes?.includes(user?.id || user?._id) ? 'fill-current' : ''}`} /> 
+                                  <Heart className={`w-4 h-4 tv:w-5 tv:h-5 ${post.likes?.includes(user?.id || user?._id) ? 'fill-current' : ''}`} /> 
                                   {post.likes?.length || 0}
                                </button>
                                <button 
                                  onClick={() => setActiveCommentsPostId(activeCommentsPostId === post._id ? null : post._id)}
-                                 className="flex items-center gap-2 text-xs font-bold text-gray-400 hover:text-white"
+                                 className="tv-focusable flex items-center gap-2 text-xs tv:text-sm font-bold text-gray-400 hover:text-white"
                                >
-                                  <MessageCircle className="w-4 h-4" />
+                                  <MessageCircle className="w-4 h-4 tv:w-5 tv:h-5" />
                                   {post.comments?.length || 0}
                                </button>
                             </div>

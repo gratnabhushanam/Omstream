@@ -301,7 +301,7 @@ export default function Stories() {
         
         <div className="bg-[#0B1F3A]/78 backdrop-blur-3xl py-6 px-8 rounded-t-[2rem] border border-[#D39A4A]/30 shadow-lg text-center relative overflow-hidden">
           <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-transparent via-devotion-gold to-transparent opacity-50"></div>
-          <h1 className="text-3xl sm:text-4xl md:text-5xl tv:text-7xl font-serif font-bold text-devotion-gold tracking-widest drop-shadow-md uppercase">
+          <h1 className="text-3xl sm:text-4xl md:text-5xl tv:text-[8rem] font-serif font-bold text-devotion-gold tracking-widest drop-shadow-md uppercase">
             Chapters
           </h1>
           <div className="w-24 h-1 bg-devotion-gold mx-auto mt-4 rounded-full"></div>
@@ -320,7 +320,7 @@ export default function Stories() {
                   <button
                     type="button"
                     onClick={() => setActiveCollection(null)}
-                    className="mb-2 inline-flex w-fit items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs font-black uppercase tracking-[0.2em] text-white/75 hover:border-devotion-gold/40 hover:text-devotion-gold"
+                    className="tv-focusable mb-2 inline-flex w-fit items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 tv:px-6 tv:py-3 text-xs tv:text-lg font-black uppercase tracking-[0.2em] text-white/75 hover:border-devotion-gold/40 hover:text-devotion-gold"
                   >
                     <ChevronRight className="h-4 w-4 rotate-180" /> Back to collections
                   </button>
@@ -329,8 +329,9 @@ export default function Stories() {
                     <button
                       key={story._id}
                       type="button"
+                      tabIndex={0}
                       onClick={() => handleOpenStory(story)}
-                      className="bg-gradient-to-r from-[#102641] to-[#1A3552] border border-[#D39A4A]/35 rounded-2xl p-4 flex items-center justify-between group hover:border-[#E6C38A] transition-colors shadow-md text-left"
+                      className="tv-focusable focus:outline-none focus:ring-4 focus:ring-devotion-gold bg-gradient-to-r from-[#102641] to-[#1A3552] border border-[#D39A4A]/35 rounded-2xl p-4 tv:p-8 flex items-center justify-between group hover:border-[#E6C38A] transition-colors shadow-md text-left"
                     >
                       <div className="flex items-center gap-6">
                         <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[#D39A4A] to-[#E6C38A] flex items-center justify-center text-[#102641] font-bold text-xl drop-shadow-sm border-2 border-[#FFECA1]">
@@ -368,8 +369,9 @@ export default function Stories() {
                   <button
                     key={collection.seriesTitle}
                     type="button"
+                    tabIndex={0}
                     onClick={() => setActiveCollection(collection.seriesTitle)}
-                    className={`bg-gradient-to-r ${theme.card.includes('rgba(58,18,14') ? 'from-[#3A120E] to-[#15304F]' : 'from-[#102641] to-[#1A3552]'} ${theme.border} rounded-2xl p-4 flex items-center justify-between group hover:border-[#E6C38A] transition-colors shadow-md text-left preserve-3d`}
+                    className={`tv-focusable focus:outline-none focus:ring-4 focus:ring-devotion-gold bg-gradient-to-r ${theme.card.includes('rgba(58,18,14') ? 'from-[#3A120E] to-[#15304F]' : 'from-[#102641] to-[#1A3552]'} ${theme.border} rounded-2xl p-4 tv:p-8 flex items-center justify-between group hover:border-[#E6C38A] transition-colors shadow-md text-left preserve-3d`}
                     onMouseMove={(e) => {
                       const card = e.currentTarget;
                       const rect = card.getBoundingClientRect();
@@ -443,7 +445,7 @@ export default function Stories() {
                 <button
                   type="button"
                   onClick={() => handleToggleAudio(activeStory)}
-                  className="inline-flex items-center gap-2 rounded-full border border-devotion-gold/30 px-4 py-2 text-xs uppercase tracking-[0.18em] text-devotion-gold hover:text-white hover:border-devotion-gold"
+                  className="tv-focusable inline-flex items-center gap-2 rounded-full border border-devotion-gold/30 px-4 py-2 tv:px-6 tv:py-3 text-xs tv:text-base uppercase tracking-[0.18em] text-devotion-gold hover:text-white hover:border-devotion-gold"
                 >
                   {isSpeaking ? <PauseCircle className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
                   {isSpeaking ? 'Stop Audio' : 'Play Audio'}
@@ -451,7 +453,7 @@ export default function Stories() {
                 <button
                   type="button"
                   onClick={handleCloseStory}
-                  className="rounded-full border border-white/10 px-4 py-2 text-xs uppercase tracking-[0.2em] text-white/70 hover:text-white hover:border-white/25"
+                  className="tv-focusable rounded-full border border-white/10 px-4 py-2 tv:px-6 tv:py-3 text-xs tv:text-base uppercase tracking-[0.2em] text-white/70 hover:text-white hover:border-white/25"
                 >
                   Close
                 </button>
@@ -468,7 +470,7 @@ export default function Stories() {
                     setIsSpeaking(false);
                     setSelectedLanguage(lang);
                   }}
-                  className={`px-3 py-1.5 rounded-full border text-[10px] font-black uppercase tracking-[0.18em] transition-all ${selectedLanguage === lang ? 'bg-devotion-gold text-[#06101E] border-devotion-gold' : 'bg-white/5 text-gray-200 border-white/20 hover:border-devotion-gold/40'}`}
+                  className={`tv-focusable px-3 py-1.5 tv:px-5 tv:py-2.5 rounded-full border text-[10px] tv:text-sm font-black uppercase tracking-[0.18em] transition-all ${selectedLanguage === lang ? 'bg-devotion-gold text-[#06101E] border-devotion-gold' : 'bg-white/5 text-gray-200 border-white/20 hover:border-devotion-gold/40'}`}
                 >
                   {lang}
                 </button>
@@ -493,7 +495,7 @@ export default function Stories() {
               <button
                 type="button"
                 onClick={handleCloseStory}
-                className="inline-flex items-center gap-2 rounded-2xl bg-devotion-gold px-5 py-3 text-xs font-black uppercase tracking-[0.2em] text-[#06101E]"
+                className="tv-focusable inline-flex items-center gap-2 rounded-2xl bg-devotion-gold px-5 py-3 tv:px-8 tv:py-4 text-xs tv:text-lg font-black uppercase tracking-[0.2em] text-[#06101E]"
               >
                 <PlayCircle className="h-4 w-4" />
                 Back to chapters
