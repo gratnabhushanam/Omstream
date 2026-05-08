@@ -77,48 +77,45 @@ export function MobileNotificationSheet({ notifications, unreadCount, handleMark
   }, []);
 
   return (
-    <div className="fixed inset-0 z-[10000] flex flex-col justify-end p-0 sm:p-4" onClick={handleBackdrop}>
-      <div className="absolute inset-0 bg-black/80 backdrop-blur-md animate-in fade-in duration-300" />
-      <div className="relative w-full max-h-[90vh] bg-[#070F1D] rounded-t-[2.5rem] sm:rounded-[2.5rem] border-t sm:border border-devotion-gold/30 shadow-[0_-20px_100px_rgba(0,0,0,0.9)] animate-in slide-in-from-bottom duration-500 flex flex-col overflow-hidden pb-safe">
-        <div className="flex justify-center pt-3 pb-1">
-          <div className="w-12 h-1.5 bg-white/10 rounded-full" />
-        </div>
-        <div className="px-6 py-5 flex justify-between items-center border-b border-white/5 bg-[#0D1424]">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-2xl bg-devotion-gold/10 border border-devotion-gold/30 flex items-center justify-center shadow-inner">
-              <Bell className="w-6 h-6 text-devotion-gold" />
-            </div>
-            <div>
-              <p className="text-base font-black text-white uppercase tracking-[0.2em] leading-tight">Notifications</p>
-              <p className="text-[11px] text-devotion-gold/60 font-black uppercase tracking-widest mt-1">
-                {unreadCount > 0 ? `${unreadCount} DIVINE ALERTS` : 'PEACEFUL HEART'}
-              </p>
-            </div>
+    <div className="fixed inset-0 z-[10000] bg-[#070F1D] flex flex-col overflow-hidden animate-in fade-in duration-300 pt-safe" onClick={handleBackdrop}>
+      <div className="flex-shrink-0 px-6 py-8 flex justify-between items-center border-b border-white/5 bg-[#0D1424]">
+        <div className="flex items-center gap-4">
+          <div className="w-12 h-12 rounded-2xl bg-devotion-gold/10 border border-devotion-gold/30 flex items-center justify-center shadow-inner">
+            <Bell className="w-6 h-6 text-devotion-gold" />
           </div>
-          <div className="flex items-center gap-3">
-            {unreadCount > 0 && (
-              <button onClick={handleMarkAsRead} className="p-3 bg-devotion-gold/10 border border-devotion-gold/30 text-devotion-gold rounded-2xl active:scale-90 transition-all shadow-lg">
-                <CheckCheck className="w-6 h-6" />
-              </button>
-            )}
-            <button onClick={onClose} className="p-3 bg-white/5 border border-white/10 text-white/60 rounded-2xl active:scale-90 transition-all shadow-lg">
-              <X className="w-6 h-6" />
+          <div>
+            <p className="text-lg font-black text-white uppercase tracking-[0.2em] leading-tight">Notifications</p>
+            <p className="text-[11px] text-devotion-gold/60 font-black uppercase tracking-widest mt-1">
+              {unreadCount > 0 ? `${unreadCount} DIVINE ALERTS` : 'PEACEFUL HEART'}
+            </p>
+          </div>
+        </div>
+        <div className="flex items-center gap-3">
+          {unreadCount > 0 && (
+            <button onClick={handleMarkAsRead} className="p-3 bg-devotion-gold/10 border border-devotion-gold/30 text-devotion-gold rounded-2xl active:scale-90 transition-all shadow-lg">
+              <CheckCheck className="w-6 h-6" />
             </button>
-          </div>
-        </div>
-        <div className="flex-1 overflow-y-auto p-5 pb-12 scrollbar-hide">
-          {notifications.length === 0 ? (
-            <div className="text-center py-24 px-8">
-              <div className="w-24 h-24 rounded-[2rem] bg-white/[0.03] border border-white/5 flex items-center justify-center mx-auto mb-8 animate-pulse">
-                <Bell className="w-10 h-10 text-white/10" />
-              </div>
-              <p className="text-lg font-black text-white/40 uppercase tracking-[0.2em] mb-3">All caught up!</p>
-              <p className="text-sm text-white/20 font-serif italic">Your spiritual path is clear of alerts.</p>
-            </div>
-          ) : (
-            notifications.map(n => <NotificationItem key={n._id || n.id} n={n} />)
           )}
+          <button onClick={onClose} className="p-3 bg-white/5 border border-white/10 text-white/60 rounded-2xl active:scale-90 transition-all shadow-lg">
+            <X className="w-6 h-6" />
+          </button>
         </div>
+      </div>
+      
+      <div className="flex-1 overflow-y-auto p-5 pb-24 scrollbar-hide">
+        {notifications.length === 0 ? (
+          <div className="text-center py-32 px-8 flex flex-col items-center justify-center h-full">
+            <div className="w-28 h-28 rounded-[2.5rem] bg-white/[0.03] border border-white/5 flex items-center justify-center mb-10 shadow-2xl">
+              <Bell className="w-12 h-12 text-white/5" />
+            </div>
+            <p className="text-xl font-black text-white/40 uppercase tracking-[0.3em] mb-4">All caught up!</p>
+            <p className="text-base text-white/20 font-serif italic text-center max-w-[240px]">Your spiritual path is clear of any new alerts.</p>
+          </div>
+        ) : (
+          <div className="space-y-4 animate-in slide-in-from-bottom-4 duration-500">
+            {notifications.map(n => <NotificationItem key={n._id || n.id} n={n} />)}
+          </div>
+        )}
       </div>
     </div>
   );
