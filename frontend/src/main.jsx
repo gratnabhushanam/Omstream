@@ -7,7 +7,7 @@ import './styles/mobile.css'
 
 const isProd = import.meta.env.MODE === 'production';
 axios.defaults.baseURL = isProd 
-  ? 'https://gitawisdom.onrender.com' 
+  ? 'https://gita-wisdom-1.onrender.com' 
   : (import.meta.env.VITE_API_BASE_URL || 'http://localhost:8888');
 
 // Interceptor to ensure app api key is set natively if missing in env
