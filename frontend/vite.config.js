@@ -48,7 +48,6 @@ export default defineConfig({
     chunkSizeWarningLimit: 700,
     rollupOptions: {
       output: {
-        codeSplitting: false,
         manualChunks: (id) => {
           if (id.includes('node_modules/react') || id.includes('node_modules/react-dom')) {
             return 'react-vendor';
