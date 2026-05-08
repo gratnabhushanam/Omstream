@@ -62,7 +62,7 @@ export default function KidsMode() {
           <div className="inline-flex items-center gap-3 px-6 py-2 rounded-full border-2 border-devotion-gold/30 bg-devotion-gold/10 text-devotion-gold text-[10px] font-black tracking-[0.4em] uppercase mb-8 shadow-2xl">
             <Sparkles className="w-5 h-5 animate-spin-slow" /> Little Krishna World
           </div>
-          <h1 className="text-6xl md:text-9xl font-serif font-black text-transparent bg-clip-text bg-gradient-to-r from-[#FFD700] via-white to-[#FFD700] drop-shadow-[0_10px_40px_rgba(255,215,0,0.4)] mb-6 uppercase tracking-tight leading-none">
+          <h1 className="text-6xl md:text-9xl tv:text-[10rem] font-serif font-black text-transparent bg-clip-text bg-gradient-to-r from-[#FFD700] via-white to-[#FFD700] drop-shadow-[0_10px_40px_rgba(255,215,0,0.4)] mb-6 uppercase tracking-tight leading-none">
              Divine <span className="italic font-light tracking-normal opacity-90">Kids</span>
           </h1>
           <p className="text-xl md:text-3xl text-gray-200 font-serif italic max-w-2xl mx-auto leading-relaxed">
@@ -134,8 +134,8 @@ function VideoModal({ video, onClose, isFavorite, toggleFavorite }) {
          <div className="pointer-events-auto">
             <span className="bg-[#FF8C00] text-white px-5 py-2 rounded-2xl font-black text-[10px] tracking-widest uppercase shadow-2xl border border-white/20">LITTLE KRISHNA</span>
          </div>
-         <button onClick={onClose} className="pointer-events-auto bg-black/40 backdrop-blur-xl text-white w-14 h-14 rounded-[2rem] flex items-center justify-center border border-white/20 hover:bg-red-500/40 transition-all active:scale-90 shadow-2xl">
-            <X className="w-7 h-7" />
+         <button onClick={onClose} className="tv-focusable pointer-events-auto bg-black/40 backdrop-blur-xl text-white w-14 h-14 tv:w-20 tv:h-20 rounded-[2rem] flex items-center justify-center border border-white/20 hover:bg-red-500/40 transition-all active:scale-90 shadow-2xl">
+            <X className="w-7 h-7 tv:w-10 tv:h-10" />
          </button>
       </div>
 
@@ -150,8 +150,8 @@ function VideoModal({ video, onClose, isFavorite, toggleFavorite }) {
             controls={true}
           />
         </div>
-        <button onClick={handleFullscreen} className="absolute bottom-6 right-6 bg-[#FF8C00] text-white p-5 rounded-[2.2rem] border-2 border-white/30 hover:scale-110 transition-all z-20 active:scale-95 shadow-[0_15px_40px_rgba(255,140,0,0.4)]">
-          <Maximize className="w-7 h-7" />
+        <button onClick={handleFullscreen} className="tv-focusable absolute bottom-6 right-6 tv:bottom-10 tv:right-10 bg-[#FF8C00] text-white p-5 tv:p-8 rounded-[2.2rem] border-2 border-white/30 hover:scale-110 transition-all z-20 active:scale-95 shadow-[0_15px_40px_rgba(255,140,0,0.4)]">
+          <Maximize className="w-7 h-7 tv:w-10 tv:h-10" />
         </button>
         <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-transparent to-transparent pointer-events-none z-0" />
       </div>
@@ -162,7 +162,7 @@ function VideoModal({ video, onClose, isFavorite, toggleFavorite }) {
         
         <div className="max-w-4xl mx-auto relative z-10 space-y-12">
           <div className="border-b-2 border-orange-500/10 pb-12 text-center md:text-left">
-            <h2 className="text-5xl md:text-8xl font-serif font-black text-[#5C2B11] mb-8 drop-shadow-sm tracking-tight leading-[0.9] uppercase">
+            <h2 className="text-5xl md:text-8xl tv:text-[8rem] font-serif font-black text-[#5C2B11] mb-8 drop-shadow-sm tracking-tight leading-[0.9] uppercase">
               {video.title}
             </h2>
             <p className="text-[#6D4224] text-2xl md:text-4xl font-serif italic leading-relaxed opacity-90 max-w-3xl mx-auto md:mx-0 border-l-8 border-[#FF8C00] pl-8">
@@ -171,11 +171,11 @@ function VideoModal({ video, onClose, isFavorite, toggleFavorite }) {
           </div>
 
           <div className="flex flex-wrap gap-6">
-            <button onClick={handleTakeQuiz} className="flex-1 min-w-[280px] bg-gradient-to-br from-[#FF8C00] to-[#FF4500] text-white px-10 py-6 rounded-[2.5rem] font-black text-lg uppercase tracking-[0.2em] flex items-center justify-center gap-5 shadow-[0_25px_50px_rgba(255,140,0,0.4)] hover:scale-[1.03] transition-all active:scale-95">
-              <BrainCircuit className="w-10 h-10" /> WIN REWARDS!
+            <button onClick={handleTakeQuiz} className="tv-focusable flex-1 min-w-[280px] bg-gradient-to-br from-[#FF8C00] to-[#FF4500] text-white px-10 py-6 tv:py-10 rounded-[2.5rem] font-black text-lg tv:text-2xl uppercase tracking-[0.2em] flex items-center justify-center gap-5 shadow-[0_25px_50px_rgba(255,140,0,0.4)] hover:scale-[1.03] transition-all active:scale-95">
+              <BrainCircuit className="w-10 h-10 tv:w-14 tv:h-14" /> WIN REWARDS!
             </button>
-            <button onClick={() => toggleFavorite(video)} className={`flex-1 min-w-[280px] flex items-center justify-center gap-5 px-10 py-6 rounded-[2.5rem] border-4 font-black text-lg uppercase tracking-[0.2em] transition-all hover:scale-[1.03] active:scale-95 ${isFavorite(video) ? 'border-[#FF4500] bg-[#FF4500]/10 text-[#FF4500] shadow-xl' : 'border-[#FF8C00]/30 bg-white/80 text-[#C65D00] shadow-lg'}`}>
-              <Heart className={`w-10 h-10 ${isFavorite(video) ? 'fill-[#FF4500]' : 'fill-none'}`} />
+            <button onClick={() => toggleFavorite(video)} className={`tv-focusable flex-1 min-w-[280px] flex items-center justify-center gap-5 px-10 py-6 tv:py-10 rounded-[2.5rem] border-4 font-black text-lg tv:text-2xl uppercase tracking-[0.2em] transition-all hover:scale-[1.03] active:scale-95 ${isFavorite(video) ? 'border-[#FF4500] bg-[#FF4500]/10 text-[#FF4500] shadow-xl' : 'border-[#FF8C00]/30 bg-white/80 text-[#C65D00] shadow-lg'}`}>
+              <Heart className={`w-10 h-10 tv:w-14 tv:h-14 ${isFavorite(video) ? 'fill-[#FF4500]' : 'fill-none'}`} />
               {isFavorite(video) ? 'SAVED' : 'SAVE STORY'}
             </button>
           </div>
@@ -269,9 +269,10 @@ function TeaserCard({ video, isFavorite, toggleFavorite, onSelect, index }) {
 
   return (
     <div
+      tabIndex={0}
       className="relative cursor-pointer group rounded-[3.5rem] overflow-hidden shadow-2xl border border-white/5
-                 h-[480px] sm:h-[540px] md:h-[620px]
-                 transition-all duration-300 ease-out preserve-3d"
+                 h-[480px] sm:h-[540px] md:h-[620px] tv:h-[750px]
+                 transition-all duration-300 ease-out preserve-3d tv-focusable focus:outline-none focus:ring-4 focus:ring-devotion-gold"
       onClick={() => onSelect(video)}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
@@ -301,9 +302,9 @@ function TeaserCard({ video, isFavorite, toggleFavorite, onSelect, index }) {
       </div>
 
       <div className="absolute top-8 left-8 right-8 z-30 flex justify-between items-center">
-        {index < 2 && <span className="bg-[#FF8C00] text-white text-[10px] font-black uppercase tracking-widest px-4 py-2 rounded-2xl shadow-2xl">New Adventure</span>}
-        <button className={`w-12 h-12 rounded-[1.2rem] backdrop-blur-3xl transition-all active:scale-90 flex items-center justify-center ${isFavorite(video) ? 'bg-red-500 text-white shadow-2xl' : 'bg-black/40 text-white border border-white/20'}`} onClick={e => { e.stopPropagation(); toggleFavorite(video); }}>
-          <Heart className={`w-6 h-6 ${isFavorite(video) ? 'fill-white' : 'fill-none'}`} />
+        {index < 2 && <span className="bg-[#FF8C00] text-white text-[10px] tv:text-sm font-black uppercase tracking-widest px-4 py-2 tv:px-6 tv:py-3 rounded-2xl shadow-2xl">New Adventure</span>}
+        <button className={`tv-focusable w-12 h-12 tv:w-16 tv:h-16 rounded-[1.2rem] tv:rounded-3xl backdrop-blur-3xl transition-all active:scale-90 flex items-center justify-center ${isFavorite(video) ? 'bg-red-500 text-white shadow-2xl' : 'bg-black/40 text-white border border-white/20'}`} onClick={e => { e.stopPropagation(); toggleFavorite(video); }}>
+          <Heart className={`w-6 h-6 tv:w-8 tv:h-8 ${isFavorite(video) ? 'fill-white' : 'fill-none'}`} />
         </button>
       </div>
 
@@ -320,7 +321,7 @@ function TeaserCard({ video, isFavorite, toggleFavorite, onSelect, index }) {
           {video.description || "A magical journey awaits!"}
         </p>
 
-        <button className={`w-full py-5 rounded-[2rem] font-black text-xs uppercase tracking-[0.3em] transition-all duration-500 ${isHovered ? 'bg-white text-black shadow-3xl scale-105' : 'bg-[#FF8C00]/20 text-[#FF8C00] border-2 border-[#FF8C00]/40 backdrop-blur-md'}`}>
+        <button className={`w-full py-5 tv:py-8 rounded-[2rem] font-black text-xs tv:text-lg uppercase tracking-[0.3em] transition-all duration-500 ${isHovered ? 'bg-white text-black shadow-3xl scale-105' : 'bg-[#FF8C00]/20 text-[#FF8C00] border-2 border-[#FF8C00]/40 backdrop-blur-md'}`}>
           LET'S GO!
         </button>
       </div>
