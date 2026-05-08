@@ -129,18 +129,18 @@ function VideoModal({ video, onClose, isFavorite, toggleFavorite }) {
   };
 
   return (
-    <div className="fixed inset-0 z-[100] bg-[#02060B]/98 backdrop-blur-3xl flex flex-col overflow-y-auto pl-safe pr-safe">
-      <div className="sticky top-0 w-full z-[120] flex items-center justify-between px-6 py-4 bg-gradient-to-b from-black/80 to-transparent pointer-events-none">
+    <div className="fixed inset-0 z-[100] bg-[#02060B] flex flex-col overflow-y-auto pl-safe pr-safe no-scrollbar">
+      <div className="absolute top-0 w-full z-[130] flex items-center justify-between px-6 py-6 pointer-events-none">
          <div className="pointer-events-auto">
-            <span className="bg-[#FF8C00] text-white px-4 py-1.5 rounded-2xl font-black text-[9px] tracking-widest uppercase shadow-lg">LITTLE KRISHNA</span>
+            <span className="bg-[#FF8C00] text-white px-5 py-2 rounded-2xl font-black text-[10px] tracking-widest uppercase shadow-2xl border border-white/20">LITTLE KRISHNA</span>
          </div>
-         <button onClick={onClose} className="pointer-events-auto bg-white/10 backdrop-blur-md text-white w-12 h-12 rounded-[1.5rem] flex items-center justify-center border border-white/20 hover:bg-red-500/40 transition-all active:scale-90 shadow-2xl">
-            <X className="w-6 h-6" />
+         <button onClick={onClose} className="pointer-events-auto bg-black/40 backdrop-blur-xl text-white w-14 h-14 rounded-[2rem] flex items-center justify-center border border-white/20 hover:bg-red-500/40 transition-all active:scale-90 shadow-2xl">
+            <X className="w-7 h-7" />
          </button>
       </div>
 
-      <div ref={videoRef} className="relative w-full bg-black flex-shrink-0 z-10 shadow-[0_20px_80px_rgba(0,0,0,1)]">
-        <div className="max-w-6xl mx-auto w-full aspect-video">
+      <div ref={videoRef} className="relative w-full bg-black flex-shrink-0 z-10 shadow-[0_20px_100px_rgba(0,0,0,1)]">
+        <div className="w-full aspect-video">
           <MediaPlayerHLS
             url={video.videoUrl || video.youtubeUrl || video.url}
             hlsUrl={video.hlsUrl}
@@ -150,9 +150,10 @@ function VideoModal({ video, onClose, isFavorite, toggleFavorite }) {
             controls={true}
           />
         </div>
-        <button onClick={handleFullscreen} className="absolute bottom-6 right-6 bg-[#FF8C00]/20 backdrop-blur-md text-[#FF8C00] p-4 rounded-[2rem] border border-[#FF8C00]/40 hover:bg-[#FF8C00] hover:text-white transition-all z-20 active:scale-95 shadow-2xl">
-          <Maximize className="w-6 h-6" />
+        <button onClick={handleFullscreen} className="absolute bottom-6 right-6 bg-[#FF8C00] text-white p-5 rounded-[2.2rem] border-2 border-white/30 hover:scale-110 transition-all z-20 active:scale-95 shadow-[0_15px_40px_rgba(255,140,0,0.4)]">
+          <Maximize className="w-7 h-7" />
         </button>
+        <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-transparent to-transparent pointer-events-none z-0" />
       </div>
 
       <div className="w-full min-h-screen bg-[#FFFDF5] px-6 py-12 md:p-24 relative overflow-hidden">
