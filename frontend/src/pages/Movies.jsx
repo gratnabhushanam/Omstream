@@ -289,8 +289,9 @@ function RowMovieCard({ video, onSelect }) {
         </div>
         <div className="flex items-center gap-2 text-[10px] md:text-xs text-gray-400 font-bold uppercase tracking-wider">
           <span className={video.isComingSoon ? "text-devotion-gold" : "text-green-500 font-black"}>{video.isComingSoon ? "Coming Soon" : "98% Match"}</span>
+          <span className="bg-white/5 px-1.5 py-0.5 rounded text-gray-500 border border-white/10">{video.genre || 'Divine'}</span>
           <span>{video.releaseYear || 'NEW'}</span>
-          {video.duration && <span className="border border-gray-500 px-1 rounded">{video.duration}m</span>}
+          {video.duration > 0 && <span className="border border-gray-500 px-1 rounded">{video.duration}m</span>}
         </div>
       </div>
     </div>
