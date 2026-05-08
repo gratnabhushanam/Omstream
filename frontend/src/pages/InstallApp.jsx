@@ -81,6 +81,18 @@ export default function InstallApp() {
             <ChevronRight className="w-5 h-5 relative z-10 group-hover:translate-x-1 transition-transform" />
           </button>
 
+          {/* QR Code Section for TV/Desktop -> Mobile Handoff */}
+          <div className="mt-8 pt-8 border-t border-white/10 flex flex-col items-center">
+             <div className="p-3 bg-white rounded-2xl shadow-2xl mb-4 group hover:scale-105 transition-transform duration-500">
+                <img 
+                  src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(window.location.origin)}`} 
+                  alt="Scan to open on mobile" 
+                  className="w-32 h-32"
+                />
+             </div>
+             <p className="text-[10px] font-black text-devotion-gold uppercase tracking-[0.2em]">Scan to open on Mobile</p>
+          </div>
+
           <p className="text-center text-[10px] text-gray-500 mt-6 uppercase tracking-widest leading-relaxed">
             Available for Android, iOS, Windows & Mac. <br/> Works instantly without App Store downloads.
           </p>

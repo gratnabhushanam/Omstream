@@ -35,10 +35,21 @@ const Movies = lazy(() => import('./pages/Movies'));
 const UploadReel = lazy(() => import('./pages/UploadReel'));
 const Satsangs = lazy(() => import('./pages/Satsangs'));
 const InstallApp = lazy(() => import('./pages/InstallApp'));
+const NotFound = lazy(() => import('./pages/NotFound'));
+
 
 function AppShell() {
   const location = useLocation();
-  const { user, loading } = useAuth();
+  const { user, loading: authLoading } = useAuth();
+  const [minSplashTimeReached, setMinSplashTimeReached] = useState(false);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setMinSplashTimeReached(true), 2500);
+    return () => clearTimeout(timer);
+  }, []);
+
+  const loading = authLoading || !minSplashTimeReached;
+
   const isAuthRoute = location.pathname === '/login' || location.pathname === '/register' || location.pathname === '/register/verify-otp' || location.pathname === '/forgot-password';
   const isFullScreenRoute = location.pathname.startsWith('/reels');
 
@@ -101,7 +112,7 @@ function AppShell() {
                 <Route path="/movies" element={user ? <Movies /> : <Navigate to="/login" replace />} />
                 <Route path="/upload-reel" element={user ? <UploadReel /> : <Navigate to="/login" replace />} />
                 <Route path="/admin" element={user ? <AdminDashboard /> : <Navigate to="/login" replace />} />
-                <Route path="*" element={<Navigate to={user ? '/kids' : '/login'} replace />} />
+                <Route path="*" element={<NotFound />} />
               </Routes>
             </Suspense>
           </LayoutWrapper>
