@@ -28,7 +28,7 @@ function AdminDashboardContent() {
   const [quickFillStoryId, setQuickFillStoryId] = useState(null);
   const [moderationNotes, setModerationNotes] = useState({});
   const [message, setMessage] = useState({ type: '', text: '' });
-  const [movieForm, setMovieForm] = useState({ title: '', description: '', videoUrl: '', thumbnail: '', releaseYear: 2025, ownerHistory: '', tags: '', views: 0 });
+  const [movieForm, setMovieForm] = useState({ title: '', description: '', videoUrl: '', trailerUrl: '', thumbnail: '', releaseYear: 2025, ownerHistory: '', tags: '', views: 0, isComingSoon: false });
   const [storyForm, setStoryForm] = useState({
     title: '',
     titleTelugu: '',
@@ -457,7 +457,7 @@ function AdminDashboardContent() {
   };
 
   const resetForms = () => {
-    setMovieForm({ title: '', description: '', videoUrl: '', thumbnail: '', releaseYear: 2025, ownerHistory: '', tags: '', views: 0 });
+    setMovieForm({ title: '', description: '', videoUrl: '', trailerUrl: '', thumbnail: '', releaseYear: 2025, ownerHistory: '', tags: '', views: 0, isComingSoon: false });
     setStoryForm({
       title: '',
       titleTelugu: '',
@@ -537,6 +537,7 @@ function AdminDashboardContent() {
       ownerHistory: movie.ownerHistory || '',
       tags: Array.isArray(movie.tags) ? movie.tags.join(', ') : (movie.tags || ''),
       views: movie.views || 0,
+      isComingSoon: movie.isComingSoon || false,
     });
     setShowAddModal(true);
   };
@@ -1523,6 +1524,14 @@ function AdminDashboardContent() {
                       <div className="space-y-4">
                          <label className="text-[10px] font-black uppercase tracking-widest text-devotion-gold ml-2">Initial Views (Promotion)</label>
                          <input type="number" className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-5 text-white focus:border-devotion-gold outline-none" placeholder="e.g. 5000" value={movieForm.views} onChange={e => setMovieForm({...movieForm, views: parseInt(e.target.value) || 0})} />
+                      </div>
+                      <div className="md:col-span-2 space-y-4">
+                         <label className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-devotion-gold ml-2"><LinkIcon className="w-3 h-3"/> Trailer / Teaser URL (Plays in Hero Section)</label>
+                         <input className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-5 text-white focus:border-devotion-gold outline-none" placeholder="YouTube or Direct Video URL" value={movieForm.trailerUrl} onChange={e => setMovieForm({...movieForm, trailerUrl: e.target.value})} />
+                      </div>
+                      <div className="md:col-span-2 flex items-center gap-4 bg-white/5 p-5 rounded-[2rem] border border-white/10 mb-6">
+                         <input type="checkbox" id="isComingSoon" className="w-6 h-6 accent-devotion-gold" checked={movieForm.isComingSoon} onChange={e => setMovieForm({...movieForm, isComingSoon: e.target.checked})} />
+                         <label htmlFor="isComingSoon" className="text-sm font-black uppercase tracking-widest text-white cursor-pointer">Mark as "Coming Soon" (Upcoming Movie)</label>
                       </div>
                       <div className="md:col-span-2 space-y-4">
                          <label className="text-[10px] font-black uppercase tracking-widest text-devotion-gold ml-2">Owner's Selection Insight</label>

@@ -89,20 +89,42 @@ export default function Movies() {
       {featuredMovie && (
         <div className="relative w-full h-[70vh] md:h-[85vh] tv:h-[90vh] flex items-end pb-24 md:pb-32 px-4 sm:px-6 lg:px-12 tv:px-20 pt-20">
           <div className="absolute inset-0 z-0 bg-black overflow-hidden">
-            <img 
-              src={featuredThumbUrl} 
-              alt={featuredMovie.title}
-              className="w-full h-full object-cover opacity-60 animate-subtle-zoom"
-            />
+            {featuredMovie.trailerUrl ? (
+              <div className="w-full h-full relative">
+                <MediaPlayerHLS
+                  url={featuredMovie.trailerUrl}
+                  title={featuredMovie.title}
+                  className="w-full h-full scale-[1.1] opacity-70"
+                  autoPlay={true}
+                  muted={true}
+                  loop={true}
+                  controls={false}
+                  instagramMode={true} // Minimal UI
+                />
+                <div className="absolute inset-0 bg-black/40" />
+              </div>
+            ) : (
+              <img 
+                src={featuredThumbUrl} 
+                alt={featuredMovie.title}
+                className="w-full h-full object-cover opacity-60 animate-subtle-zoom"
+              />
+            )}
+            
             {/* Elegant Gradient overlays to blend into background */}
             <div className="absolute inset-0 bg-gradient-to-t from-[#050B14] via-[#050B14]/60 to-transparent"></div>
             <div className="absolute inset-0 bg-gradient-to-r from-[#050B14] via-[#050B14]/40 to-transparent w-[70%]"></div>
           </div>
 
           <div className="relative z-10 max-w-3xl tv:max-w-5xl space-y-4 md:space-y-6 animate-fade-in-up">
-            <div className="flex items-center gap-2">
-              <Sparkles className="w-4 h-4 text-devotion-gold" />
-              <span className="text-devotion-gold font-black tracking-[0.4em] uppercase text-xs tv:text-sm">Gita Original</span>
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2">
+                <Sparkles className="w-4 h-4 text-devotion-gold" />
+                <span className="text-devotion-gold font-black tracking-[0.4em] uppercase text-xs tv:text-sm">Gita Original</span>
+              </div>
+              {featuredMovie.isComingSoon && (
+                 <span className="bg-red-600 text-white px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest shadow-xl">Upcoming</span>
+              )}
             </div>
             
             <h1 className="text-5xl md:text-7xl tv:text-[8rem] font-serif font-black text-white leading-[0.9] drop-shadow-2xl uppercase tracking-tighter">
@@ -119,7 +141,7 @@ export default function Movies() {
                 tabIndex={0}
                 className="tv-focusable focus:outline-none focus:ring-4 focus:ring-devotion-gold flex items-center justify-center gap-3 bg-white text-black px-6 py-3 md:px-8 md:py-4 tv:px-12 tv:py-5 rounded-xl font-black text-sm md:text-base tv:text-xl uppercase tracking-widest hover:bg-gray-200 transition-colors shadow-2xl active:scale-95"
               >
-                <Play className="w-5 h-5 tv:w-7 tv:h-7 fill-current" /> Play Now
+                <Play className="w-5 h-5 tv:w-7 tv:h-7 fill-current" /> {featuredMovie.isComingSoon ? 'Watch Trailer' : 'Play Now'}
               </button>
               <button 
                 onClick={() => setSelectedMovie(featuredMovie)}
@@ -258,10 +280,15 @@ function RowMovieCard({ video, onSelect }) {
           <button className="w-8 h-8 md:w-10 md:h-10 bg-white rounded-full flex items-center justify-center hover:bg-gray-200 transition-colors">
             <Play className="w-4 h-4 md:w-5 md:h-5 ml-1 text-black fill-current" />
           </button>
-          <h3 className="text-sm md:text-base font-bold text-white line-clamp-1 flex-1">{video.title}</h3>
+          <div className="flex-1">
+             <h3 className="text-sm md:text-base font-bold text-white line-clamp-1">{video.title}</h3>
+             {video.isComingSoon && (
+               <span className="text-[8px] bg-red-600 text-white px-2 py-0.5 rounded-full font-black uppercase tracking-widest mt-1 inline-block">Upcoming</span>
+             )}
+          </div>
         </div>
         <div className="flex items-center gap-2 text-[10px] md:text-xs text-gray-400 font-bold uppercase tracking-wider">
-          <span className="text-green-500 font-black">98% Match</span>
+          <span className={video.isComingSoon ? "text-devotion-gold" : "text-green-500 font-black"}>{video.isComingSoon ? "Coming Soon" : "98% Match"}</span>
           <span>{video.releaseYear || 'NEW'}</span>
           {video.duration && <span className="border border-gray-500 px-1 rounded">{video.duration}m</span>}
         </div>
@@ -289,7 +316,7 @@ function MovieModal({ movie, onClose }) {
       <div ref={videoRef} className="relative w-full bg-black flex-shrink-0 z-10 shadow-[0_20px_100px_rgba(0,0,0,1)]">
         <div className="w-full aspect-video">
           <MediaPlayerHLS
-            url={movie.videoUrl || movie.youtubeUrl || movie.url}
+            url={(movie.isComingSoon && movie.trailerUrl) ? movie.trailerUrl : (movie.videoUrl || movie.youtubeUrl || movie.url)}
             hlsUrl={movie.hlsUrl}
             title={movie.title}
             className="w-full h-full"
