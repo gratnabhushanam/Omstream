@@ -41,11 +41,17 @@ const mapVideo = (video) => {
   const commentsCount = Number(plain.commentsCount || 0);
   const sharesCount = Number(plain.sharesCount || 0);
 
+  const fixUrl = (url) => {
+    if (!url) return url;
+    // Fix the "Localhost Leak": Replace local dev server with production backend URL
+    return url.replace(/http:\/\/localhost:8888/g, 'https://gitawisdom.onrender.com');
+  };
+
   return {
     ...plain,
-    videoUrl: plain.videoUrl || plain.youtubeUrl || plain.url,
-    youtubeUrl: plain.youtubeUrl || plain.videoUrl || plain.url,
-    url: plain.videoUrl || plain.youtubeUrl || plain.url,
+    videoUrl: fixUrl(plain.videoUrl || plain.youtubeUrl || plain.url),
+    youtubeUrl: fixUrl(plain.youtubeUrl || plain.videoUrl || plain.url),
+    url: fixUrl(plain.videoUrl || plain.youtubeUrl || plain.url),
     likesCount,
     commentsCount,
     sharesCount,

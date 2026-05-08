@@ -250,7 +250,9 @@ exports.uploadUserReel = async (req, res) => {
     const { title, description } = req.body;
     if (!req.file) return res.status(400).json({ message: 'Video file required' });
 
-    const videoUrl = `${req.protocol}://${req.get('host')}/uploads/reels/${req.file.filename}`;
+    const host = req.get('host');
+    const protocol = req.protocol;
+    const videoUrl = `${protocol}://${host}/uploads/reels/${req.file.filename}`;
     const reel = await Video.create({
       title: title || 'My Reel',
       description: description || '',
