@@ -339,6 +339,8 @@ function MovieModal({ movie, onClose }) {
             <div className="flex flex-wrap items-center gap-4 mb-8">
                <span className="text-green-600 font-black text-sm uppercase tracking-widest">98% Match</span>
                <span className="text-gray-500 font-bold">{movie.releaseYear || '2025'}</span>
+               <span className="bg-devotion-gold/10 px-3 py-1 rounded-lg text-devotion-gold font-black text-xs border border-devotion-gold/20">{movie.genre || 'Divine'}</span>
+               {movie.duration > 0 && <span className="text-[#5C2B11] font-bold text-sm">{movie.duration}m</span>}
                <span className="bg-devotion-gold/10 px-3 py-1 rounded-lg text-devotion-gold font-black text-xs border border-devotion-gold/20">ULTRA HD</span>
             </div>
             
