@@ -189,6 +189,59 @@ export default function Home() {
           <HomeCard to="/mentor" badge="GITA MENTOR"  icon={Heart} title="Student Mode"    description="Krishna's solutions for stress, fear, and focus." />
           <HomeCard to="/kids"   badge="KIDS FUN!"    icon={Play}  title="Animated Stories" description="Watch & Learn with Krishna! Cartoon adventures for little heroes." isKids />
         </div>
+
+        {/* Divine Cinema Promo Section */}
+        <div className="mt-24 sm:mt-32 tv:mt-40 relative rounded-[2.5rem] tv:rounded-[4rem] overflow-hidden border border-devotion-gold/20 shadow-[0_0_100px_rgba(0,0,0,0.6)] group">
+          {/* Cinematic BG */}
+          <div className="absolute inset-0 bg-gradient-to-r from-[#050B14] via-[#0B1F3A]/80 to-[#050B14]"></div>
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(255,215,0,0.06),transparent_70%)]"></div>
+          <div className="absolute right-0 top-0 bottom-0 w-1/2 pointer-events-none opacity-30"
+               style={{ background: 'linear-gradient(to left, rgba(255,215,0,0.08), transparent)' }}>
+          </div>
+
+          <div className="relative z-10 p-8 sm:p-14 tv:p-20 flex flex-col md:flex-row items-center gap-10 md:gap-14">
+            {/* Left: Text */}
+            <div className="flex-1 space-y-5">
+              <div className="flex items-center gap-3">
+                <Film className="w-5 h-5 text-devotion-gold" />
+                <span className="text-devotion-gold font-black uppercase tracking-[0.4em] text-xs tv:text-sm">Divine Cinema</span>
+              </div>
+              <h2 className="text-4xl sm:text-5xl tv:text-7xl font-serif font-black text-white uppercase tracking-tight leading-[0.9]">
+                Watch Sacred<br />
+                <span className="text-devotion-gold italic font-light">Stories</span>
+              </h2>
+              <p className="text-gray-400 text-base sm:text-lg tv:text-2xl font-light leading-relaxed max-w-lg">
+                Stream divine narratives, epics, and spiritual documentaries. Bhagavad Gita, Ramayana, Mahabharat — all in one place.
+              </p>
+              <div className="flex flex-wrap gap-3 pt-2">
+                {['Bhagavad Gita', 'Ramayana', 'Mahabharat', 'Coming Soon'].map(tag => (
+                  <span key={tag} className="text-[10px] tv:text-xs font-black uppercase tracking-widest bg-white/5 border border-white/10 px-4 py-1.5 rounded-full text-gray-400">
+                    {tag}
+                  </span>
+                ))}
+              </div>
+              <Link
+                to="/movies"
+                className="group tv-focusable inline-flex items-center gap-3 bg-gradient-to-r from-devotion-gold to-[#FFB800] text-devotion-darkBlue px-8 py-4 tv:px-12 tv:py-5 rounded-2xl font-black text-sm tv:text-lg uppercase tracking-widest hover:scale-105 transition-all shadow-[0_10px_30px_rgba(255,215,0,0.2)] mt-2"
+              >
+                <Play className="w-5 h-5 tv:w-6 tv:h-6 fill-current" />
+                Enter Divine Cinema
+                <ArrowRight className="w-4 h-4 tv:w-5 tv:h-5 group-hover:translate-x-1 transition-transform" />
+              </Link>
+            </div>
+
+            {/* Right: Visual */}
+            <div className="flex-shrink-0 flex items-center justify-center w-48 h-48 sm:w-56 sm:h-56 tv:w-72 tv:h-72 relative">
+              <div className="absolute inset-0 rounded-full bg-devotion-gold/5 border border-devotion-gold/20 animate-pulse"></div>
+              <div className="absolute inset-4 rounded-full bg-devotion-gold/5 border border-devotion-gold/10"></div>
+              <img
+                src="/logo-om-v2.png"
+                alt="Divine Cinema"
+                className="relative z-10 w-28 h-28 sm:w-36 sm:h-36 tv:w-48 tv:h-48 object-contain drop-shadow-[0_0_30px_rgba(255,215,0,0.5)] group-hover:scale-110 transition-transform duration-700"
+              />
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );
