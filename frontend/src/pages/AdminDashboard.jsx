@@ -1769,7 +1769,7 @@ function AdminDashboardContent() {
                            setVideoForm((prev) => ({
                              ...prev,
                              category: selectedCategory,
-                             isKids: selectedCategory === 'animated' ? true : prev.isKids,
+                             isKids: selectedCategory === 'animated' ? true : false,
                            }));
                          }}>
                             <option value="reels" className="bg-[#0B1F3A]">Wisdom Reel</option>
