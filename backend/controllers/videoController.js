@@ -239,11 +239,7 @@ exports.toggleSaveReel = async (req, res) => {
   }
 };
 
-    res.json(videos.map(mapVideo));
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-};
+
 
 exports.uploadUserReel = async (req, res) => {
   try {
