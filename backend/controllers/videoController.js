@@ -66,7 +66,7 @@ exports.getKidsVideos = async (req, res) => {
     const kidsVideos = await Video.find({
       isKids: true,
       moderationStatus: 'approved',
-    }).sort({ createdAt: -1 });
+    }).sort({ views: -1, createdAt: -1 });
     res.json(kidsVideos.map(mapVideo));
   } catch (error) {
     res.status(500).json({ message: error.message });

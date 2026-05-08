@@ -1,21 +1,20 @@
 import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Play, Star, BookOpen, X, Sparkles, Heart, BrainCircuit, Maximize, ChevronRight } from 'lucide-react';
+import { Play, Star, BookOpen, X, Sparkles, Heart, BrainCircuit, Maximize, ChevronRight, ChevronLeft, Info } from 'lucide-react';
 import MediaPlayerHLS from '../components/MediaPlayerHLS';
 
 export default function KidsMode() {
     const location = useLocation();
+    const navigate = useNavigate();
     const [videos, setVideos] = useState([]);
-    const [, setLoading] = useState(true);
+    const [loading, setLoading] = useState(true);
     const [selectedVideo, setSelectedVideo] = useState(null);
+    const [featuredVideo, setFeaturedVideo] = useState(null);
 
     const [favorites, setFavorites] = useState(() => {
-      try {
-        return JSON.parse(localStorage.getItem('kidsFavorites') || '[]');
-      } catch {
-        return [];
-      }
+      try { return JSON.parse(localStorage.getItem('kidsFavorites') || '[]'); } 
+      catch { return []; }
     });
 
     const isFavorite = (video) => favorites.includes(video._id || video.id);
@@ -31,67 +30,124 @@ export default function KidsMode() {
     useEffect(() => {
       setLoading(true);
       axios.get('/api/videos/kids')
-        .then(res => setVideos(Array.isArray(res.data) ? res.data : []))
+        .then(res => {
+           const fetched = Array.isArray(res.data) ? res.data : [];
+           setVideos(fetched);
+           if (fetched.length > 0) setFeaturedVideo(fetched[0]);
+        })
         .catch(() => setVideos([]))
         .finally(() => setLoading(false));
     }, [location]);
 
+    if (loading) return (
+      <div className="min-h-screen flex items-center justify-center bg-[#020610]">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-[#FF8C00]"></div>
+      </div>
+    );
+
+    // Group by tags for swimlanes
+    const rows = {};
+    videos.forEach(video => {
+      const categories = video.tags && video.tags.length > 0 ? video.tags : ['Magical Tales'];
+      categories.forEach(cat => {
+        const catName = cat.charAt(0).toUpperCase() + cat.slice(1);
+        if (!rows[catName]) rows[catName] = [];
+        if (!rows[catName].find(v => v._id === video._id)) rows[catName].push(video);
+      });
+    });
+
+    if (Object.keys(rows).length === 0 && videos.length > 0) {
+      rows['All Adventures'] = [...videos];
+    }
+
+    const extractYoutubeId = (url) => {
+      if (!url) return null;
+      const match = url.match(/[?&]v=([^&]+)/) || url.match(/youtu\.be\/([^?]+)/);
+      return match ? match[1] : null;
+    };
+
+    const featuredYtId = featuredVideo ? extractYoutubeId(featuredVideo.videoUrl || featuredVideo.youtubeUrl || featuredVideo.url || '') : null;
+    const featuredThumbUrl = featuredVideo ? (featuredVideo.thumbnail || featuredVideo.thumbnailUrl || (featuredYtId ? `https://img.youtube.com/vi/${featuredYtId}/maxresdefault.jpg` : '/scene-krishna.svg')) : '';
+
     return (
-      <div className="min-h-[100dvh] bg-[#020610] pt-20 landscape:pt-14 md:pt-28 pb-32 px-4 sm:px-6 lg:px-8 text-white overflow-y-auto overflow-x-hidden relative pl-safe pr-safe">
+      <div className="min-h-[100dvh] bg-[#020610] text-white overflow-y-auto overflow-x-hidden relative pl-safe pr-safe">
         <style>{`
+          .hide-scrollbar::-webkit-scrollbar { display: none; }
+          .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
           @keyframes float-krishna { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-20px)} }
           .animate-float-krishna { animation: float-krishna 6s ease-in-out infinite; }
           @keyframes sparkle { 0%,100%{opacity:.2} 50%{opacity:.4} }
           .animate-sparkle { animation: sparkle 3s ease-in-out infinite; }
-          @media (orientation:landscape) and (max-width:1024px) {
-            .kids-landscape-header { display:none !important; }
-            .kids-landscape-mini { display:flex !important; }
-            .kids-grid { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; }
-          }
-          .kids-landscape-mini { display:none; }
+          @keyframes subtle-zoom { 0% { transform: scale(1); } 100% { transform: scale(1.05); } }
+          .animate-subtle-zoom { animation: subtle-zoom 20s infinite alternate ease-in-out; }
         `}</style>
 
-        {/* Background Layers */}
-        <div className="absolute inset-0 bg-[#020610] z-0"></div>
         <div className="absolute inset-0 pointer-events-none z-0 bg-[radial-gradient(circle_at_top_right,rgba(255,180,0,0.12),transparent_50%),radial-gradient(circle_at_bottom_left,rgba(0,100,200,0.25),transparent_60%)]"></div>
-        
         <div className="pointer-events-none absolute inset-0 z-10 animate-sparkle bg-[url('/sparkles.svg')] opacity-20" />
 
-        {/* Playful Header */}
-        <div className="kids-landscape-header relative z-20 max-w-4xl mx-auto text-center mb-16 animate-fade-in-up">
-          <div className="inline-flex items-center gap-3 px-6 py-2 rounded-full border-2 border-devotion-gold/30 bg-devotion-gold/10 text-devotion-gold text-[10px] font-black tracking-[0.4em] uppercase mb-8 shadow-2xl">
-            <Sparkles className="w-5 h-5 animate-spin-slow" /> Little Krishna World
+        {/* Netflix-style Hero Banner (Kids Theme) */}
+        {featuredVideo && (
+          <div className="relative w-full h-[70vh] md:h-[85vh] tv:h-[90vh] flex items-end pb-24 md:pb-32 px-4 sm:px-6 lg:px-12 tv:px-20 pt-20">
+            <div className="absolute inset-0 z-0 bg-[#020610] overflow-hidden">
+              <img 
+                src={featuredThumbUrl} 
+                alt={featuredVideo.title}
+                className="w-full h-full object-cover opacity-70 animate-subtle-zoom"
+              />
+              {/* Vibrant Gradients */}
+              <div className="absolute inset-0 bg-gradient-to-t from-[#020610] via-[#020610]/60 to-transparent"></div>
+              <div className="absolute inset-0 bg-gradient-to-r from-[#020610] via-[#020610]/40 to-transparent w-[70%]"></div>
+            </div>
+
+            <div className="relative z-10 max-w-3xl tv:max-w-5xl space-y-4 md:space-y-6 animate-fade-in-up">
+              <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border-2 border-devotion-gold/30 bg-devotion-gold/20 text-devotion-gold text-[10px] font-black tracking-[0.4em] uppercase shadow-2xl">
+                <Sparkles className="w-4 h-4 animate-spin-slow" /> Little Krishna
+              </div>
+              
+              <h1 className="text-5xl md:text-7xl tv:text-[8rem] font-serif font-black text-transparent bg-clip-text bg-gradient-to-r from-[#FFD700] via-white to-[#FFD700] leading-[0.9] drop-shadow-[0_10px_40px_rgba(255,215,0,0.4)] uppercase tracking-tighter">
+                {featuredVideo.title}
+              </h1>
+              
+              <p className="text-sm md:text-lg tv:text-2xl text-gray-200 line-clamp-3 md:line-clamp-4 font-serif italic max-w-2xl drop-shadow-lg leading-relaxed">
+                {featuredVideo.description || 'Step into a world of magic and ancient wisdom!'}
+              </p>
+
+              <div className="flex items-center gap-4 pt-4">
+                <button 
+                  onClick={() => setSelectedVideo(featuredVideo)}
+                  tabIndex={0}
+                  className="tv-focusable focus:outline-none focus:ring-4 focus:ring-[#FF8C00] flex items-center justify-center gap-3 bg-gradient-to-r from-[#FF8C00] to-[#FF4500] text-white px-6 py-3 md:px-8 md:py-4 tv:px-12 tv:py-5 rounded-xl font-black text-sm md:text-base tv:text-xl uppercase tracking-widest hover:scale-105 transition-all shadow-[0_15px_30px_rgba(255,140,0,0.4)] active:scale-95"
+                >
+                  <Play className="w-5 h-5 tv:w-7 tv:h-7 fill-current" /> Play Now
+                </button>
+                <button 
+                  onClick={() => setSelectedVideo(featuredVideo)}
+                  tabIndex={0}
+                  className="tv-focusable focus:outline-none focus:ring-4 focus:ring-[#FF8C00] flex items-center justify-center gap-3 bg-white/10 backdrop-blur-md border-2 border-[#FF8C00]/50 text-white px-6 py-3 md:px-8 md:py-4 tv:px-12 tv:py-5 rounded-xl font-black text-sm md:text-base tv:text-xl uppercase tracking-widest hover:bg-white/20 transition-all shadow-2xl active:scale-95"
+                >
+                  <Info className="w-5 h-5 tv:w-7 tv:h-7" /> More Info
+                </button>
+              </div>
+            </div>
           </div>
-          <h1 className="text-6xl md:text-9xl tv:text-[10rem] font-serif font-black text-transparent bg-clip-text bg-gradient-to-r from-[#FFD700] via-white to-[#FFD700] drop-shadow-[0_10px_40px_rgba(255,215,0,0.4)] mb-6 uppercase tracking-tight leading-none">
-             Divine <span className="italic font-light tracking-normal opacity-90">Kids</span>
-          </h1>
-          <p className="text-xl md:text-3xl text-gray-200 font-serif italic max-w-2xl mx-auto leading-relaxed">
-            "Magical stories of courage and wisdom for young souls."
-          </p>
-        </div>
+        )}
 
-        {/* Header - Landscape Mini */}
-        <div className="kids-landscape-mini items-center gap-3 mb-6 relative z-20 bg-black/50 backdrop-blur-xl p-4 rounded-3xl border border-white/10 sticky top-2 shadow-2xl">
-          <Star className="w-5 h-5 text-devotion-gold fill-devotion-gold" />
-          <span className="text-devotion-gold font-black text-xs uppercase tracking-widest">Little Krishna</span>
-          <ChevronRight className="w-4 h-4 text-white/30" />
-          <span className="text-white/50 text-[10px] font-bold uppercase tracking-widest">{videos.length} ADVENTURES</span>
-        </div>
-
-        {/* Video Grid */}
-        <div className="kids-grid relative max-w-[1920px] mx-auto grid grid-cols-1 landscape:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 md:gap-12 pb-24">
-          {videos.map((video, index) => (
-            <TeaserCard
-              key={video._id || video.id || index}
-              video={video}
-              index={index}
+        <div className="relative z-10 pb-32 -mt-10 md:-mt-20 tv:-mt-32">
+          {/* Horizontal Rows */}
+          {Object.entries(rows).map(([category, categoryVideos], index) => (
+            <VideoRow 
+              key={category} 
+              title={category} 
+              videos={categoryVideos} 
+              onSelect={setSelectedVideo} 
               isFavorite={isFavorite}
               toggleFavorite={toggleFavorite}
-              onSelect={setSelectedVideo}
+              index={index}
             />
           ))}
+
           {videos.length === 0 && (
-            <div className="col-span-full bg-white/5 backdrop-blur-3xl p-32 rounded-[4rem] border border-devotion-gold/20 text-center shadow-2xl">
+            <div className="bg-white/5 backdrop-blur-3xl p-20 rounded-[4rem] border border-devotion-gold/20 text-center shadow-2xl mx-4 md:mx-12 mt-12">
               <Sparkles className="w-20 h-20 text-devotion-gold mx-auto mb-8 opacity-20 animate-pulse" />
               <p className="text-3xl font-serif text-devotion-gold mb-4 italic">The divine flute is playing...</p>
               <p className="text-gray-400 text-lg font-light">Krishna is curating new adventures just for you.</p>
@@ -105,14 +161,104 @@ export default function KidsMode() {
             onClose={() => setSelectedVideo(null)}
             isFavorite={isFavorite}
             toggleFavorite={toggleFavorite}
+            navigate={navigate}
           />
         )}
       </div>
     );
 }
 
-function VideoModal({ video, onClose, isFavorite, toggleFavorite }) {
-  const navigate = useNavigate();
+function VideoRow({ title, videos, onSelect, isFavorite, toggleFavorite, index }) {
+  const scrollRef = useRef(null);
+
+  const scroll = (direction) => {
+    if (scrollRef.current) {
+      const { clientWidth } = scrollRef.current;
+      const scrollAmount = direction === 'left' ? -clientWidth + 100 : clientWidth - 100;
+      scrollRef.current.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+    }
+  };
+
+  return (
+    <div className="mb-10 md:mb-16 tv:mb-20">
+      <div className="px-4 md:px-12 tv:px-20 mb-4 flex items-center justify-between group">
+        <h2 className="text-xl md:text-2xl tv:text-4xl font-bold text-white capitalize flex items-center gap-2 transition-colors group-hover:text-[#FF8C00]">
+          {title} <ChevronRight className="w-5 h-5 opacity-0 group-hover:opacity-100 transition-opacity translate-x-[-10px] group-hover:translate-x-0" />
+        </h2>
+      </div>
+      
+      <div className="relative group/row">
+        <button onClick={() => scroll('left')} className="hidden md:flex absolute left-0 top-0 bottom-0 z-20 w-16 bg-gradient-to-r from-[#020610] to-transparent items-center justify-center opacity-0 group-hover/row:opacity-100 transition-opacity hover:from-[#020610]/90">
+          <ChevronLeft className="w-10 h-10 text-white hover:scale-125 transition-transform" />
+        </button>
+        <button onClick={() => scroll('right')} className="hidden md:flex absolute right-0 top-0 bottom-0 z-20 w-16 bg-gradient-to-l from-[#020610] to-transparent items-center justify-center opacity-0 group-hover/row:opacity-100 transition-opacity hover:from-[#020610]/90">
+          <ChevronRight className="w-10 h-10 text-white hover:scale-125 transition-transform" />
+        </button>
+
+        <div ref={scrollRef} className="flex overflow-x-auto overflow-y-visible hide-scrollbar px-4 md:px-12 tv:px-20 gap-4 tv:gap-6 py-6 snap-x snap-mandatory">
+          {videos.map((video) => (
+            <div key={video._id || video.id} className="snap-start shrink-0">
+              <RowTeaserCard video={video} onSelect={onSelect} isFavorite={isFavorite} toggleFavorite={toggleFavorite} />
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function RowTeaserCard({ video, onSelect, isFavorite, toggleFavorite }) {
+  const [isHovered, setIsHovered] = useState(false);
+  const hoverTimeoutRef = useRef(null);
+
+  const handleMouseEnter = () => { setIsHovered(true); };
+  const handleMouseLeave = () => { setIsHovered(false); };
+
+  const ytId = ((url) => { 
+    if (!url) return null;
+    const match = url.match(/[?&]v=([^&]+)/) || url.match(/youtu\.be\/([^?]+)/); 
+    return match ? match[1] : null; 
+  })(video.videoUrl || video.youtubeUrl || video.url || '');
+  
+  const thumbUrl = video.thumbnail || video.thumbnailUrl || (ytId ? `https://img.youtube.com/vi/${ytId}/maxresdefault.jpg` : '/krishna-line-art.svg');
+
+  return (
+    <div
+      tabIndex={0}
+      className="relative cursor-pointer group rounded-2xl md:rounded-3xl tv:rounded-[2.5rem] overflow-hidden shadow-xl border border-white/5 bg-[#0A1220]
+                 w-[280px] h-[160px] md:w-[320px] md:h-[180px] tv:w-[480px] tv:h-[270px]
+                 transition-all duration-500 ease-out tv-focusable focus:outline-none focus:ring-4 focus:ring-[#FF8C00] z-10 hover:z-30 hover:scale-[1.15] hover:shadow-[0_20px_50px_rgba(255,140,0,0.3)] origin-center"
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+      onClick={() => onSelect(video)}
+    >
+      <div className="absolute inset-0 bg-black">
+        <img src={thumbUrl} alt={video.title} loading="lazy" className="w-full h-full object-cover opacity-80" />
+        <div className={`absolute inset-0 bg-gradient-to-t from-[#020610] via-[#020610]/40 to-transparent z-10 transition-opacity duration-300 ${isHovered ? 'opacity-100' : 'opacity-0'}`}></div>
+      </div>
+
+      {/* Favorite Button */}
+      <button className={`absolute top-3 right-3 tv:top-5 tv:right-5 z-40 w-8 h-8 tv:w-12 tv:h-12 rounded-full backdrop-blur-md transition-all flex items-center justify-center ${isFavorite(video) ? 'bg-red-500 text-white shadow-xl' : 'bg-black/40 text-white border border-white/20 hover:bg-white/20'}`} onClick={e => { e.stopPropagation(); toggleFavorite(video); }}>
+        <Heart className={`w-4 h-4 tv:w-6 tv:h-6 ${isFavorite(video) ? 'fill-white' : 'fill-none'}`} />
+      </button>
+
+      <div className={`absolute inset-0 p-4 md:p-6 z-20 flex flex-col justify-end transition-opacity duration-300 ${isHovered ? 'opacity-100' : 'opacity-0'}`}>
+        <div className="flex items-center gap-3 mb-2">
+          <button className="w-8 h-8 md:w-10 md:h-10 bg-[#FF8C00] rounded-full flex items-center justify-center hover:scale-110 transition-transform shadow-lg">
+            <Play className="w-4 h-4 md:w-5 md:h-5 ml-1 text-white fill-current" />
+          </button>
+          <h3 className="text-sm md:text-base font-black text-white line-clamp-1 flex-1">{video.title}</h3>
+        </div>
+        <div className="flex items-center gap-2 text-[10px] md:text-xs text-gray-300 font-bold uppercase tracking-wider">
+          <span className="text-[#FFD700] font-black">Magical!</span>
+          {video.duration && <span className="border border-gray-500 px-1 rounded">{video.duration}m</span>}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function VideoModal({ video, onClose, isFavorite, toggleFavorite, navigate }) {
   const videoRef = useRef(null);
 
   const handleTakeQuiz = () => { onClose(); navigate(video.quizSetId ? `/quiz?setId=${video.quizSetId}` : '/quizzes'); };
@@ -129,7 +275,7 @@ function VideoModal({ video, onClose, isFavorite, toggleFavorite }) {
   };
 
   return (
-    <div className="fixed inset-0 z-[100] bg-[#02060B] flex flex-col overflow-y-auto pl-safe pr-safe no-scrollbar">
+    <div className="fixed inset-0 z-[100] bg-[#02060B] flex flex-col overflow-y-auto pl-safe pr-safe no-scrollbar animate-in fade-in zoom-in duration-300">
       <div className="absolute top-0 w-full z-[130] flex items-center justify-between px-6 py-6 pointer-events-none">
          <div className="pointer-events-auto">
             <span className="bg-[#FF8C00] text-white px-5 py-2 rounded-2xl font-black text-[10px] tracking-widest uppercase shadow-2xl border border-white/20">LITTLE KRISHNA</span>
@@ -150,9 +296,6 @@ function VideoModal({ video, onClose, isFavorite, toggleFavorite }) {
             controls={true}
           />
         </div>
-        <button onClick={handleFullscreen} className="tv-focusable absolute bottom-6 right-6 tv:bottom-10 tv:right-10 bg-[#FF8C00] text-white p-5 tv:p-8 rounded-[2.2rem] border-2 border-white/30 hover:scale-110 transition-all z-20 active:scale-95 shadow-[0_15px_40px_rgba(255,140,0,0.4)]">
-          <Maximize className="w-7 h-7 tv:w-10 tv:h-10" />
-        </button>
         <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-transparent to-transparent pointer-events-none z-0" />
       </div>
 
@@ -239,92 +382,6 @@ function ReadAlong({ script }) {
           <span key={idx} className={`cursor-pointer transition-all px-3 py-1 rounded-2xl inline-block ${highlighted.includes(idx) ? 'bg-[#FF8C00] text-white font-black shadow-2xl scale-110 rotate-1' : 'hover:bg-orange-100'}`} onClick={() => handleWordClick(idx)}>{word}</span>
         ) : word)}
       </p>
-    </div>
-  );
-}
-
-function TeaserCard({ video, isFavorite, toggleFavorite, onSelect, index }) {
-  const [isHovered, setIsHovered] = useState(false);
-  const [isDesktop, setIsDesktop] = useState(false);
-  const [showVideo, setShowVideo] = useState(false);
-  const hoverTimeoutRef = useRef(null);
-
-  useEffect(() => {
-    setIsDesktop(window.innerWidth > 1024);
-    const handleResize = () => setIsDesktop(window.innerWidth > 1024);
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
-
-  const handleMouseEnter = () => { setIsHovered(true); if (isDesktop) hoverTimeoutRef.current = setTimeout(() => setShowVideo(true), 800); };
-  const handleMouseLeave = () => { setIsHovered(false); setShowVideo(false); clearTimeout(hoverTimeoutRef.current); };
-
-  const ytId = ((url) => { 
-    if (!url) return null;
-    const match = url.match(/[?&]v=([^&]+)/) || url.match(/youtu\.be\/([^?]+)/); 
-    return match ? match[1] : null; 
-  })(video.videoUrl || video.youtubeUrl || video.url || '');
-  
-  const thumbUrl = video.thumbnail || video.thumbnailUrl || (ytId ? `https://img.youtube.com/vi/${ytId}/maxresdefault.jpg` : '/krishna-line-art.svg');
-
-  return (
-    <div
-      tabIndex={0}
-      className="relative cursor-pointer group rounded-[3.5rem] overflow-hidden shadow-2xl border border-white/5
-                 h-[480px] sm:h-[540px] md:h-[620px] tv:h-[750px]
-                 transition-all duration-300 ease-out preserve-3d tv-focusable focus:outline-none focus:ring-4 focus:ring-devotion-gold"
-      onClick={() => onSelect(video)}
-      onMouseEnter={handleMouseEnter}
-      onMouseLeave={handleMouseLeave}
-      onMouseMove={(e) => {
-        const card = e.currentTarget;
-        const rect = card.getBoundingClientRect();
-        const x = e.clientX - rect.left;
-        const y = e.clientY - rect.top;
-        const centerX = rect.width / 2;
-        const centerY = rect.height / 2;
-        const rotateX = ((y - centerY) / centerY) * -10;
-        const rotateY = ((x - centerX) / centerX) * 10;
-        card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale3d(1.02, 1.02, 1.02)`;
-      }}
-      onMouseOut={(e) => {
-        e.currentTarget.style.transform = 'perspective(1000px) rotateX(0) rotateY(0) scale3d(1, 1, 1)';
-      }}
-    >
-      <div className="absolute inset-0 bg-black">
-        <img src={thumbUrl} alt={video.title} className={`w-full h-full object-cover opacity-80 transition-transform duration-[2s] ease-out ${isHovered ? 'scale-110' : 'scale-100'}`} />
-        {showVideo && ytId && (
-          <div className="absolute inset-0 z-10 bg-black animate-fade-in duration-1000">
-            <iframe src={`https://www.youtube.com/embed/${ytId}?autoplay=1&mute=1&controls=0&modestbranding=1&rel=0&loop=1&playlist=${ytId}`} className="w-full h-[140%] -translate-y-[15%] object-cover pointer-events-none opacity-80" frameBorder="0" title="Teaser" />
-          </div>
-        )}
-        <div className="absolute inset-0 bg-gradient-to-t from-[#020610] via-transparent to-transparent z-20 group-hover:from-[#020610]/90 transition-all duration-500"></div>
-      </div>
-
-      <div className="absolute top-8 left-8 right-8 z-30 flex justify-between items-center">
-        {index < 2 && <span className="bg-[#FF8C00] text-white text-[10px] tv:text-sm font-black uppercase tracking-widest px-4 py-2 tv:px-6 tv:py-3 rounded-2xl shadow-2xl">New Adventure</span>}
-        <button className={`tv-focusable w-12 h-12 tv:w-16 tv:h-16 rounded-[1.2rem] tv:rounded-3xl backdrop-blur-3xl transition-all active:scale-90 flex items-center justify-center ${isFavorite(video) ? 'bg-red-500 text-white shadow-2xl' : 'bg-black/40 text-white border border-white/20'}`} onClick={e => { e.stopPropagation(); toggleFavorite(video); }}>
-          <Heart className={`w-6 h-6 tv:w-8 tv:h-8 ${isFavorite(video) ? 'fill-white' : 'fill-none'}`} />
-        </button>
-      </div>
-
-      <div className="absolute inset-x-0 bottom-0 p-10 z-30 flex flex-col items-center text-center">
-        <div className={`w-20 h-20 bg-white/10 backdrop-blur-3xl rounded-[2rem] flex items-center justify-center border border-white/20 mb-8 transition-all duration-700 ${isHovered ? 'bg-[#FF8C00] text-white border-[#FF8C00] scale-110 rotate-[15deg] shadow-[0_0_60px_rgba(255,140,0,0.5)]' : 'text-[#FF8C00]'}`}>
-           <Play className="w-10 h-10 ml-1.5 fill-current" />
-        </div>
-        
-        <h3 className="text-3xl md:text-5xl font-serif font-black text-white mb-4 leading-none tracking-tighter uppercase drop-shadow-2xl" style={{ transform: 'translateZ(50px)' }}>
-          {video.title}
-        </h3>
-        
-        <p className="text-gray-300 font-serif italic text-lg mb-10 line-clamp-2 opacity-0 group-hover:opacity-90 transition-all duration-700 translate-y-8 group-hover:translate-y-0">
-          {video.description || "A magical journey awaits!"}
-        </p>
-
-        <button className={`w-full py-5 tv:py-8 rounded-[2rem] font-black text-xs tv:text-lg uppercase tracking-[0.3em] transition-all duration-500 ${isHovered ? 'bg-white text-black shadow-3xl scale-105' : 'bg-[#FF8C00]/20 text-[#FF8C00] border-2 border-[#FF8C00]/40 backdrop-blur-md'}`}>
-          LET'S GO!
-        </button>
-      </div>
     </div>
   );
 }
