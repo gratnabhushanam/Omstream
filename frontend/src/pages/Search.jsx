@@ -104,7 +104,12 @@ export default function Search() {
          <div className="flex justify-between items-start mb-4">
             <div className="flex items-center gap-3">
                <div className="p-2 bg-white/5 rounded-lg">{icon}</div>
-               <span className="text-[10px] uppercase font-black tracking-widest text-gray-500">{type}</span>
+               <div className="flex flex-col">
+                  <span className="text-[10px] uppercase font-black tracking-widest text-gray-500">{type}</span>
+                  {type === 'movie' && item.isComingSoon && (
+                    <span className="text-[8px] bg-devotion-gold/10 text-devotion-gold px-2 py-0.5 rounded-full font-black uppercase tracking-tighter border border-devotion-gold/30 mt-1">Coming Soon</span>
+                  )}
+               </div>
             </div>
             <ExternalLink className="w-4 h-4 text-gray-600 group-hover:text-devotion-gold" />
          </div>
