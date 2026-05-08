@@ -70,3 +70,39 @@
   transform-style: preserve-3d;
 }
 
+/* TV & Spatial Navigation Utilities */
+.tv-focusable {
+  outline: none !important;
+  transition: all 0.3s cubic-bezier(0.19, 1, 0.22, 1);
+}
+
+.tv-focusable:focus {
+  transform: scale(1.08) translateZ(50px) !important;
+  box-shadow: 0 0 50px rgba(255, 215, 0, 0.4) !important;
+  border-color: #FFD700 !important;
+  background-color: rgba(255, 215, 0, 0.1) !important;
+  z-index: 50;
+}
+
+/* Larger Text for TV screens */
+@media (min-width: 2560px) {
+  .tv-text-4xl { font-size: 6rem; line-height: 1; }
+  .tv-text-2xl { font-size: 4rem; line-height: 1.1; }
+  .tv-text-xl { font-size: 3rem; line-height: 1.2; }
+  .tv-p-10 { padding: 5rem; }
+  .tv-gap-10 { gap: 5rem; }
+}
+
+/* Smooth Scrolling for TV Lists */
+.tv-scroll-container {
+  display: flex;
+  overflow-x: auto;
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+
+.tv-scroll-container::-webkit-scrollbar {
+  display: none;
+}
+
