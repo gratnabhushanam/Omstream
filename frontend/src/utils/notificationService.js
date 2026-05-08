@@ -128,7 +128,7 @@ export const registerServiceWorker = async () => {
   }
 
   try {
-    const registration = await navigator.serviceWorker.register('/service-worker.js');
+    const registration = await navigator.serviceWorker.register('/sw.js');
     console.log('Service Worker registered:', registration);
     return registration;
   } catch (error) {
@@ -189,8 +189,7 @@ export const subscribeUserToPush = async () => {
     
     if (!subscription) {
       // Subscribe using the public VAPID key
-      // Ideally fetched from backend, but hardcoded here based on the env
-      const publicVapidKey = 'BDMaeaDKARXaDrXdmeBkdcq4880r8vx3QTqj114DTOBqgddw9xOJC3gL73-fzce95JLRo__t2GYNQrl1ctK1LIk';
+      const publicVapidKey = import.meta.env.VITE_VAPID_PUBLIC_KEY || 'BDMaeaDKARXaDrXdmeBkdcq4880r8vx3QTqj114DTOBqgddw9xOJC3gL73-fzce95JLRo__t2GYNQrl1ctK1LIk';
       
       subscription = await registration.pushManager.subscribe({
         userVisibleOnly: true,

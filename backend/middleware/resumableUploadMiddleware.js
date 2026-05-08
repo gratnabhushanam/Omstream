@@ -40,32 +40,41 @@ function resumableUploadMiddleware(req, res, next) {
   
   writeStream.on('finish', () => {
     // If last chunk, assemble file
-    if (chunkIndex === totalChunks - 1) {
-      const finalPath = path.join(targetReelsDir, fileName);
-      const outStream = fs.createWriteStream(finalPath);
-      
-      outStream.on('error', (err) => {
-        console.error('File assembly stream error:', err);
-        return res.status(500).json({ message: 'File assembly error', error: err.message });
-      });
+      // Assembly using non-blocking async streams
+      const assembleChunks = async () => {
+        try {
+          const finalPath = path.join(targetReelsDir, fileName);
+          const outStream = fs.createWriteStream(finalPath);
 
-      try {
-        for (let i = 0; i < totalChunks; i++) {
-          const chunk = fs.readFileSync(path.join(uploadDir, `chunk_${i}`));
-          outStream.write(chunk);
+          for (let i = 0; i < totalChunks; i++) {
+            const chunkPath = path.join(uploadDir, `chunk_${i}`);
+            await new Promise((resolve, reject) => {
+              const inStream = fs.createReadStream(chunkPath);
+              inStream.pipe(outStream, { end: false });
+              inStream.on('end', resolve);
+              inStream.on('error', reject);
+            });
+          }
+          
+          outStream.end();
+          
+          await new Promise((resolve, reject) => {
+            outStream.on('finish', resolve);
+            outStream.on('error', reject);
+          });
+
+          // Cleanup
+          fs.rmSync(uploadDir, { recursive: true, force: true });
+          
+          req.resumableUpload = { filePath: finalPath, fileName };
+          next();
+        } catch (error) {
+          console.error('File assembly stream error:', error);
+          res.status(500).json({ message: 'File assembly error', error: error.message });
         }
-        outStream.end();
-      } catch (appendErr) {
-        console.error('Error assembling chunks:', appendErr);
-        return res.status(500).json({ message: 'Failed to read chunks', error: appendErr.message });
-      }
-      
-      outStream.on('finish', () => {
-        // Cleanup
-        try { fs.rmSync(uploadDir, { recursive: true, force: true }); } catch(err){}
-        req.resumableUpload = { filePath: finalPath, fileName };
-        next();
-      });
+      };
+
+      assembleChunks();
     } else {
       res.status(200).json({ message: 'Chunk uploaded' });
     }
@@ -75,5 +84,24 @@ function resumableUploadMiddleware(req, res, next) {
     res.status(500).json({ message: 'Chunk write error', error: err.message });
   });
 }
+
+// Abandoned chunk cleanup daemon (runs every 12 hours)
+setInterval(() => {
+  try {
+    const folders = fs.readdirSync(defaultChunkDir);
+    const now = Date.now();
+    for (const folder of folders) {
+      const folderPath = path.join(defaultChunkDir, folder);
+      const stat = fs.statSync(folderPath);
+      // Delete chunk folders older than 24 hours
+      if (now - stat.mtimeMs > 24 * 60 * 60 * 1000) {
+        fs.rmSync(folderPath, { recursive: true, force: true });
+        console.log(`[CLEANUP] Deleted abandoned upload chunks: ${folder}`);
+      }
+    }
+  } catch (err) {
+    console.error('Upload chunk cleanup failed:', err);
+  }
+}, 12 * 60 * 60 * 1000);
 
 module.exports = resumableUploadMiddleware;

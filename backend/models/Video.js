@@ -49,4 +49,9 @@ const VideoSchema = new mongoose.Schema({
   strict: false 
 });
 
+VideoSchema.index({ category: 1, createdAt: -1 });
+VideoSchema.index({ tags: 1 });
+VideoSchema.index({ module: 1, isKids: 1 });
+VideoSchema.index({ moderationStatus: 1 });
+
 module.exports = mongoose.models.Video || mongoose.model('Video', VideoSchema);

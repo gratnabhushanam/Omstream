@@ -10,10 +10,15 @@ const MovieSchema = new mongoose.Schema({
   genre: { type: String },
   releaseDate: { type: Date },
   isPremium: { type: Boolean, default: false },
-  trailerUrl: { type: String }
+  trailerUrl: { type: String },
+  hlsUrl: { type: String }
 }, {
   timestamps: true,
   strict: false
 });
+
+MovieSchema.index({ genre: 1, releaseDate: -1 });
+MovieSchema.index({ isPremium: 1 });
+MovieSchema.index({ createdAt: -1 });
 
 module.exports = mongoose.models.Movie || mongoose.model('Movie', MovieSchema);
