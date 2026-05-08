@@ -15,7 +15,9 @@ export default defineConfig({
         globPatterns: ['**/*.{js,css,html,ico,png,svg}'],
         rollupOptions: {
           output: {
-            codeSplitting: false
+            codeSplitting: false,
+            // Explicitly unset deprecated option that plugin might be injecting
+            inlineDynamicImports: undefined 
           }
         }
       },
