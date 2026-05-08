@@ -45,13 +45,13 @@ export default function Navbar() {
     <nav className="sticky top-0 w-full z-50 bg-[#06101E]/95 backdrop-blur-2xl border-b border-white/5 shadow-2xl tv:h-24 transition-all duration-500">
       <div className="max-w-[1920px] mx-auto px-4 sm:px-8 lg:px-12 pl-safe pr-safe">
         <div className="flex items-center justify-between h-16 tv:h-24">
-          <Link to="/home" className="group flex items-center gap-3 hover:opacity-80 transition-all">
-            <div className="w-9 h-9 tv:w-14 tv:h-14 rounded-xl overflow-hidden flex items-center justify-center bg-devotion-gold/10 border border-devotion-gold/30 shadow-[0_0_20px_rgba(255,215,0,0.1)] group-hover:shadow-[0_0_30px_rgba(255,215,0,0.3)] transition-all">
+          <Link to="/home" className="group flex items-center gap-2 sm:gap-3 hover:opacity-80 transition-all flex-shrink-0">
+            <div className="w-8 h-8 sm:w-9 sm:h-9 tv:w-14 tv:h-14 rounded-xl overflow-hidden flex items-center justify-center bg-devotion-gold/10 border border-devotion-gold/30 shadow-[0_0_20px_rgba(255,215,0,0.1)] group-hover:shadow-[0_0_30px_rgba(255,215,0,0.3)] transition-all">
               <img src="/logo-om-v2.png" alt="Logo" className="w-full h-full object-cover scale-90 group-hover:scale-105 transition-transform" />
             </div>
             <div className="flex flex-col">
-              <span className="text-lg tv:text-2xl font-black bg-gradient-to-r from-devotion-gold to-white bg-clip-text text-transparent tracking-tighter uppercase leading-none">GitaWisdom</span>
-              <span className="text-[8px] tv:text-xs font-black text-devotion-gold uppercase tracking-[0.4em] opacity-60">Divine Path</span>
+              <span className="text-base sm:text-lg tv:text-2xl font-black bg-gradient-to-r from-devotion-gold to-white bg-clip-text text-transparent tracking-tighter uppercase leading-none">GitaWisdom</span>
+              <span className="text-[7px] sm:text-[8px] tv:text-xs font-black text-devotion-gold uppercase tracking-[0.4em] opacity-60">Divine Path</span>
             </div>
           </Link>
           
@@ -75,7 +75,7 @@ export default function Navbar() {
           
             {user && (
               <div className="relative ml-2">
-                <button onClick={toggleNotifications} className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all ${showNotifications ? 'bg-devotion-gold/20 text-devotion-gold' : 'text-gray-400 hover:bg-white/5 hover:text-white'}`}>
+                <button onClick={toggleNotifications} className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all ${showNotifications ? 'bg-devotion-gold/20 text-devotion-gold' : 'text-gray-400 hover:bg-white/5 hover:text-white'} active:scale-110`}>
                   <Bell className="w-5 h-5" />
                   {unreadCount > 0 && <span className="absolute top-2 right-2 w-2.5 h-2.5 bg-red-600 rounded-full border-2 border-[#06101E] animate-pulse shadow-[0_0_8px_rgba(220,38,38,0.5)]"></span>}
                 </button>
@@ -103,9 +103,9 @@ export default function Navbar() {
             )}
           </div>
 
-          <div className="lg:hidden flex items-center gap-3">
+          <div className="lg:hidden flex items-center gap-2 sm:gap-3 flex-shrink-0">
             {user && (
-              <button onClick={toggleNotifications} className="relative w-10 h-10 flex items-center justify-center text-devotion-gold bg-devotion-gold/10 rounded-xl border border-devotion-gold/20 active:scale-90 transition-all">
+              <button onClick={toggleNotifications} className="relative w-10 h-10 flex items-center justify-center text-devotion-gold bg-devotion-gold/10 rounded-xl border border-devotion-gold/20 active:scale-110 transition-all shadow-[0_0_15px_rgba(255,215,0,0.1)]">
                 <Bell className="w-5 h-5" />
                 {unreadCount > 0 && <span className="absolute top-2 right-2 w-2.5 h-2.5 bg-red-600 rounded-full border-2 border-[#06101E] animate-pulse shadow-[0_0_10px_rgba(220,38,38,0.6)]" />}
               </button>

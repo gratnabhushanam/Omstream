@@ -4,46 +4,63 @@ import { Play, Flame, Trophy, Award, ArrowRight, Book, Sparkles, Heart, Star, Fi
 
 function HomeCard({ to, badge, icon: Icon, title, description, content, isKids }) {
   const [isHovered, setIsHovered] = useState(false);
+  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
+
+  const handleMouseMove = (e) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    const centerX = rect.width / 2;
+    const centerY = rect.height / 2;
+    const rotateX = ((y - centerY) / centerY) * -12;
+    const rotateY = ((x - centerX) / centerX) * 12;
+    setMousePos({ x: rotateX, y: rotateY });
+  };
 
   return (
     <Link
       to={to}
-      className="block group h-full tv-focusable"
+      className="block group h-full tv-focusable preserve-3d"
       onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
+      onMouseLeave={() => { setIsHovered(false); setMousePos({ x: 0, y: 0 }); }}
+      onMouseMove={handleMouseMove}
+      style={{
+        transform: isHovered ? `perspective(1000px) rotateX(${mousePos.x}deg) rotateY(${mousePos.y}deg) scale3d(1.02, 1.02, 1.02)` : 'perspective(1000px) rotateX(0deg) rotateY(0deg)',
+        transition: isHovered ? 'none' : 'all 0.5s ease-out'
+      }}
     >
       <div className={`
         bg-glass-gradient backdrop-blur-3xl rounded-[2rem] tv:rounded-[3rem]
         p-7 sm:p-10 tv:p-14
         border border-devotion-gold/30 shadow-2xl relative h-full
         flex flex-col items-center
-        transition-all duration-500
-        ${isHovered ? 'border-devotion-gold/60 shadow-[0_20px_60px_rgba(255,215,0,0.18)] -translate-y-1' : ''}
+        transition-all duration-500 preserve-3d
+        ${isHovered ? 'border-devotion-gold/60 shadow-[0_20px_60px_rgba(255,215,0,0.18)]' : ''}
       `}>
         {/* Badge */}
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-gradient-to-r from-devotion-gold to-[#FFB800] text-devotion-darkBlue px-6 py-1.5 rounded-full font-black text-[10px] tv:text-sm tracking-[0.2em] shadow-xl uppercase whitespace-nowrap">
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-gradient-to-r from-devotion-gold to-[#FFB800] text-devotion-darkBlue px-6 py-1.5 rounded-full font-black text-[10px] tv:text-sm tracking-[0.2em] shadow-xl uppercase whitespace-nowrap translate-z-30">
           {badge}
         </div>
 
-        <div className="mt-4 text-center flex flex-col items-center w-full">
+        <div className="mt-4 text-center flex flex-col items-center w-full translate-z-20">
           <div className={`w-16 h-16 tv:w-24 tv:h-24 bg-devotion-gold/10 rounded-full flex items-center justify-center mb-6 tv:mb-10 border border-devotion-gold/20 transition-transform duration-500 ${isHovered ? 'scale-110' : ''}`}>
             <Icon className="w-8 h-8 tv:w-12 tv:h-12 text-devotion-gold" fill={isKids ? 'currentColor' : 'none'} />
           </div>
 
           {content ? (
-            <>
+            <div className="translate-z-10">
               <p className="text-gray-200 font-serif leading-relaxed text-lg tv:text-2xl mb-6 italic opacity-90">
                 {content}
               </p>
               <div className={`text-devotion-gold font-black text-xs tv:text-base tracking-widest border-b-2 inline-block pb-1 transition-all duration-300 ${isHovered ? 'border-devotion-gold' : 'border-transparent'}`}>
                 EXPLORE WISDOM
               </div>
-            </>
+            </div>
           ) : (
-            <>
+            <div className="translate-z-10">
               <h3 className="text-2xl tv:text-4xl font-serif font-black text-devotion-gold mb-3 uppercase tracking-tighter">{title}</h3>
               <p className="text-gray-300 text-base tv:text-xl font-light leading-relaxed">{description}</p>
-            </>
+            </div>
           )}
         </div>
       </div>

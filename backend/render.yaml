@@ -10,20 +10,8 @@ services:
         value: production
       - key: PORT
         value: 10000
-      - key: DB_DIALECT
-        value: sqlite
-      - key: SQLITE_STORAGE
-        value: /tmp/gita_wisdom.sqlite
-      - key: DB_SYNC_ALTER
-        value: false
-      - key: USE_MONGODB
-        value: true
       - key: MONGO_URI
         sync: false
-      - key: MONGO_REQUIRED
-        value: true
-      - key: SQL_FALLBACK_WHEN_MONGO
-        value: false
       - key: CORS_ALLOWED_ORIGINS
         sync: false
       - key: JWT_SECRET

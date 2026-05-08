@@ -1,64 +1,24 @@
-const { DataTypes } = require('sequelize');
-const { sequelize } = require('../config/db');
+const mongoose = require('mongoose');
 
-const Sloka = sequelize.define('Sloka', {
-  id: {
-    type: DataTypes.INTEGER,
-    autoIncrement: true,
-    primaryKey: true,
-  },
-  chapter: {
-    type: DataTypes.INTEGER,
-    allowNull: false,
-  },
-  verse: {
-    type: DataTypes.INTEGER,
-    allowNull: false,
-  },
-  sanskrit: {
-    type: DataTypes.TEXT,
-    allowNull: false,
-  },
-  teluguMeaning: {
-    type: DataTypes.TEXT,
-    allowNull: false,
-  },
-  hindiMeaning: {
-    type: DataTypes.TEXT,
-    allowNull: true,
-  },
-  englishMeaning: {
-    type: DataTypes.TEXT,
-    allowNull: false,
-  },
-  simpleExplanation: {
-    type: DataTypes.TEXT,
-  },
-  realLifeExample: {
-    type: DataTypes.TEXT,
-  },
-  audioUrl: {
-    type: DataTypes.STRING,
-  },
-  audioUrlEnglish: {
-    type: DataTypes.STRING,
-  },
-  audioUrlTelugu: {
-    type: DataTypes.STRING,
-  },
-  audioUrlHindi: {
-    type: DataTypes.STRING,
-  },
-  tags: {
-    type: DataTypes.JSON, // To store array of tags
-    defaultValue: [],
-  },
-  isDaily: {
-    type: DataTypes.BOOLEAN,
-    defaultValue: false,
-  },
+const SlokaSchema = new mongoose.Schema({
+  id: { type: Number, unique: true }, // Keep legacy numeric ID for client compatibility
+  chapter: { type: Number },
+  verse: { type: Number },
+  sanskrit: { type: String },
+  teluguMeaning: { type: String },
+  hindiMeaning: { type: String },
+  englishMeaning: { type: String },
+  simpleExplanation: { type: String },
+  realLifeExample: { type: String },
+  audioUrl: { type: String },
+  audioUrlEnglish: { type: String },
+  audioUrlTelugu: { type: String },
+  audioUrlHindi: { type: String },
+  tags: { type: [String], default: [] },
+  isDaily: { type: Boolean, default: false }
 }, {
   timestamps: true,
+  strict: false // Allow extra fields
 });
 
-module.exports = Sloka;
+module.exports = mongoose.models.Sloka || mongoose.model('Sloka', SlokaSchema);

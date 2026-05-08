@@ -1,109 +1,52 @@
-const { DataTypes } = require('sequelize');
-const { sequelize } = require('../config/db');
+const mongoose = require('mongoose');
 
-const Video = sequelize.define('Video', {
-  id: {
-    type: DataTypes.INTEGER,
-    autoIncrement: true,
-    primaryKey: true,
+const VideoSchema = new mongoose.Schema({
+  title: { type: String, required: true },
+  videoUrl: { type: String },
+  video_url: { type: String }, 
+  youtubeUrl: { type: String },
+  url: { type: String },
+  hlsUrl: { type: String },
+  hls_url: { type: String }, 
+  thumbnail: { type: String },
+  module: { 
+    type: String, 
+    enum: ['divine', 'sloka', 'mentor', 'kids', 'other'], 
+    default: 'divine' 
   },
-  title: {
-    type: DataTypes.STRING,
-    allowNull: false,
-  },
-  description: {
-    type: DataTypes.TEXT,
-  },
-  videoUrl: {
-    type: DataTypes.STRING,
-    allowNull: false,
-    field: 'youtubeUrl',
-  },
-  thumbnail: {
-    type: DataTypes.STRING,
-  },
-  category: {
-    type: DataTypes.STRING,
-  },
-  collectionTitle: {
-    type: DataTypes.STRING,
-    defaultValue: 'Bhagavad Gita',
-  },
-  language: {
-    type: DataTypes.STRING,
-    defaultValue: 'telugu',
-  },
-  duration: {
-    type: DataTypes.STRING,
-  },
-  tags: {
-    type: DataTypes.JSON,
-    defaultValue: [],
-  },
-  views: {
-    type: DataTypes.INTEGER,
-    defaultValue: 0,
-  },
-  isKids: {
-    type: DataTypes.BOOLEAN,
-    defaultValue: false,
-  },
-  isUserReel: {
-    type: DataTypes.BOOLEAN,
-    defaultValue: false,
-  },
-  uploadedBy: {
-    type: DataTypes.INTEGER, // Foreign key to User id
-  },
-  uploadSource: {
-    type: DataTypes.ENUM('user', 'admin'),
-    defaultValue: 'admin',
-  },
-  contentType: {
-    type: DataTypes.ENUM('spiritual', 'other'),
-    defaultValue: 'spiritual',
-  },
-  moderationStatus: {
-    type: DataTypes.ENUM('pending', 'approved', 'rejected'),
-    defaultValue: 'approved',
-  },
-  moderationNote: {
-    type: DataTypes.STRING,
-  },
-  reviewedBy: {
-    type: DataTypes.INTEGER,
-  },
-  likesCount: {
-    type: DataTypes.INTEGER,
-    defaultValue: 0,
-  },
-  sharesCount: {
-    type: DataTypes.INTEGER,
-    defaultValue: 0,
-  },
-  commentsCount: {
-    type: DataTypes.INTEGER,
-    defaultValue: 0,
-  },
-  likedBy: {
-    type: DataTypes.JSON,
-    defaultValue: [],
-  },
-  comments: {
-    type: DataTypes.JSON,
-    defaultValue: [],
-  },
-  chapter: {
-    type: DataTypes.INTEGER,
-  },
-  moral: {
-    type: DataTypes.TEXT,
-  },
-  script: {
-    type: DataTypes.TEXT,
-  },
+  category: { type: String, default: 'reels' },
+  collectionTitle: { type: String, default: 'Bhagavad Gita' },
+  isKids: { type: Boolean, default: false },
+  quizSetId: { type: mongoose.Schema.Types.ObjectId, ref: 'QuizSet' },
+  tags: { type: [String], default: [] },
+  isUserReel: { type: Boolean, default: false },
+  moderationStatus: { type: String, default: 'approved' },
+  moderationNote: { type: String, default: '' },
+  contentType: { type: String, default: 'spiritual' },
+  likesCount: { type: Number, default: 0 },
+  likedBy: { type: [String], default: [] },
+  savedBy: { type: [String], default: [] },
+  commentsCount: { type: Number, default: 0 },
+  sharesCount: { type: Number, default: 0 },
+  comments: [{
+    id: String,
+    userId: String,
+    userName: String,
+    userEmail: String,
+    userRole: String,
+    text: String,
+    createdAt: Date,
+  }],
+  chapter: { type: Number },
+  language: { type: String, default: 'telugu' },
+  duration: { type: Number }, 
+  quality_levels: [{ type: String }], 
+  description: { type: String },
+  views: { type: Number, default: 0 },
+  uploadedBy: { type: String },
 }, {
   timestamps: true,
+  strict: false 
 });
 
-module.exports = Video;
+module.exports = mongoose.models.Video || mongoose.model('Video', VideoSchema);

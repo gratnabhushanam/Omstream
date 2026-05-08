@@ -77,32 +77,32 @@ export function MobileNotificationSheet({ notifications, unreadCount, handleMark
   }, []);
 
   return (
-    <div className="fixed inset-0 z-[10000] flex flex-col justify-end" onClick={handleBackdrop}>
+    <div className="fixed inset-0 z-[10000] flex flex-col justify-end p-0 sm:p-4" onClick={handleBackdrop}>
       <div className="absolute inset-0 bg-black/80 backdrop-blur-md animate-in fade-in duration-300" />
-      <div className="relative w-full max-h-[85vh] bg-[#070F1D] rounded-t-[2.5rem] border-t border-devotion-gold/30 shadow-[0_-20px_100px_rgba(0,0,0,0.9)] animate-in slide-in-from-bottom duration-500 flex flex-col overflow-hidden pb-safe">
-        <div className="flex justify-center pt-3 pb-2">
+      <div className="relative w-full max-h-[90vh] bg-[#070F1D] rounded-t-[2.5rem] sm:rounded-[2.5rem] border-t sm:border border-devotion-gold/30 shadow-[0_-20px_100px_rgba(0,0,0,0.9)] animate-in slide-in-from-bottom duration-500 flex flex-col overflow-hidden pb-safe">
+        <div className="flex justify-center pt-3 pb-1">
           <div className="w-12 h-1.5 bg-white/10 rounded-full" />
         </div>
-        <div className="px-6 py-4 flex justify-between items-center border-b border-white/5 bg-[#0D1424]">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-devotion-gold/10 border border-devotion-gold/30 flex items-center justify-center">
-              <Bell className="w-5 h-5 text-devotion-gold" />
+        <div className="px-6 py-5 flex justify-between items-center border-b border-white/5 bg-[#0D1424]">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-2xl bg-devotion-gold/10 border border-devotion-gold/30 flex items-center justify-center shadow-inner">
+              <Bell className="w-6 h-6 text-devotion-gold" />
             </div>
             <div>
-              <p className="text-sm font-black text-white uppercase tracking-[0.2em]">Notifications</p>
-              <p className="text-[10px] text-devotion-gold/60 font-black uppercase tracking-widest mt-0.5">
+              <p className="text-base font-black text-white uppercase tracking-[0.2em] leading-tight">Notifications</p>
+              <p className="text-[11px] text-devotion-gold/60 font-black uppercase tracking-widest mt-1">
                 {unreadCount > 0 ? `${unreadCount} DIVINE ALERTS` : 'PEACEFUL HEART'}
               </p>
             </div>
           </div>
           <div className="flex items-center gap-3">
             {unreadCount > 0 && (
-              <button onClick={handleMarkAsRead} className="p-2.5 bg-devotion-gold/10 border border-devotion-gold/30 text-devotion-gold rounded-xl active:scale-90 transition-all">
-                <CheckCheck className="w-5 h-5" />
+              <button onClick={handleMarkAsRead} className="p-3 bg-devotion-gold/10 border border-devotion-gold/30 text-devotion-gold rounded-2xl active:scale-90 transition-all shadow-lg">
+                <CheckCheck className="w-6 h-6" />
               </button>
             )}
-            <button onClick={onClose} className="p-2.5 bg-white/5 border border-white/10 text-white/60 rounded-xl active:scale-90 transition-all">
-              <X className="w-5 h-5" />
+            <button onClick={onClose} className="p-3 bg-white/5 border border-white/10 text-white/60 rounded-2xl active:scale-90 transition-all shadow-lg">
+              <X className="w-6 h-6" />
             </button>
           </div>
         </div>

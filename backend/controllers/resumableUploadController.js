@@ -3,15 +3,15 @@ const fs = require('fs');
 const { transcodeToHLS } = require('../utils/hlsTranscoder');
 const { uploadToVercelBlob } = require('../utils/vercelBlob');
 const { getVideoDurationSeconds } = require('../utils/videoMetadata');
-const VideoMongo = require('../models/mongo/VideoMongo');
+const { Video } = require('../models');
 const { mapVideo } = require('../utils/responseMappers');
 
-// Save video metadata and trigger HLS after resumable upload
 async function handleResumableUpload(req, res) {
   try {
-    if (!req.resumableUpload) return res.status(400).json({ message: 'No file assembled' });
+    if (!req.resumableUpload) return res.status(400).json({ message: 'No file' });
     const { filePath, fileName } = req.resumableUpload;
     const user = req.user;
+    
     let title = req.headers['video-title'] || fileName;
     try { title = decodeURIComponent(title); } catch (e) { }
     let description = req.headers['video-description'] || '';
@@ -19,81 +19,8 @@ async function handleResumableUpload(req, res) {
     let rawTags = req.headers['video-tags'] || '';
     try { rawTags = decodeURIComponent(rawTags); } catch (e) { }
     const tags = rawTags.split(',').map(t => t.trim()).filter(Boolean);
-    const isKids = req.headers['video-kids'] === 'true';
-    const collectionTitle = req.headers['video-collection'] || 'Bhagavad Gita';
-    const category = req.headers['video-category'] || 'reels';
-    const contentType = req.headers['video-content-type'] || 'short';
-    const explicitSource = req.headers['video-source'];
-    const moderationStatus = user && user.role === 'admin' && explicitSource !== 'user' ? 'approved' : 'pending';
-    const uploadSource = user && user.role === 'admin' && explicitSource !== 'user' ? 'admin' : 'user';
-    let duration = req.headers['video-duration'];
-    let orientation = req.headers['video-orientation'];
-
-    // Always probe duration if possible
-    try {
-      duration = await getVideoDurationSeconds(filePath);
-    } catch { }
-
-    // Validate for short-form reels
-    if (contentType === 'short') {
-      const stats = fs.statSync(filePath);
-      const fileSizeMB = stats.size / (1024 * 1024);
-      if (fileSizeMB > 4000) {
-        fs.unlink(filePath, () => { });
-        return res.status(400).json({ message: 'Short-form reels must be <= 4GB.' });
-      }
-      if (duration < 3 || duration > 1200) {
-        fs.unlink(filePath, () => { });
-        return res.status(400).json({ message: 'Short-form reels must be between 3 and 1200 seconds.' });
-      }
-      let aspect = 0;
-      try {
-        const ffmpeg = require('fluent-ffmpeg');
-        ffmpeg.setFfmpegPath(require('ffmpeg-static'));
-        ffmpeg.setFfprobePath(require('ffprobe-static').path);
-        await new Promise((resolve) => {
-          ffmpeg.ffprobe(filePath, (err, metadata) => {
-            if (!err && metadata && metadata.streams && metadata.streams[0]) {
-              aspect = metadata.streams[0].width / metadata.streams[0].height;
-            }
-            resolve();
-          });
-        });
-      } catch { }
-      // Allowed any type/orientation for Reels as per user request
-    }
-
-    // Validate for long-form videos
-    if (contentType === 'long') {
-      const stats = fs.statSync(filePath);
-      const fileSizeMB = stats.size / (1024 * 1024);
-      if (fileSizeMB > 102400) {
-        fs.unlink(filePath, () => { });
-        return res.status(400).json({ message: 'Long-form videos must be <= 100GB.' });
-      }
-      if (duration < 91 || duration > 86400) {
-        fs.unlink(filePath, () => { });
-        return res.status(400).json({ message: 'Long-form videos must be between 91 seconds and 24 hours.' });
-      }
-      let aspect = 0;
-      try {
-        const ffmpeg = require('fluent-ffmpeg');
-        ffmpeg.setFfmpegPath(require('ffmpeg-static'));
-        ffmpeg.setFfprobePath(require('ffprobe-static').path);
-        await new Promise((resolve) => {
-          ffmpeg.ffprobe(filePath, (err, metadata) => {
-            if (!err && metadata && metadata.streams && metadata.streams[0]) {
-              aspect = metadata.streams[0].width / metadata.streams[0].height;
-            }
-            resolve();
-          });
-        });
-      } catch { }
-      if (aspect && aspect <= 0.8) {
-        fs.unlink(filePath, () => { });
-        return res.status(400).json({ message: 'Long-form videos must not be vertical.' });
-      }
-    }
+    
+    const duration = await getVideoDurationSeconds(filePath).catch(() => 0);
 
     // HLS transcoding
     const hlsOutputDir = path.join(__dirname, '..', 'uploads', 'hls', path.parse(fileName).name);
@@ -101,116 +28,56 @@ async function handleResumableUpload(req, res) {
       transcodeToHLS(filePath, hlsOutputDir, 'playlist', () => resolve());
     });
 
-    // Upload HLS files to Vercel Blob or Fallback to local
-    const hlsFiles = fs.readdirSync(hlsOutputDir).filter(f => f.endsWith('.m3u8') || f.endsWith('.ts'));
-    const blobBase = `videos/${path.parse(fileName).name}/`;
-    let masterPlaylistCdnUrl = '';
-    let videoCdnUrl = '';
     const backendUrl = `${req.secure || req.headers['x-forwarded-proto'] === 'https' ? 'https' : 'http'}://${req.get('host')}`;
+    let masterPlaylistUrl = `${backendUrl}/uploads/hls/${path.parse(fileName).name}/${path.parse(fileName).name}_master.m3u8`;
+    let videoUrl = `${backendUrl}/uploads/reels/${fileName}`;
 
     if (process.env.BLOB_READ_WRITE_TOKEN) {
       try {
+        const hlsFiles = fs.readdirSync(hlsOutputDir);
         for (const f of hlsFiles) {
-          const cdnUrl = await uploadToVercelBlob(path.join(hlsOutputDir, f), `${blobBase}${f}`);
-          if (f.endsWith('_master.m3u8')) masterPlaylistCdnUrl = cdnUrl;
+          const cdnUrl = await uploadToVercelBlob(path.join(hlsOutputDir, f), `videos/${path.parse(fileName).name}/${f}`);
+          if (f.endsWith('_master.m3u8')) masterPlaylistUrl = cdnUrl;
         }
-        videoCdnUrl = await uploadToVercelBlob(filePath, `videos/${fileName}`);
-      } catch (uploadErr) {
-        console.warn('Vercel Blob upload failed, falling back to local storage:', uploadErr.message);
-        masterPlaylistCdnUrl = `${backendUrl}/uploads/hls/${path.parse(fileName).name}/${path.parse(fileName).name}_master.m3u8`;
-        videoCdnUrl = `${backendUrl}/uploads/reels/${fileName}`;
-      }
-    } else {
-      console.warn('BLOB_READ_WRITE_TOKEN not found, falling back to local storage.');
-      masterPlaylistCdnUrl = hlsFiles.length > 0 ? `${backendUrl}/uploads/hls/${path.parse(fileName).name}/${path.parse(fileName).name}_master.m3u8` : '';
-      videoCdnUrl = `${backendUrl}/uploads/reels/${fileName}`;
+        videoUrl = await uploadToVercelBlob(filePath, `videos/${fileName}`);
+      } catch (e) { console.warn('Blob fallback'); }
     }
 
-    // Save to MongoDB
-    const newVideo = await VideoMongo.create({
+    const newVideo = await Video.create({
       title,
-      videoUrl: videoCdnUrl,
-      hlsUrl: masterPlaylistCdnUrl,
+      videoUrl,
+      hlsUrl: masterPlaylistUrl,
       description,
       tags,
-      category,
-      isKids,
-      collectionTitle,
-      isUserReel: uploadSource === 'user',
-      uploadedBy: user ? String(user._id || user.id) : undefined,
-      uploadSource,
-      moderationStatus,
-      contentType,
+      category: req.headers['video-category'] || 'reels',
+      isKids: req.headers['video-kids'] === 'true',
+      isUserReel: req.headers['video-source'] === 'user',
+      uploadedBy: user ? String(user.id) : undefined,
+      moderationStatus: user && user.role === 'admin' ? 'approved' : 'pending',
+      contentType: req.headers['video-content-type'] || 'short',
       duration,
-      orientation,
-      likesCount: 0,
-      sharesCount: 0,
-      commentsCount: 0,
-      likedBy: [],
-      comments: [],
     });
 
-    res.status(201).json({ ...mapVideo(newVideo), message: 'Video uploaded and processed (CDN-backed)' });
-  } catch (err) {
-    console.error('Upload error:', err);
-    res.status(500).json({ message: err.message || 'Internal server error' });
-  }
+    res.status(201).json(mapVideo(newVideo));
+  } catch (err) { res.status(500).json({ message: err.message }); }
 }
 
 async function handleUrlUpload(req, res) {
   try {
     const { url } = req.body;
-    if (!url) {
-      return res.status(400).json({ message: 'URL is required' });
-    }
+    if (!url) return res.status(400).json({ message: 'URL required' });
 
-    const user = req.user;
-    let title = req.headers['video-title'] || 'External Video';
-    try { title = decodeURIComponent(title); } catch (e) { }
-    let description = req.headers['video-description'] || '';
-    try { description = decodeURIComponent(description); } catch (e) { }
-    let rawTags = req.headers['video-tags'] || '';
-    try { rawTags = decodeURIComponent(rawTags); } catch (e) { }
-    const tags = rawTags.split(',').map(t => t.trim()).filter(Boolean);
-    const isKids = req.headers['video-kids'] === 'true';
-    const collectionTitle = req.headers['video-collection'] || 'Bhagavad Gita';
-    const category = req.headers['video-category'] || 'reels';
-    const contentType = req.headers['video-content-type'] || 'short';
-    const explicitSource = req.headers['video-source'];
-    const moderationStatus = user && user.role === 'admin' && explicitSource !== 'user' ? 'approved' : 'pending';
-    const uploadSource = user && user.role === 'admin' && explicitSource !== 'user' ? 'admin' : 'user';
-
-    const VideoMongo = require('../models/mongo/VideoMongo');
-    const { mapVideo } = require('../utils/responseMappers');
-
-    const newVideo = await VideoMongo.create({
-      title,
+    const newVideo = await Video.create({
+      title: req.headers['video-title'] || 'External Video',
       videoUrl: url,
-      hlsUrl: '', // No local HLS for external hotlinks
-      description,
-      tags,
-      category,
-      isKids,
-      collectionTitle,
-      isUserReel: uploadSource === 'user',
-      uploadedBy: user ? String(user._id || user.id) : undefined,
-      uploadSource,
-      moderationStatus,
-      contentType,
-      duration: 60, // Default duration approximation 
-      orientation: 'portrait',
-      likesCount: 0,
-      sharesCount: 0,
-      commentsCount: 0,
-      likedBy: [],
-      comments: [],
+      category: req.headers['video-category'] || 'reels',
+      isUserReel: req.headers['video-source'] === 'user',
+      uploadedBy: req.user ? String(req.user.id) : undefined,
+      moderationStatus: req.user && req.user.role === 'admin' ? 'approved' : 'pending',
     });
 
-    res.status(201).json({ ...mapVideo(newVideo), message: 'Video successfully linked to platform!' });
-  } catch (err) {
-    console.error('URL upload error:', err);
-    res.status(500).json({ message: err.message || 'Error processing remote video URL' });
-  }
+    res.status(201).json(mapVideo(newVideo));
+  } catch (err) { res.status(500).json({ message: err.message }); }
 }
 
 module.exports = { handleResumableUpload, handleUrlUpload };

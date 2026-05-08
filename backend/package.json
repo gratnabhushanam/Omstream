@@ -31,12 +31,9 @@
     "jsonwebtoken": "^9.0.3",
     "mongoose": "^8.23.0",
     "multer": "^2.0.2",
-    "mysql2": "^3.22.3",
     "node-cron": "^4.2.1",
     "nodemailer": "^8.0.7",
     "openai": "^6.37.0",
-    "sequelize": "^6.37.8",
-    "sqlite3": "^5.1.7",
     "twilio": "^6.0.2",
     "web-push": "^3.6.7"
   }

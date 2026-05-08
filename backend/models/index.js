@@ -4,13 +4,12 @@ const Video = require('./Video');
 const Story = require('./Story');
 const Movie = require('./Movie');
 const Category = require('./Category');
-
-// Relationships
-User.belongsToMany(Sloka, { through: 'UserBookmarks', as: 'bookmarkedSlokas' });
-Sloka.belongsToMany(User, { through: 'UserBookmarks' });
-
-Video.belongsTo(User, { foreignKey: 'uploadedBy', as: 'uploader' });
-Story.belongsTo(User, { foreignKey: 'createdBy', as: 'author' });
+const Notification = require('./Notification');
+const Quiz = require('./Quiz');
+const QuizSet = require('./QuizSet');
+const QuizAttempt = require('./QuizAttempt');
+const Group = require('./Group');
+const Post = require('./Post');
 
 module.exports = {
   User,
@@ -18,5 +17,11 @@ module.exports = {
   Video,
   Story,
   Movie,
-  Category
+  Category,
+  Notification,
+  Quiz,
+  QuizSet,
+  QuizAttempt,
+  Group,
+  Post
 };

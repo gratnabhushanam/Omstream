@@ -1,23 +1,12 @@
-const { DataTypes } = require('sequelize');
-const { sequelize } = require('../config/db');
+const mongoose = require('mongoose');
 
-const Category = sequelize.define('Category', {
-  id: {
-    type: DataTypes.INTEGER,
-    autoIncrement: true,
-    primaryKey: true,
-  },
-  name: {
-    type: DataTypes.STRING,
-    allowNull: false,
-    unique: true,
-  },
-  type: {
-    type: DataTypes.ENUM('story', 'video'),
-    allowNull: false,
-  },
+const CategorySchema = new mongoose.Schema({
+  name: { type: String, required: true, unique: true },
+  description: { type: String },
+  icon: { type: String },
+  module: { type: String, enum: ['divine', 'sloka', 'mentor', 'kids', 'other'], default: 'divine' }
 }, {
-  timestamps: true,
+  timestamps: true
 });
 
-module.exports = Category;
+module.exports = mongoose.models.Category || mongoose.model('Category', CategorySchema);

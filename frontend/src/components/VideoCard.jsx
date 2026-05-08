@@ -49,25 +49,26 @@ export default function VideoCard({ title, url, videoUrl, description }) {
       className="relative preserve-3d transition-transform duration-300 ease-out cursor-pointer bg-[#0B1F3A]/60 backdrop-blur rounded-2xl overflow-hidden shadow-xl border border-yellow-500/20 hover:border-yellow-500/40 group h-full flex flex-col"
       style={{ 
         transform: isHovered && isDesktop ? `perspective(1000px) rotateX(${mousePos.x}deg) rotateY(${mousePos.y}deg) scale3d(1.02, 1.02, 1.02)` : 'perspective(1000px) rotateX(0deg) rotateY(0deg)',
+        transition: isHovered ? 'none' : 'all 0.5s ease-out',
         zIndex: isHovered ? 50 : 1
       }}
       onMouseMove={handleMouseMove}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
     >
-      <div className="relative aspect-video overflow-hidden shrink-0">
+      <div className="relative aspect-video overflow-hidden shrink-0 preserve-3d">
         <img 
           src={thumbnailUrl} 
           alt={title} 
-          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 translate-z-10"
         />
-        <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+        <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 translate-z-30">
           <div className="bg-yellow-500 text-black w-16 h-16 rounded-full flex items-center justify-center transform scale-90 group-hover:scale-100 transition-all shadow-[0_0_20px_rgba(234,179,8,0.5)]">
             <svg className="w-8 h-8 ml-1" fill="currentColor" viewBox="0 0 20 20"><path d="M4 4l12 6-12 6z"></path></svg>
           </div>
         </div>
       </div>
-      <div className="p-5 flex-1 flex flex-col">
+      <div className="p-5 flex-1 flex flex-col translate-z-20">
         <h3 className="text-lg font-bold text-white mb-2 line-clamp-1 group-hover:text-yellow-400 transition-colors">{title}</h3>
         <p className="text-gray-400 text-sm line-clamp-2">{description}</p>
       </div>
