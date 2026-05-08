@@ -117,10 +117,19 @@ export default function Movies() {
           </div>
 
           <div className="relative z-10 max-w-3xl tv:max-w-5xl space-y-4 md:space-y-6 animate-fade-in-up">
-            <div className="flex items-center gap-4">
+            <div className="flex flex-wrap items-center gap-4">
               <div className="flex items-center gap-2">
                 <Sparkles className="w-4 h-4 text-devotion-gold" />
                 <span className="text-devotion-gold font-black tracking-[0.4em] uppercase text-xs tv:text-sm">Gita Original</span>
+              </div>
+              <div className="flex items-center gap-2 text-gray-400 font-bold uppercase tracking-widest text-[10px] tv:text-xs">
+                <span>{featuredMovie.genre || 'Divine'}</span>
+                {featuredMovie.duration > 0 && (
+                   <>
+                     <span className="w-1 h-1 bg-gray-600 rounded-full"></span>
+                     <span>{featuredMovie.duration}m</span>
+                   </>
+                )}
               </div>
               {featuredMovie.isComingSoon && (
                  <span className="bg-red-600 text-white px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest shadow-xl">Upcoming</span>
