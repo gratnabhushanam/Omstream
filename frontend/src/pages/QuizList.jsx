@@ -71,7 +71,25 @@ export default function QuizList() {
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 landscape:grid-cols-2 lg:grid-cols-3 tv:grid-cols-4 gap-5 sm:gap-8 tv:gap-10">
             {filteredQuizzes.map(quiz => (
-              <div key={quiz._id} className="bg-white/5 border border-white/10 rounded-3xl overflow-hidden backdrop-blur-xl hover:border-[#FFD700]/30 hover:bg-white/10 transition-all duration-300 group flex flex-col cursor-pointer" onClick={() => navigate(`/quiz?setId=${quiz._id}`)}>
+              <div 
+                key={quiz._id} 
+                className="bg-white/5 border border-white/10 rounded-3xl overflow-hidden backdrop-blur-xl hover:border-[#FFD700]/30 hover:bg-white/10 transition-all duration-300 group flex flex-col cursor-pointer preserve-3d" 
+                onClick={() => navigate(`/quiz?setId=${quiz._id}`)}
+                onMouseMove={(e) => {
+                  const card = e.currentTarget;
+                  const rect = card.getBoundingClientRect();
+                  const x = e.clientX - rect.left;
+                  const y = e.clientY - rect.top;
+                  const centerX = rect.width / 2;
+                  const centerY = rect.height / 2;
+                  const rotateX = ((y - centerY) / centerY) * -8;
+                  const rotateY = ((x - centerX) / centerX) * 8;
+                  card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale3d(1.02, 1.02, 1.02)`;
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = 'perspective(1000px) rotateX(0) rotateY(0) scale3d(1, 1, 1)';
+                }}
+              >
                 {quiz.thumbnail && (
                   <div className="w-full h-48 bg-black relative overflow-hidden">
                     <img src={quiz.thumbnail} alt={quiz.title} className="w-full h-full object-cover opacity-80 group-hover:scale-105 transition-transform duration-500" />

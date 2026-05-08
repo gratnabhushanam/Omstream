@@ -170,7 +170,23 @@ export default function Quiz() {
          </div>
       )}
 
-      <div className="max-w-3xl w-full bg-white/5 backdrop-blur-2xl border border-[#FFD700]/20 rounded-[2.5rem] p-8 md:p-14 shadow-2xl relative z-10">
+      <div 
+        className="max-w-3xl w-full bg-white/5 backdrop-blur-2xl border border-[#FFD700]/20 rounded-[2.5rem] p-8 md:p-14 shadow-2xl relative z-10 preserve-3d transition-all duration-500 ease-out"
+        onMouseMove={(e) => {
+          const card = e.currentTarget;
+          const rect = card.getBoundingClientRect();
+          const x = e.clientX - rect.left;
+          const y = e.clientY - rect.top;
+          const centerX = rect.width / 2;
+          const centerY = rect.height / 2;
+          const rotateX = ((y - centerY) / centerY) * -3;
+          const rotateY = ((x - centerX) / centerX) * 3;
+          card.style.transform = `perspective(2000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.transform = 'perspective(2000px) rotateX(0) rotateY(0)';
+        }}
+      >
         {showScore ? (
           <div className="text-center animate-in zoom-in duration-500">
             <Trophy className="w-32 h-32 text-[#FFD700] mx-auto mb-8 drop-shadow-[0_0_30px_rgba(255,215,0,0.6)]" />
@@ -242,7 +258,22 @@ export default function Quiz() {
                     key={index}
                     onClick={() => selectedAnswer === null && handleAnswerOptionClick(optionText, index)}
                     disabled={selectedAnswer !== null}
-                    className={`border p-6 rounded-2xl text-left text-lg font-medium transition-all duration-300 flex justify-between items-center group relative overflow-hidden ${buttonStyle}`}
+                    className={`border p-6 rounded-2xl text-left text-lg font-medium transition-all duration-300 flex justify-between items-center group relative overflow-hidden preserve-3d ${buttonStyle}`}
+                    onMouseMove={(e) => {
+                      if (selectedAnswer !== null) return;
+                      const card = e.currentTarget;
+                      const rect = card.getBoundingClientRect();
+                      const x = e.clientX - rect.left;
+                      const y = e.clientY - rect.top;
+                      const centerX = rect.width / 2;
+                      const centerY = rect.height / 2;
+                      const rotateX = ((y - centerY) / centerY) * -10;
+                      const rotateY = ((x - centerX) / centerX) * 10;
+                      card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale3d(1.02, 1.02, 1.02)`;
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.transform = 'perspective(1000px) rotateX(0) rotateY(0) scale3d(1, 1, 1)';
+                    }}
                   >
                     {selectedAnswer === index && <div className="absolute inset-0 bg-gradient-to-r from-[#FFD700]/10 to-transparent"></div>}
                     <span className="relative z-10">{optionText}</span>

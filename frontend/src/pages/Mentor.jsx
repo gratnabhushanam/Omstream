@@ -161,7 +161,21 @@ export default function Mentor() {
             <button
               key={problem.id}
               onClick={() => fetchSolution(problem.id)}
-              className={`flex flex-col items-center justify-center p-6 md:p-8 tv:p-12 rounded-[2rem] tv:rounded-[3rem] transition-all duration-500 transform active:scale-95 border tv-focusable ${selectedProblem === problem.id ? 'bg-gradient-to-br ' + problem.color + ' text-white scale-[1.03] shadow-[0_0_40px_rgba(255,215,0,0.18)] border-white/30' : 'bg-glass-gradient backdrop-blur-3xl text-gray-300 hover:text-devotion-gold border-white/5 hover:border-devotion-gold/40 shadow-xl'}`}
+              className={`flex flex-col items-center justify-center p-6 md:p-8 tv:p-12 rounded-[2rem] tv:rounded-[3rem] transition-all duration-300 ease-out transform active:scale-95 border tv-focusable preserve-3d ${selectedProblem === problem.id ? 'bg-gradient-to-br ' + problem.color + ' text-white scale-[1.03] shadow-[0_0_40px_rgba(255,215,0,0.18)] border-white/30' : 'bg-glass-gradient backdrop-blur-3xl text-gray-300 hover:text-devotion-gold border-white/5 hover:border-devotion-gold/40 shadow-xl'}`}
+              onMouseMove={(e) => {
+                const card = e.currentTarget;
+                const rect = card.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                const centerX = rect.width / 2;
+                const centerY = rect.height / 2;
+                const rotateX = ((y - centerY) / centerY) * -12;
+                const rotateY = ((x - centerX) / centerX) * 12;
+                card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale3d(1.05, 1.05, 1.05)`;
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = 'perspective(1000px) rotateX(0) rotateY(0) scale3d(1, 1, 1)';
+              }}
             >
               <div className={`mb-4 transition-all duration-500 ${selectedProblem === problem.id ? 'text-white scale-125' : 'text-devotion-gold'}`}>
                 {React.cloneElement(problem.icon, { className: 'w-8 h-8 tv:w-14 tv:h-14' })}
@@ -343,7 +357,21 @@ export default function Mentor() {
                     <div
                       key={sloka.id}
                       onClick={() => handleNavigateToContent(sloka, 'sloka')}
-                      className="bg-devotion-darkBlue/40 backdrop-blur-md p-6 rounded-2xl border border-white/5 hover:border-devotion-gold/40 transition-all cursor-pointer hover:scale-105 group shadow-xl"
+                      className="bg-devotion-darkBlue/40 backdrop-blur-md p-6 rounded-2xl border border-white/5 transition-all cursor-pointer group shadow-xl preserve-3d"
+                      onMouseMove={(e) => {
+                        const card = e.currentTarget;
+                        const rect = card.getBoundingClientRect();
+                        const x = e.clientX - rect.left;
+                        const y = e.clientY - rect.top;
+                        const centerX = rect.width / 2;
+                        const centerY = rect.height / 2;
+                        const rotateX = ((y - centerY) / centerY) * -8;
+                        const rotateY = ((x - centerX) / centerX) * 8;
+                        card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale3d(1.05, 1.05, 1.05)`;
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.transform = 'perspective(1000px) rotateX(0) rotateY(0) scale3d(1, 1, 1)';
+                      }}
                     >
                       <p className="text-[10px] font-black uppercase tracking-[0.25em] text-devotion-gold mb-3 opacity-70 group-hover:opacity-100">
                         {sloka.chapter && sloka.verse ? `Ch ${sloka.chapter}: V ${sloka.verse}` : 'Sacred Verse'}
@@ -370,7 +398,21 @@ export default function Mentor() {
                     <div 
                       key={story.id} 
                       onClick={() => handleNavigateToContent(story, 'story')}
-                      className="bg-devotion-darkBlue/40 backdrop-blur-md p-6 rounded-2xl border border-white/5 hover:border-devotion-gold/40 transition-all cursor-pointer hover:scale-105 group shadow-xl"
+                      className="bg-devotion-darkBlue/40 backdrop-blur-md p-6 rounded-2xl border border-white/5 transition-all cursor-pointer group shadow-xl preserve-3d"
+                      onMouseMove={(e) => {
+                        const card = e.currentTarget;
+                        const rect = card.getBoundingClientRect();
+                        const x = e.clientX - rect.left;
+                        const y = e.clientY - rect.top;
+                        const centerX = rect.width / 2;
+                        const centerY = rect.height / 2;
+                        const rotateX = ((y - centerY) / centerY) * -8;
+                        const rotateY = ((x - centerX) / centerX) * 8;
+                        card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale3d(1.05, 1.05, 1.05)`;
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.transform = 'perspective(1000px) rotateX(0) rotateY(0) scale3d(1, 1, 1)';
+                      }}
                     >
                       <p className="text-[10px] font-black uppercase tracking-[0.25em] text-blue-400 mb-3">Story</p>
                       <h4 className="text-lg font-serif font-black text-white mb-3 line-clamp-2">{story.title}</h4>
@@ -395,7 +437,21 @@ export default function Mentor() {
                     <div 
                       key={video.id} 
                       onClick={() => handleNavigateToContent(video, 'video')}
-                      className="bg-devotion-darkBlue/40 backdrop-blur-md p-6 rounded-2xl border border-white/5 hover:border-devotion-gold/40 transition-all cursor-pointer hover:scale-105 group shadow-xl"
+                      className="bg-devotion-darkBlue/40 backdrop-blur-md p-6 rounded-2xl border border-white/5 transition-all cursor-pointer group shadow-xl preserve-3d"
+                      onMouseMove={(e) => {
+                        const card = e.currentTarget;
+                        const rect = card.getBoundingClientRect();
+                        const x = e.clientX - rect.left;
+                        const y = e.clientY - rect.top;
+                        const centerX = rect.width / 2;
+                        const centerY = rect.height / 2;
+                        const rotateX = ((y - centerY) / centerY) * -8;
+                        const rotateY = ((x - centerX) / centerX) * 8;
+                        card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale3d(1.05, 1.05, 1.05)`;
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.transform = 'perspective(1000px) rotateX(0) rotateY(0) scale3d(1, 1, 1)';
+                      }}
                     >
                       <p className="text-[10px] font-black uppercase tracking-[0.25em] text-purple-400 mb-3">Video</p>
                       <h4 className="text-lg font-serif font-black text-white mb-3 line-clamp-2">{video.title}</h4>

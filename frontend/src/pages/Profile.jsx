@@ -487,7 +487,23 @@ export default function Profile() {
         
         {/* Profile Card */}
         <div className="lg:col-span-1">
-          <div className="bg-glass-premium rounded-[2.5rem] tv:rounded-[3.5rem] border border-devotion-gold/20 overflow-hidden shadow-2xl sticky top-20 sm:top-28 tv:top-36">
+          <div 
+            className="bg-glass-premium rounded-[2.5rem] tv:rounded-[3.5rem] border border-devotion-gold/20 overflow-hidden shadow-2xl sticky top-20 sm:top-28 tv:top-36 preserve-3d transition-all duration-300 ease-out"
+            onMouseMove={(e) => {
+              const card = e.currentTarget;
+              const rect = card.getBoundingClientRect();
+              const x = e.clientX - rect.left;
+              const y = e.clientY - rect.top;
+              const centerX = rect.width / 2;
+              const centerY = rect.height / 2;
+              const rotateX = ((y - centerY) / centerY) * -5;
+              const rotateY = ((x - centerX) / centerX) * 5;
+              card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = 'perspective(1000px) rotateX(0) rotateY(0)';
+            }}
+          >
             <div className="h-32 sm:h-40 tv:h-56 bg-gradient-to-br from-[#B66A2A] via-[#E6C38A] to-[#B66A2A] relative">
                <div className="absolute -bottom-16 left-1/2 -translate-x-1/2">
                   <div className="relative group">
@@ -609,7 +625,23 @@ export default function Profile() {
         <div className="lg:col-span-2 space-y-10">
           
           {/* User Benefits Section */}
-          <section className="bg-glass-gradient backdrop-blur-3xl rounded-[2.5rem] border border-devotion-gold/20 p-10 shadow-2xl relative overflow-hidden">
+          <section 
+            className="bg-glass-gradient backdrop-blur-3xl rounded-[2.5rem] border border-devotion-gold/20 p-10 shadow-2xl relative overflow-hidden preserve-3d transition-all duration-300 ease-out"
+            onMouseMove={(e) => {
+              const card = e.currentTarget;
+              const rect = card.getBoundingClientRect();
+              const x = e.clientX - rect.left;
+              const y = e.clientY - rect.top;
+              const centerX = rect.width / 2;
+              const centerY = rect.height / 2;
+              const rotateX = ((y - centerY) / centerY) * -3;
+              const rotateY = ((x - centerX) / centerX) * 3;
+              card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = 'perspective(1000px) rotateX(0) rotateY(0)';
+            }}
+          >
              <div className="absolute top-0 right-0 p-8 opacity-[0.03] text-[10rem] pointer-events-none italic">Wisdom</div>
              <div className="flex items-center gap-4 mb-8">
                 <Sparkles className="text-devotion-gold w-8 h-8" />
@@ -642,7 +674,23 @@ export default function Profile() {
              </div>
           </section>
 
-          <section className="bg-glass-gradient backdrop-blur-3xl rounded-[2.5rem] border border-devotion-gold/20 p-10 shadow-2xl">
+          <section 
+            className="bg-glass-gradient backdrop-blur-3xl rounded-[2.5rem] border border-devotion-gold/20 p-10 shadow-2xl preserve-3d transition-all duration-300 ease-out"
+            onMouseMove={(e) => {
+              const card = e.currentTarget;
+              const rect = card.getBoundingClientRect();
+              const x = e.clientX - rect.left;
+              const y = e.clientY - rect.top;
+              const centerX = rect.width / 2;
+              const centerY = rect.height / 2;
+              const rotateX = ((y - centerY) / centerY) * -2;
+              const rotateY = ((x - centerX) / centerX) * 2;
+              card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = 'perspective(1000px) rotateX(0) rotateY(0)';
+            }}
+          >
              <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 mb-8 border-b border-white/10 pb-6">
                 <div className="flex items-center gap-4">
                    <Bookmark className="text-devotion-gold w-8 h-8" />
@@ -678,7 +726,24 @@ export default function Profile() {
                ) : (
                  <div className="grid grid-cols-1 gap-5">
                    {savedVerses.map((sloka) => (
-                     <div key={sloka.id || sloka._id} className="bg-devotion-darkBlue/40 rounded-2xl border border-white/10 p-6">
+                     <div 
+                        key={sloka.id || sloka._id} 
+                        className="bg-devotion-darkBlue/40 rounded-2xl border border-white/10 p-6 preserve-3d transition-all duration-300 ease-out"
+                        onMouseMove={(e) => {
+                          const card = e.currentTarget;
+                          const rect = card.getBoundingClientRect();
+                          const x = e.clientX - rect.left;
+                          const y = e.clientY - rect.top;
+                          const centerX = rect.width / 2;
+                          const centerY = rect.height / 2;
+                          const rotateX = ((y - centerY) / centerY) * -5;
+                          const rotateY = ((x - centerX) / centerX) * 5;
+                          card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.transform = 'perspective(1000px) rotateX(0) rotateY(0)';
+                        }}
+                      >
                        <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
                          <div className="space-y-3">
                            <div className="flex items-center gap-3 text-devotion-gold font-black text-xs uppercase tracking-widest">
@@ -713,7 +778,24 @@ export default function Profile() {
                ) : (
                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                    {savedReels.slice(0, 30).map((reel) => (
-                     <div key={`${reel.reelId}-${reel.savedAt}`} className="rounded-2xl border border-white/10 bg-white/5 p-5">
+                     <div 
+                        key={`${reel.reelId}-${reel.savedAt}`} 
+                        className="rounded-2xl border border-white/10 bg-white/5 p-5 preserve-3d transition-all duration-300 ease-out"
+                        onMouseMove={(e) => {
+                          const card = e.currentTarget;
+                          const rect = card.getBoundingClientRect();
+                          const x = e.clientX - rect.left;
+                          const y = e.clientY - rect.top;
+                          const centerX = rect.width / 2;
+                          const centerY = rect.height / 2;
+                          const rotateX = ((y - centerY) / centerY) * -5;
+                          const rotateY = ((x - centerX) / centerX) * 5;
+                          card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.transform = 'perspective(1000px) rotateX(0) rotateY(0)';
+                        }}
+                      >
                        <h4 className="text-white font-bold text-lg line-clamp-1 mb-2">{reel.title || 'Saved Reel'}</h4>
                        <p className="text-sm text-gray-300 line-clamp-2 mb-3">{reel.description || 'No description'}</p>
                        <p className="text-[10px] uppercase tracking-widest text-gray-400 mb-4">
@@ -752,7 +834,24 @@ export default function Profile() {
                        <h4 className="text-devotion-gold font-black text-xs uppercase tracking-[0.2em] mb-4">Daily Sloka Saves</h4>
                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                          {dailySavedVerses.slice(0, 8).map((item) => (
-                           <div key={item.verseKey} className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                           <div 
+                              key={item.verseKey} 
+                              className="rounded-2xl border border-white/10 bg-white/5 p-4 preserve-3d transition-all duration-300 ease-out"
+                              onMouseMove={(e) => {
+                                const card = e.currentTarget;
+                                const rect = card.getBoundingClientRect();
+                                const x = e.clientX - rect.left;
+                                const y = e.clientY - rect.top;
+                                const centerX = rect.width / 2;
+                                const centerY = rect.height / 2;
+                                const rotateX = ((y - centerY) / centerY) * -5;
+                                const rotateY = ((x - centerX) / centerX) * 5;
+                                card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
+                              }}
+                              onMouseLeave={(e) => {
+                                e.currentTarget.style.transform = 'perspective(1000px) rotateX(0) rotateY(0)';
+                              }}
+                            >
                              <p className="text-[10px] uppercase tracking-[0.2em] text-gray-400 mb-2">
                                {item.chapter && item.verse ? `Chapter ${item.chapter} • Verse ${item.verse}` : item.dailyKey || 'Daily Verse'}
                              </p>

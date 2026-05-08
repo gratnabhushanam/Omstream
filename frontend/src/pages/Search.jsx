@@ -85,7 +85,21 @@ export default function Search() {
       <button
         type="button"
         onClick={onOpen}
-        className="text-left w-full bg-glass-gradient backdrop-blur-md p-6 rounded-2xl border border-white/10 hover:border-devotion-gold/50 transition-all group shadow-lg"
+        className="text-left w-full bg-glass-gradient backdrop-blur-md p-6 rounded-2xl border border-white/10 hover:border-devotion-gold/50 transition-all group shadow-lg preserve-3d"
+        onMouseMove={(e) => {
+          const card = e.currentTarget;
+          const rect = card.getBoundingClientRect();
+          const x = e.clientX - rect.left;
+          const y = e.clientY - rect.top;
+          const centerX = rect.width / 2;
+          const centerY = rect.height / 2;
+          const rotateX = ((y - centerY) / centerY) * -8;
+          const rotateY = ((x - centerX) / centerX) * 8;
+          card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale3d(1.02, 1.02, 1.02)`;
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.transform = 'perspective(1000px) rotateX(0) rotateY(0) scale3d(1, 1, 1)';
+        }}
       >
          <div className="flex justify-between items-start mb-4">
             <div className="flex items-center gap-3">
