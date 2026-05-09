@@ -66,6 +66,10 @@ export default function Movies() {
         .bubbly-button { transition: all 0.2s cubic-bezier(0.68, -0.55, 0.265, 1.55); }
         .bubbly-button:hover { transform: scale(1.1) rotate(-3deg); }
         .bubbly-button:active { transform: scale(0.9); }
+        .card-3d { transition: transform 0.6s cubic-bezier(0.23, 1, 0.32, 1), box-shadow 0.6s ease; transform-style: preserve-3d; }
+        .card-3d:hover { transform: perspective(1200px) rotateX(8deg) rotateY(-8deg) scale(1.05); box-shadow: -20px 30px 50px rgba(0,0,0,0.25); z-index: 50; }
+        .card-3d-inner { transition: transform 0.6s cubic-bezier(0.23, 1, 0.32, 1); }
+        .card-3d:hover .card-3d-inner { transform: translateZ(40px); }
       `}</style>
 
       {/* Vibrant Movies Navbar */}
@@ -220,12 +224,12 @@ function MovieCard({ movie, onSelect, colorClass }) {
 
   return (
     <div
-      className={`relative w-[340px] h-[400px] md:w-[420px] md:h-[480px] rounded-[2.5rem] overflow-hidden cursor-pointer bg-white shadow-[0_15px_35px_rgba(0,0,0,0.08)] border-4 border-transparent hover:border-white transition-all duration-300 bubbly-button group`}
+      className={`relative w-[340px] h-[400px] md:w-[420px] md:h-[480px] rounded-[2.5rem] overflow-hidden cursor-pointer bg-white shadow-[0_15px_35px_rgba(0,0,0,0.08)] border-4 border-transparent hover:border-white card-3d group`}
       onClick={() => onSelect(movie)}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      <div className="absolute top-0 inset-x-0 h-[60%] rounded-b-[2rem] overflow-hidden bg-black">
+      <div className="absolute top-0 inset-x-0 h-[60%] rounded-b-[2rem] overflow-hidden bg-black card-3d-inner">
         {isHovered && (movie.trailerUrl || movie.videoUrl || movie.youtubeUrl || movie.url) ? (
           <div className="w-full h-full scale-110">
             <MediaPlayerHLS
