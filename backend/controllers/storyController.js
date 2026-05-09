@@ -1,7 +1,6 @@
-const { Story } = require('../models');
+const { Story, Job } = require('../models');
 const mongoose = require('mongoose');
 const { mapStory } = require('../utils/responseMappers');
-const { translateMetadata, processStoryIntoChapters, generateQuizFromContent } = require('../utils/aiService');
 
 /**
  * GET /api/stories
@@ -70,9 +69,14 @@ exports.addStory = async (req, res) => {
 
     const newStory = await Story.create(payload);
 
-    // Kick off background AI processing (non-blocking)
+    // Kick off background AI processing via Job Queue
     if (req.body.autoProcess !== false && (newStory.content || newStory.chapters?.length)) {
-      setImmediate(() => _runAiProcessing(newStory._id));
+       await Job.create({
+         type: 'all',
+         contentId: newStory._id,
+         contentType: 'Story',
+         status: 'pending'
+       });
     }
 
     return res.status(201).json(mapStory(newStory));
@@ -90,9 +94,13 @@ exports.updateStory = async (req, res) => {
     const story = await Story.findByIdAndUpdate(req.params.id, req.body, { new: true });
     if (!story) return res.status(404).json({ message: 'Story not found' });
 
-    // Re-run AI if content or title changed and not already processing
+    // Trigger AI re-processing if content changed
     if ((req.body.content || req.body.title) && story.status !== 'processing') {
-      setImmediate(() => _runAiProcessing(story._id));
+       await Job.findOneAndUpdate(
+         { contentId: story._id, status: 'pending' },
+         { type: 'all', status: 'pending' },
+         { upsert: true }
+       );
     }
 
     return res.json(mapStory(story));
@@ -116,7 +124,12 @@ exports.publishStory = async (req, res) => {
     });
 
     if (!story.aiProcessed) {
-      setImmediate(() => _runAiProcessing(story._id));
+       await Job.create({
+         type: 'all',
+         contentId: story._id,
+         contentType: 'Story',
+         status: 'pending'
+       });
     }
 
     return res.json({ message: 'Story published', id: req.params.id });
@@ -146,57 +159,21 @@ exports.processStory = async (req, res) => {
     const story = await Story.findById(req.params.id);
     if (!story) return res.status(404).json({ message: 'Story not found' });
 
-    await Story.findByIdAndUpdate(req.params.id, { status: 'processing' });
-    res.json({ message: 'AI processing started', id: req.params.id });
+    // Check if job already exists
+    const existingJob = await Job.findOne({ contentId: story._id, status: { $in: ['pending', 'processing'] } });
+    if (existingJob) {
+      return res.status(400).json({ message: 'A processing job is already active for this story' });
+    }
 
-    // Run async after response
-    setImmediate(() => _runAiProcessing(req.params.id));
+    await Job.create({
+      type: 'all',
+      contentId: story._id,
+      contentType: 'Story',
+      status: 'pending'
+    });
+
+    res.json({ message: 'AI processing job queued successfully', id: req.params.id });
   } catch (error) {
     return res.status(500).json({ message: error.message });
   }
 };
-
-/**
- * Internal: runs AI chaptering + translation for a story.
- * Called asynchronously so it never blocks API responses.
- */
-async function _runAiProcessing(storyId) {
-  try {
-    const story = await Story.findById(storyId);
-    if (!story) return;
-
-    await Story.findByIdAndUpdate(storyId, { status: 'processing' });
-
-    const updates = { aiProcessed: true, status: 'published' };
-
-    // 1. Auto-segment into chapters if we have raw content and no chapters yet
-    if (story.content && (!story.chapters || story.chapters.length === 0)) {
-      try {
-        const chapters = await processStoryIntoChapters(story.content, story.title);
-        if (chapters && chapters.length > 0) {
-          updates.chapters = chapters;
-          console.log(`[AI] Generated ${chapters.length} chapters for: ${story.title}`);
-        }
-      } catch (chapErr) {
-        console.warn(`[AI] Chapter processing failed for ${story.title}:`, chapErr.message);
-      }
-    }
-
-    // 2. Translate title + description into all supported languages
-    try {
-      const translations = await translateMetadata(story, 'Story');
-      if (translations && Object.keys(translations).length > 0) {
-        updates.translations = translations;
-        console.log(`[AI] Translated story "${story.title}" into ${Object.keys(translations).length} languages`);
-      }
-    } catch (transErr) {
-      console.warn(`[AI] Translation failed for ${story.title}:`, transErr.message);
-    }
-
-    await Story.findByIdAndUpdate(storyId, updates);
-    console.log(`[AI] Processing complete for story: ${story.title}`);
-  } catch (err) {
-    console.error(`[AI] Background processing error for story ${storyId}:`, err.message);
-    await Story.findByIdAndUpdate(storyId, { status: 'draft', aiProcessed: false }).catch(() => {});
-  }
-}

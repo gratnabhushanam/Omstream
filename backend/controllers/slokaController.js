@@ -173,7 +173,17 @@ exports.getDailySloka = async (req, res) => {
 
 exports.addSloka = async (req, res) => {
   try {
+    const { Job } = require('../models');
     const newSloka = await Sloka.create(req.body);
+    
+    // Queue AI enrichment and translation
+    await Job.create({
+      type: 'all',
+      contentId: newSloka._id,
+      contentType: 'Sloka',
+      status: 'pending'
+    });
+
     return res.status(201).json(mapSloka(newSloka));
   } catch (error) {
     res.status(500).json({ message: error.message });

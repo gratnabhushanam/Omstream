@@ -10,6 +10,7 @@ const QuizSet = require('./QuizSet');
 const QuizAttempt = require('./QuizAttempt');
 const Group = require('./Group');
 const Post = require('./Post');
+const Job = require('./Job');
 
 module.exports = {
   User,
@@ -23,5 +24,6 @@ module.exports = {
   QuizSet,
   QuizAttempt,
   Group,
-  Post
+  Post,
+  Job
 };

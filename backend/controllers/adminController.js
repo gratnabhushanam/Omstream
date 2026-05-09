@@ -41,6 +41,15 @@ exports.uploadVideoToCloudinary = async (req, res) => {
       uploadedBy: req.user.id,
     });
 
+    // Queue AI processing for metadata translation, subtitles, and quizzes
+    const { Job } = require('../models');
+    await Job.create({
+      type: 'all',
+      contentId: newVideo._id,
+      contentType: 'Video',
+      status: 'pending'
+    });
+
     res.status(201).json({ video: newVideo });
   } catch (error) { res.status(500).json({ message: error.message }); }
 };

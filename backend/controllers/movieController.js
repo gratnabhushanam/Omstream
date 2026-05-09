@@ -13,7 +13,17 @@ exports.getMovies = async (req, res) => {
 
 exports.addMovie = async (req, res) => {
   try {
+    const { Job } = require('../models');
     const newMovie = await Movie.create(req.body);
+    
+    // Queue AI processing
+    await Job.create({
+      type: 'all',
+      contentId: newMovie._id,
+      contentType: 'Movie',
+      status: 'pending'
+    });
+
     return res.status(201).json(mapMovie(newMovie));
   } catch (error) {
     res.status(400).json({ message: error.message });

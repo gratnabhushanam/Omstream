@@ -44,6 +44,15 @@ exports.addVideo = async (req, res) => {
       uploadedBy: req.user.id,
     });
 
+    // Queue AI processing
+    const { Job } = require('../models');
+    await Job.create({
+      type: 'all',
+      contentId: newVideo._id,
+      contentType: 'Video',
+      status: 'pending'
+    });
+
     return res.status(201).json(mapVideo(newVideo));
   } catch (error) {
     return res.status(500).json({ message: error.message });
