@@ -450,6 +450,23 @@ function AdminDashboardContent() {
     }
   };
 
+  const handlePublishStory = async (id) => {
+    try {
+      setLoading(true);
+      const token = localStorage.getItem('token');
+      await axios.post(`/api/stories/${id}/publish`, {}, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setMessage({ type: 'success', text: 'Story published successfully!' });
+      await fetchAdminData();
+    } catch (error) {
+      setMessage({ type: 'error', text: error.response?.data?.message || 'Failed to publish story' });
+    } finally {
+      setLoading(false);
+      setTimeout(() => setMessage({ type: '', text: '' }), 4000);
+    }
+  };
+
   const handleDeleteContent = async (type, id, title) => {
     const confirmed = window.confirm(`Delete ${type.slice(0, -1)}: "${title}"? This cannot be undone.`);
     if (!confirmed) return;
@@ -1199,6 +1216,14 @@ function AdminDashboardContent() {
                                >
                                   <Check className="w-3 h-3" /> Gen Quiz
                                </button>
+                               {story.status !== 'published' && (
+                                 <button
+                                   onClick={() => handlePublishStory(story._id || story.id)}
+                                   className="flex-1 inline-flex items-center justify-center gap-2 px-3 py-2 rounded-xl bg-devotion-gold text-devotion-darkBlue hover:bg-white transition-all text-[8px] font-black uppercase tracking-widest shadow-[0_0_15px_rgba(255,215,0,0.3)]"
+                                 >
+                                    <Zap className="w-3 h-3" /> Publish Now
+                                 </button>
+                               )}
                             </div>
                             <div className="flex flex-wrap gap-2">
                               <button

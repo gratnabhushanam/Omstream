@@ -247,19 +247,39 @@ export const useDailySloka = () => {
   const getMeaningByLanguage = (sloka, lang) => {
     if (!sloka) return '';
     const localized = sloka.localizedMeaning || {};
-    if (lang === 'telugu') {
-      return localized.telugu || sloka.teluguMeaning || sloka.englishMeaning || '';
-    }
-    if (lang === 'hindi') {
-      return localized.hindi || sloka.hindiMeaning || sloka.englishMeaning || '';
-    }
-    return localized.english || sloka.englishMeaning || '';
+    // Priority 1: New dynamic Map/Object format (supports all languages: en, hi, te, ta, kn, ml, etc.)
+    const code = String(lang || 'en').toLowerCase().substring(0, 2);
+    if (localized[code]) return localized[code];
+    if (localized[lang]) return localized[lang];
+
+    // Priority 2: Legacy field-based meanings
+    if (lang === 'telugu' || code === 'te') return sloka.teluguMeaning || sloka.englishMeaning || '';
+    if (lang === 'hindi' || code === 'hi') return sloka.hindiMeaning || sloka.englishMeaning || '';
+    if (lang === 'tamil' || code === 'ta') return sloka.tamilMeaning || sloka.englishMeaning || '';
+    if (lang === 'kannada' || code === 'kn') return sloka.kannadaMeaning || sloka.englishMeaning || '';
+    if (lang === 'malayalam' || code === 'ml') return sloka.malayalamMeaning || sloka.englishMeaning || '';
+    
+    return sloka.englishMeaning || '';
   };
 
   const getAudioByLanguage = (sloka, lang) => {
     if (!sloka) return '';
     const audioByLanguage = sloka.audioByLanguage || {};
-    return audioByLanguage[lang] || sloka.audioUrl || '';
+    const code = String(lang || 'en').toLowerCase().substring(0, 2);
+    
+    // Priority 1: New dynamic audio Map (AI generated)
+    if (audioByLanguage[code]) return audioByLanguage[code];
+    if (audioByLanguage[lang]) return audioByLanguage[lang];
+
+    // Priority 2: Legacy dedicated fields
+    if (code === 'en') return sloka.audioUrlEnglish || sloka.audioUrl || '';
+    if (code === 'hi') return sloka.audioUrlHindi || sloka.audioUrl || '';
+    if (code === 'te') return sloka.audioUrlTelugu || sloka.audioUrl || '';
+    if (code === 'ta') return sloka.audioUrlTamil || sloka.audioUrl || '';
+    if (code === 'kn') return sloka.audioUrlKannada || sloka.audioUrl || '';
+    if (code === 'ml') return sloka.audioUrlMalayalam || sloka.audioUrl || '';
+    
+    return sloka.audioUrl || '';
   };
 
   const resolveAudioUrl = (rawUrl) => {
