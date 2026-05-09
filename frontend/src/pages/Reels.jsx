@@ -276,7 +276,7 @@ export default function Reels() {
                    <h2 className="text-2xl font-black uppercase tracking-[0.2em] italic">Spiritual Reels</h2>
                    <div className="flex gap-3">
                       <button onClick={() => setPlatform('mobile')} className="p-3 rounded-full bg-white/5 border border-white/10 hover:bg-white/10 transition-all"><Smartphone className="w-4 h-4"/></button>
-                      <button className="p-3 rounded-full bg-white/5 border border-white/10 hover:bg-white/10 transition-all"><monitor className="w-4 h-4"/></button>
+                      <button className="p-3 rounded-full bg-white/5 border border-white/10 hover:bg-white/10 transition-all"><Monitor className="w-4 h-4"/></button>
                    </div>
                 </div>
                 <div className="grid grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-8">
@@ -418,7 +418,7 @@ export default function Reels() {
                     />
                     <div className="absolute right-4 top-1/2 -translate-y-1/2 flex gap-4 text-white/20">
                        <Smartphone className="w-5 h-5"/>
-                       <monitor className="w-5 h-5"/>
+                       <Monitor className="w-5 h-5"/>
                     </div>
                   </div>
                   <button 
