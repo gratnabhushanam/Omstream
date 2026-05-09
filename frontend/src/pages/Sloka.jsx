@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Share2, Bookmark, Volume2, Info, Pause } from 'lucide-react';
+import { useLanguage } from '../context/LanguageContext';
 
 export default function Sloka() {
   const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
@@ -10,6 +11,9 @@ export default function Sloka() {
   const [sloka, setSloka] = useState(null);
   const [loading, setLoading] = useState(true);
   const [language, setLanguage] = useState(globalLanguage);
+
+  // Sync with global language changes
+  useEffect(() => { setLanguage(globalLanguage); }, [globalLanguage]);
   const [isPlaying, setIsPlaying] = useState(false);
   const [audio, setAudio] = useState(null);
   const [playbackType, setPlaybackType] = useState(null);

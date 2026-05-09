@@ -168,6 +168,21 @@ export default function Navbar() {
                 {link.icon} {link.name}
               </Link>
             ))}
+            {/* Mobile Language Switcher */}
+            <div className="mt-3 mb-1">
+              <p className="text-[9px] font-black uppercase tracking-[0.4em] text-gray-600 mb-2 px-1">Language</p>
+              <div className="flex flex-wrap gap-2">
+                {languages.slice(0, 10).map((lang) => (
+                  <button
+                    key={lang.code}
+                    onClick={() => { setLanguage(lang.code); setIsOpen(false); }}
+                    className={`px-3 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${language === lang.code ? 'bg-devotion-gold text-black' : 'bg-white/5 border border-white/10 text-gray-400 hover:text-white'}`}
+                  >
+                    {lang.native}
+                  </button>
+                ))}
+              </div>
+            </div>
             <button onClick={() => { handleInstallClick(); setIsOpen(false); }} className="w-full mt-4 py-4 bg-gradient-to-r from-devotion-gold to-[#FFB800] text-[#06101E] rounded-2xl font-black text-[11px] uppercase tracking-widest shadow-xl active:scale-95 flex items-center justify-center gap-3"><Download className="w-5 h-5" /> INSTALL DIVINE APP</button>
             {user ? (
               <Link to="/profile" onClick={() => setIsOpen(false)} className="flex items-center gap-4 mt-6 p-4 bg-white/5 rounded-2xl border border-white/10 group">
