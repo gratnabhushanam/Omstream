@@ -384,6 +384,29 @@ Your implementation includes:
 
 ---
 
+---
+
+## 🤖 AI Background Worker & Automation
+
+Your platform now includes a robust, automated AI processing pipeline for content enrichment.
+
+### ⚙️ How it Works
+1. **Content Ingestion**: When you add a new Story, Video, Movie, or Sloka, a "Job" is automatically created in the database.
+2. **Automated Processing**: An AI Worker scans for pending jobs and performs:
+   - **Regional Translations**: Auto-localizes content into 21+ languages.
+   - **Chaptering**: Breaks long stories into manageable AI-powered chapters.
+   - **Quiz Generation**: Creates interactive challenges based on the content.
+   - **Metadata Enrichment**: Adds tags and summaries automatically.
+3. **Real-time Monitoring**: Track progress directly from the **Admin Dashboard** AI Monitor tab.
+
+### ☁️ Production Automation (Vercel)
+The system is optimized for serverless deployment using **Vercel Cron Jobs**:
+- **Schedule**: Runs every 10 minutes.
+- **Security**: Protected by a `CRON_SECRET` to prevent unauthorized triggers.
+- **Reliability**: Ensures background tasks are handled even when the main server is idle.
+
+---
+
 ## 🎉 You're All Set!
 
 Your GitaWisdom project is now:
@@ -391,6 +414,7 @@ Your GitaWisdom project is now:
 - 📱 **PWA Ready** - Installable as app
 - 👆 **Touch Optimized** - Easy to use on phones
 - ♿ **Accessible** - Works for everyone
+- 🤖 **AI Automated** - Hands-free content localization
 - 📚 **Well Documented** - Easy to maintain
 - 🚀 **Production Ready** - Deploy with confidence
 
@@ -398,5 +422,5 @@ Your GitaWisdom project is now:
 
 ---
 
-Generated: April 2, 2026
-Next Review: When adding new pages/components
+Generated: May 9, 2026
+Next Review: When adding new AI models or content types
