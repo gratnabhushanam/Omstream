@@ -213,34 +213,54 @@ function MoviesRow({ category, movies, onSelect }) {
 }
 
 function MovieCard({ movie, onSelect, colorClass }) {
+  const [isHovered, setIsHovered] = useState(false);
   const extractYoutubeId = (url) => { if (!url) return null; const match = url.match(/[?&]v=([^&]+)/) || url.match(/youtu\.be\/([^?]+)/); return match ? match[1] : null; };
   const ytId = extractYoutubeId(movie.videoUrl || movie.youtubeUrl || movie.url || '');
   const thumbUrl = movie.thumbnail || movie.thumbnailUrl || (ytId ? `https://img.youtube.com/vi/${ytId}/maxresdefault.jpg` : '/scene-krishna.svg');
 
   return (
     <div
-      className={`relative w-[280px] h-[320px] md:w-[320px] md:h-[360px] rounded-[2.5rem] overflow-hidden cursor-pointer bg-white shadow-[0_15px_35px_rgba(0,0,0,0.08)] border-4 border-transparent hover:border-white transition-all duration-300 bubbly-button group`}
+      className={`relative w-[340px] h-[400px] md:w-[420px] md:h-[480px] rounded-[2.5rem] overflow-hidden cursor-pointer bg-white shadow-[0_15px_35px_rgba(0,0,0,0.08)] border-4 border-transparent hover:border-white transition-all duration-300 bubbly-button group`}
       onClick={() => onSelect(movie)}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
     >
-      <div className="absolute top-0 inset-x-0 h-[60%]">
-        <img src={thumbUrl} alt={movie.title} className="w-full h-full object-cover rounded-b-[2rem]" />
-        <div className={`absolute top-4 left-4 px-3 py-1 bg-gradient-to-r ${colorClass} text-white font-black text-[10px] rounded-full uppercase tracking-widest shadow-md border-2 border-white`}>
+      <div className="absolute top-0 inset-x-0 h-[60%] rounded-b-[2rem] overflow-hidden bg-black">
+        {isHovered && (movie.trailerUrl || movie.videoUrl || movie.youtubeUrl || movie.url) ? (
+          <div className="w-full h-full scale-110">
+            <MediaPlayerHLS
+              url={movie.trailerUrl || movie.videoUrl || movie.youtubeUrl || movie.url}
+              className="w-full h-full object-cover pointer-events-none"
+              autoPlay={true}
+              muted={true}
+              controls={false}
+              loop={true}
+              instagramMode={true}
+            />
+          </div>
+        ) : (
+          <img src={thumbUrl} alt={movie.title} className="w-full h-full object-cover" />
+        )}
+        <div className={`absolute top-4 left-4 z-20 px-4 py-1.5 bg-gradient-to-r ${colorClass} text-white font-black text-[11px] rounded-full uppercase tracking-widest shadow-md border-2 border-white`}>
           {movie.duration ? `${movie.duration} MINS` : 'FEATURE'}
         </div>
         
         {/* Play Button Overlay */}
-        <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center rounded-b-[2rem]">
-          <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center shadow-2xl animate-bounce">
-            <Play className="w-8 h-8 text-[#4FACFE] ml-1 fill-current" />
+        <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center z-20 pointer-events-none">
+          <div className="w-20 h-20 bg-white rounded-full flex items-center justify-center shadow-2xl animate-bounce">
+            <Play className="w-10 h-10 text-[#4FACFE] ml-1 fill-current" />
           </div>
         </div>
       </div>
 
-      <div className="absolute bottom-0 inset-x-0 h-[40%] p-6 flex flex-col justify-center items-center text-center bg-white">
-        <h3 className="font-black text-xl text-[#2D3748] line-clamp-2 leading-tight mb-2 group-hover:text-[#4FACFE] transition-colors">{movie.title}</h3>
-        <p className="text-sm font-bold text-[#A0AEC0] uppercase tracking-widest bg-[#F2F7FF] px-4 py-1 rounded-full">
+      <div className="absolute bottom-0 inset-x-0 h-[40%] p-6 md:p-8 flex flex-col justify-center items-center text-center bg-white z-30">
+        <h3 className="font-black text-2xl md:text-3xl text-[#2D3748] line-clamp-2 leading-tight mb-3 group-hover:text-[#4FACFE] transition-colors">{movie.title}</h3>
+        <p className="text-sm md:text-base font-bold text-[#A0AEC0] uppercase tracking-widest bg-[#F2F7FF] px-5 py-1.5 rounded-full mb-3">
           {movie.genre || 'Action & Drama'}
         </p>
+        <span className="text-[#4FACFE] font-black text-xs uppercase tracking-[0.2em] opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+          PLAY TRAILER
+        </span>
       </div>
     </div>
   );
