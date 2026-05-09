@@ -15,7 +15,8 @@ export default defineConfig({
         globPatterns: ['**/*.{js,css,html,ico,png,svg}'],
         rollupOptions: {
           output: {
-            codeSplitting: false
+            codeSplitting: false,
+            format: 'es'
           }
         }
       },
