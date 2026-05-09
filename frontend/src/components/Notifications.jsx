@@ -23,12 +23,12 @@ export function NotificationItem({ n, onClick }) {
       </div>
       <div className="flex-1 min-w-0 pt-0.5">
         <div className="flex justify-between items-start mb-1.5">
-          <p className={`text-[13px] font-black leading-tight tracking-tight uppercase transition-colors ${isUnread ? 'text-white' : 'text-gray-400 group-hover:text-white'}`}>
+          <p className={`text-[13px] font-black leading-tight tracking-tight uppercase transition-colors ${isUnread ? 'text-white' : 'text-gray-200 group-hover:text-white'}`}>
             {n.title || 'Divine Update'}
           </p>
-          {timeAgo && <p className="text-[9px] text-gray-700 font-black uppercase tracking-widest whitespace-nowrap ml-2 opacity-60">{timeAgo}</p>}
+          {timeAgo && <p className="text-[9px] text-white/45 font-black uppercase tracking-widest whitespace-nowrap ml-2">{timeAgo}</p>}
         </div>
-        <p className={`text-sm leading-relaxed font-semibold transition-colors ${isUnread ? 'text-gray-100' : 'text-gray-500 group-hover:text-gray-300'}`}>
+        <p className={`text-sm leading-relaxed font-semibold transition-colors ${isUnread ? 'text-gray-100' : 'text-gray-300 group-hover:text-gray-200'}`}>
           {n.body || n.message || n.text}
         </p>
         <div className="flex items-center justify-end mt-3">
@@ -41,7 +41,7 @@ export function NotificationItem({ n, onClick }) {
 
 export function DesktopNotificationPanel({ notifications, unreadCount, handleMarkAsRead }) {
   return (
-    <div className="absolute right-0 top-full mt-4 w-96 bg-[#0B121F]/95 backdrop-blur-3xl border border-devotion-gold/30 rounded-3xl shadow-[0_30px_70px_rgba(0,0,0,0.7)] overflow-hidden z-[60] animate-in fade-in zoom-in-95 duration-200">
+    <div className="absolute right-0 top-full mt-4 w-[24rem] max-w-[calc(100vw-1rem)] bg-[#0B121F]/98 backdrop-blur-3xl border border-devotion-gold/30 rounded-3xl shadow-[0_30px_70px_rgba(0,0,0,0.7)] overflow-hidden z-[60] animate-in fade-in zoom-in-95 duration-200">
       <div className="px-6 py-4 flex justify-between items-center border-b border-white/5 bg-[#141C2B]">
         <div className="flex items-center gap-3">
           <Bell className="w-4 h-4 text-devotion-gold" />
@@ -104,7 +104,7 @@ export function MobileNotificationSheet({ notifications, unreadCount, handleMark
         </div>
       </div>
       
-      <div className="flex-1 overflow-y-auto p-5 pb-24 scrollbar-hide">
+      <div className="flex-1 min-h-0 overflow-y-auto p-5 pb-28 scrollbar-hide">
         {notifications.length === 0 ? (
           <div className="text-center py-32 px-8 flex flex-col items-center justify-center h-full">
             <div className="w-28 h-28 rounded-[2.5rem] bg-white/[0.03] border border-white/5 flex items-center justify-center mb-10 shadow-2xl">
@@ -125,7 +125,7 @@ export function MobileNotificationSheet({ notifications, unreadCount, handleMark
                 <h4 className="text-2xl font-serif font-black text-white mb-3 uppercase tracking-tight">
                   {notifications.find(n => !n.read && (n.type === 'promo' || n.type === 'content')).title}
                 </h4>
-                <p className="text-gray-300 text-sm font-medium italic mb-6 leading-relaxed">
+                <p className="text-gray-100 text-sm font-medium italic mb-6 leading-relaxed">
                   {notifications.find(n => !n.read && (n.type === 'promo' || n.type === 'content')).body}
                 </p>
                 <button className="px-6 py-3 bg-devotion-gold text-devotion-darkBlue rounded-xl font-black text-[10px] uppercase tracking-widest active:scale-95 transition-all shadow-xl">
@@ -134,7 +134,7 @@ export function MobileNotificationSheet({ notifications, unreadCount, handleMark
               </div>
             )}
 
-            <p className="text-[9px] font-black text-white/20 uppercase tracking-[0.5em] mb-4 px-2">All Divine Notifications</p>
+            <p className="text-[9px] font-black text-white/35 uppercase tracking-[0.5em] mb-4 px-2">All Divine Notifications</p>
             {notifications.map(n => <NotificationItem key={n._id || n.id} n={n} />)}
           </div>
         )}

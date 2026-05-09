@@ -45,7 +45,7 @@ export default function ImmersiveNotification({ notification, onClose, onAction 
         onClick={onClose}
       />
       
-      <div className={`relative w-full max-w-lg bg-gradient-to-br ${theme.bg} bg-[#0D1424] border ${theme.border} rounded-[3rem] p-8 sm:p-12 ${theme.glow} animate-in zoom-in-95 slide-in-from-bottom-10 duration-700 overflow-hidden`}>
+      <div className={`relative w-full max-w-xl bg-gradient-to-br ${theme.bg} bg-[#0D1424] border ${theme.border} rounded-[3rem] p-8 sm:p-12 ${theme.glow} animate-in zoom-in-95 slide-in-from-bottom-10 duration-700 overflow-hidden max-h-[88vh] overflow-y-auto`}>
         {/* Cinematic Background Decoration */}
         <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full blur-[80px] -mr-32 -mt-32 pointer-events-none" />
         <div className={`absolute bottom-0 left-0 w-48 h-48 ${theme.accent} opacity-10 rounded-full blur-[60px] -ml-24 -mb-24 pointer-events-none`} />
@@ -63,15 +63,15 @@ export default function ImmersiveNotification({ notification, onClose, onAction 
              <Icon className={`w-12 h-12 sm:w-14 sm:h-14 ${theme.accent} animate-bounce-slow`} />
           </div>
 
-          <p className={`text-[10px] sm:text-xs font-black ${theme.accent} uppercase tracking-[0.5em] mb-4`}>
+          <p className={`text-[10px] sm:text-xs font-black ${theme.accent} uppercase tracking-[0.5em] mb-4 drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]`}>
             {notification.type === 'promo' ? 'Exclusive Reward' : notification.type === 'content' ? 'New Release' : 'Divine Alert'}
           </p>
           
-          <h2 className="text-3xl sm:text-4xl font-serif font-black text-white mb-6 leading-tight tracking-tight uppercase">
+          <h2 className="text-3xl sm:text-4xl font-serif font-black text-white mb-6 leading-tight tracking-tight uppercase drop-shadow-[0_2px_8px_rgba(0,0,0,0.75)]">
             {notification.title}
           </h2>
           
-          <p className="text-base sm:text-lg text-gray-300 font-medium leading-relaxed mb-10 max-w-xs font-serif italic">
+          <p className="text-base sm:text-lg text-gray-100 font-medium leading-relaxed mb-10 max-w-md font-serif italic drop-shadow-[0_1px_2px_rgba(0,0,0,0.6)]">
             "{notification.body || notification.message || notification.text}"
           </p>
 

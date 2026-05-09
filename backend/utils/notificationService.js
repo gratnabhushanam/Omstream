@@ -58,13 +58,19 @@ async function sendPush({ subscription, title, body, data }) {
 async function sendInApp({ userId, type, title, body, data }) {
   // Lazy load to avoid circular dependency
   const Notification = require('../models/Notification');
-  if (!userId || !title || !body) return;
+  if (!userId) return;
+  const safeType = String(type || 'system').trim() || 'system';
+  const safeTitle = String(title || '').trim() || 'Gita Wisdom Update';
+  const safeBody = String(body || '').trim() || 'You have a new update from Gita Wisdom.';
+
   await Notification.create({
     userId,
-    type: type || 'system',
-    title,
-    body,
+    type: safeType,
+    title: safeTitle,
+    body: safeBody,
+    message: safeBody,
     data: data || {},
+    isRead: false,
     read: false,
     createdAt: new Date(),
   });

@@ -69,6 +69,9 @@ export default function Movies() {
 
   const featuredYtId = featuredMovie ? extractYoutubeId(featuredMovie.videoUrl || featuredMovie.youtubeUrl || featuredMovie.url || '') : null;
   const featuredThumbUrl = featuredMovie ? (featuredMovie.thumbnail || featuredMovie.thumbnailUrl || (featuredYtId ? `https://img.youtube.com/vi/${featuredYtId}/maxresdefault.jpg` : '/scene-krishna.svg')) : '';
+  const heroMovie = featuredMovie;
+  const heroYtId = heroMovie ? extractYoutubeId(heroMovie.videoUrl || heroMovie.youtubeUrl || heroMovie.url || '') : null;
+  const heroThumbUrl = heroMovie ? (heroMovie.thumbnail || heroMovie.thumbnailUrl || (heroYtId ? `https://img.youtube.com/vi/${heroYtId}/maxresdefault.jpg` : '/scene-krishna.svg')) : '';
 
   return (
     <div className="min-h-[100dvh] bg-[#050B14] relative overflow-y-auto overflow-x-hidden text-white pl-safe pr-safe">
@@ -86,15 +89,15 @@ export default function Movies() {
       `}</style>
 
       {/* Netflix-style Hero Banner */}
-      {featuredMovie && (
+      {heroMovie && (
         <div className="relative w-full h-[70vh] md:h-[85vh] tv:h-[90vh] flex items-end pb-24 md:pb-32 px-4 sm:px-6 lg:px-12 tv:px-20 pt-20">
           <div className="absolute inset-0 z-0 bg-black overflow-hidden">
-            {featuredMovie.trailerUrl ? (
+            {heroMovie.trailerUrl ? (
               <div className="w-full h-full relative">
                 <MediaPlayerHLS
-                  url={featuredMovie.trailerUrl}
-                  title={featuredMovie.title}
-                  className="w-full h-full scale-[1.1] opacity-70"
+                  url={heroMovie.trailerUrl}
+                  title={heroMovie.title}
+                  className="w-full h-full object-cover opacity-70 transform-gpu"
                   autoPlay={true}
                   muted={true}
                   loop={true}
@@ -105,8 +108,8 @@ export default function Movies() {
               </div>
             ) : (
               <img 
-                src={featuredThumbUrl} 
-                alt={featuredMovie.title}
+                src={heroThumbUrl} 
+                alt={heroMovie.title}
                 className="w-full h-full object-cover opacity-60 animate-subtle-zoom"
               />
             )}
@@ -123,37 +126,37 @@ export default function Movies() {
                 <span className="text-devotion-gold font-black tracking-[0.4em] uppercase text-xs tv:text-sm">Gita Original</span>
               </div>
               <div className="flex items-center gap-2 text-gray-400 font-bold uppercase tracking-widest text-[10px] tv:text-xs">
-                <span>{featuredMovie.genre || 'Divine'}</span>
-                {featuredMovie.duration > 0 && (
+                <span>{heroMovie.genre || 'Divine'}</span>
+                {heroMovie.duration > 0 && (
                    <>
                      <span className="w-1 h-1 bg-gray-600 rounded-full"></span>
-                     <span>{featuredMovie.duration}m</span>
+                     <span>{heroMovie.duration}m</span>
                    </>
                 )}
               </div>
-              {featuredMovie.isComingSoon && (
+              {heroMovie.isComingSoon && (
                  <span className="bg-red-600 text-white px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest shadow-xl">Upcoming</span>
               )}
             </div>
             
             <h1 className="text-5xl md:text-7xl tv:text-[8rem] font-serif font-black text-white leading-[0.9] drop-shadow-2xl uppercase tracking-tighter">
-              {featuredMovie.title}
+              {heroMovie.title}
             </h1>
             
             <p className="text-sm md:text-lg tv:text-2xl text-gray-300 line-clamp-3 md:line-clamp-4 font-serif italic max-w-2xl drop-shadow-lg leading-relaxed">
-              {featuredMovie.desc || featuredMovie.description || 'A journey through divine narratives and spiritual wisdom.'}
+              {heroMovie.desc || heroMovie.description || 'A journey through divine narratives and spiritual wisdom.'}
             </p>
 
             <div className="flex items-center gap-4 pt-4">
               <button 
-                onClick={() => setSelectedMovie(featuredMovie)}
+                onClick={() => setSelectedMovie(heroMovie)}
                 tabIndex={0}
                 className="tv-focusable focus:outline-none focus:ring-4 focus:ring-devotion-gold flex items-center justify-center gap-3 bg-white text-black px-6 py-3 md:px-8 md:py-4 tv:px-12 tv:py-5 rounded-xl font-black text-sm md:text-base tv:text-xl uppercase tracking-widest hover:bg-gray-200 transition-colors shadow-2xl active:scale-95"
               >
-                <Play className="w-5 h-5 tv:w-7 tv:h-7 fill-current" /> {featuredMovie.isComingSoon ? 'Watch Trailer' : 'Play Now'}
+                <Play className="w-5 h-5 tv:w-7 tv:h-7 fill-current" /> {heroMovie.isComingSoon ? 'Watch Trailer' : 'Play Now'}
               </button>
               <button 
-                onClick={() => setSelectedMovie(featuredMovie)}
+                onClick={() => setSelectedMovie(heroMovie)}
                 tabIndex={0}
                 className="tv-focusable focus:outline-none focus:ring-4 focus:ring-devotion-gold flex items-center justify-center gap-3 bg-white/20 backdrop-blur-md border border-white/30 text-white px-6 py-3 md:px-8 md:py-4 tv:px-12 tv:py-5 rounded-xl font-black text-sm md:text-base tv:text-xl uppercase tracking-widest hover:bg-white/30 transition-colors shadow-2xl active:scale-95"
               >
@@ -247,18 +250,10 @@ function RowMovieCard({ video, onSelect }) {
   const [isHovered, setIsHovered] = useState(false);
   const hoverTimeoutRef = useRef(null);
 
-  const handleMouseEnter = () => {
-    setIsHovered(true);
-  };
-  const handleMouseLeave = () => {
-    setIsHovered(false);
-  };
+  const handleMouseEnter = () => { setIsHovered(true); };
+  const handleMouseLeave = () => { setIsHovered(false); };
 
-  const extractYoutubeId = (url) => {
-    if (!url) return null;
-    const match = url.match(/[?&]v=([^&]+)/) || url.match(/youtu\.be\/([^?]+)/);
-    return match ? match[1] : null;
-  };
+  const extractYoutubeId = (url) => { if (!url) return null; const match = url.match(/[?&]v=([^&]+)/) || url.match(/youtu\.be\/([^?]+)/); return match ? match[1] : null; };
 
   const ytId = extractYoutubeId(video.videoUrl || video.youtubeUrl || video.url || '');
   const thumbUrl = video.thumbnail || video.thumbnailUrl || (ytId ? `https://img.youtube.com/vi/${ytId}/maxresdefault.jpg` : '/scene-krishna.svg');
@@ -266,41 +261,53 @@ function RowMovieCard({ video, onSelect }) {
   return (
     <div
       tabIndex={0}
-      className="relative cursor-pointer group rounded-xl md:rounded-2xl tv:rounded-3xl overflow-hidden shadow-xl border border-white/5 bg-[#0A1220]
+      className={`relative cursor-pointer group rounded-xl md:rounded-2xl tv:rounded-3xl overflow-hidden shadow-xl border border-white/5 bg-[#0A1220]
                  w-[280px] h-[160px] md:w-[320px] md:h-[180px] tv:w-[480px] tv:h-[270px]
-                 transition-all duration-500 ease-out tv-focusable focus:outline-none focus:ring-4 focus:ring-white z-10 hover:z-30 hover:scale-[1.15] hover:shadow-[0_20px_50px_rgba(0,0,0,0.8)] origin-center"
+                 transition-all duration-700 ease-out tv-focusable focus:outline-none focus:ring-4 focus:ring-white z-10 hover:z-30 hover:scale-[1.09] hover:shadow-[0_28px_70px_rgba(0,0,0,0.9)] origin-center transform-gpu perspective-[1400px] hover:[transform:translateY(-2px)_rotateX(6deg)_rotateY(-8deg)_scale(1.09)]`}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
       onClick={() => onSelect(video)}
     >
       <div className="absolute inset-0 bg-black">
-        <img
-          src={thumbUrl}
-          alt={video.title}
-          loading="lazy"
-          className="w-full h-full object-cover opacity-80"
-        />
-        {/* Subtle gradient so text is readable */}
-        <div className={`absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent z-10 transition-opacity duration-300 ${isHovered ? 'opacity-100' : 'opacity-0'}`}></div>
+        <div className="absolute inset-0 scale-110 translate-y-4 opacity-45 blur-xl bg-black">
+          <img src={thumbUrl} alt="" aria-hidden="true" className="w-full h-full object-cover" />
+        </div>
+        <img src={thumbUrl} alt={video.title} loading="lazy" className="relative z-10 w-full h-full object-cover opacity-85 transition-transform duration-700 group-hover:scale-105" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/35 to-transparent z-10" />
+        <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/10 to-transparent" />
+        <div className="absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-[#050B14] to-transparent z-10" />
       </div>
 
-      <div className={`absolute inset-0 p-4 md:p-6 z-20 flex flex-col justify-end transition-opacity duration-300 ${isHovered ? 'opacity-100' : 'opacity-0'}`}>
-        <div className="flex items-center gap-3 mb-2">
-          <button className="w-8 h-8 md:w-10 md:h-10 bg-white rounded-full flex items-center justify-center hover:bg-gray-200 transition-colors">
-            <Play className="w-4 h-4 md:w-5 md:h-5 ml-1 text-black fill-current" />
+      <div className="absolute top-4 left-4 z-30 flex items-center gap-2">
+        <span className="px-3 py-1 rounded-full bg-black/55 backdrop-blur-md border border-white/10 text-[9px] font-black uppercase tracking-[0.25em] text-white">
+          {video.isComingSoon || video.trailerUrl ? 'Trailer' : 'Feature'}
+        </span>
+        {video.genre && (
+          <span className="px-3 py-1 rounded-full bg-devotion-gold/15 backdrop-blur-md border border-devotion-gold/20 text-[9px] font-black uppercase tracking-[0.25em] text-devotion-gold">
+            {video.genre}
+          </span>
+        )}
+      </div>
+
+      <div className={`absolute inset-0 p-4 md:p-6 z-20 flex flex-col justify-end transition-all duration-700 ${isHovered ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2'}`}>
+        <div className="absolute inset-x-4 bottom-4 h-[42%] rounded-[1.5rem] bg-black/35 backdrop-blur-xl border border-white/10 shadow-[0_20px_50px_rgba(0,0,0,0.45)]" />
+        <div className="relative z-10 flex items-center gap-3 mb-3">
+          <button className="w-9 h-9 md:w-11 md:h-11 rounded-full bg-white text-black flex items-center justify-center shadow-[0_10px_30px_rgba(0,0,0,0.35)] transition-all duration-500 group-hover:scale-110 group-hover:bg-devotion-gold" onClick={(e) => { e.stopPropagation(); onSelect(video); }}>
+            <Play className="w-4 h-4 md:w-5 md:h-5 ml-1 fill-current" />
           </button>
           <div className="flex-1">
-             <h3 className="text-sm md:text-base font-bold text-white line-clamp-1">{video.title}</h3>
-             {video.isComingSoon && (
-               <span className="text-[8px] bg-red-600 text-white px-2 py-0.5 rounded-full font-black uppercase tracking-widest mt-1 inline-block">Upcoming</span>
-             )}
+             <h3 className="text-sm md:text-base font-black text-white line-clamp-1 tracking-tight">{video.title}</h3>
+             <p className="text-[10px] md:text-xs text-gray-300 mt-1 line-clamp-1">{video.isComingSoon ? 'Upcoming teaser' : 'Stream-ready feature film'}</p>
           </div>
+          <button onClick={(e) => { e.stopPropagation(); onSelect(video); }} className="ml-3 px-3 py-2 rounded-full bg-white/10 border border-white/20 text-[10px] font-black uppercase tracking-widest text-white backdrop-blur-md transition-all duration-500 hover:bg-white/20 hover:scale-105">
+            More Info
+          </button>
         </div>
-        <div className="flex items-center gap-2 text-[10px] md:text-xs text-gray-400 font-bold uppercase tracking-wider">
-          <span className={video.isComingSoon ? "text-devotion-gold" : "text-green-500 font-black"}>{video.isComingSoon ? "Coming Soon" : "98% Match"}</span>
-          <span className="bg-white/5 px-1.5 py-0.5 rounded text-gray-500 border border-white/10">{video.genre || 'Divine'}</span>
-          <span>{video.releaseYear || 'NEW'}</span>
-          {video.duration > 0 && <span className="border border-gray-500 px-1 rounded">{video.duration}m</span>}
+        <div className="relative z-10 flex flex-wrap items-center gap-2 text-[10px] md:text-xs text-gray-300 font-black uppercase tracking-wider">
+          <span className={video.isComingSoon ? 'text-devotion-gold' : 'text-green-400'}>{video.isComingSoon ? 'Trailer' : '98% Match'}</span>
+          <span className="bg-white/10 px-2 py-1 rounded-full border border-white/10 text-white">{video.category || 'Movie'}</span>
+          <span className="bg-white/10 px-2 py-1 rounded-full border border-white/10 text-white">{video.releaseYear || 'NEW'}</span>
+          {video.duration > 0 && <span className="bg-white/10 px-2 py-1 rounded-full border border-white/10 text-white">{video.duration}m</span>}
         </div>
       </div>
     </div>

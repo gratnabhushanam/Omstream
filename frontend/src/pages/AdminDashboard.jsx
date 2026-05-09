@@ -29,7 +29,7 @@ function AdminDashboardContent() {
   const [quickFillStoryId, setQuickFillStoryId] = useState(null);
   const [moderationNotes, setModerationNotes] = useState({});
   const [message, setMessage] = useState({ type: '', text: '' });
-  const [movieForm, setMovieForm] = useState({ title: '', description: '', videoUrl: '', trailerUrl: '', thumbnail: '', releaseYear: 2025, ownerHistory: '', tags: '', views: 0, isComingSoon: false, genre: 'Divine', duration: 0 });
+  const [movieForm, setMovieForm] = useState({ title: '', description: '', videoUrl: '', hlsUrl: '', trailerUrl: '', thumbnail: '', releaseYear: 2025, ownerHistory: '', tags: '', views: 0, isComingSoon: false, genre: 'Divine', duration: 0 });
   const [storyForm, setStoryForm] = useState({
     title: '',
     titleTelugu: '',
@@ -471,7 +471,7 @@ function AdminDashboardContent() {
   };
 
   const resetForms = () => {
-    setMovieForm({ title: '', description: '', videoUrl: '', trailerUrl: '', thumbnail: '', releaseYear: 2025, ownerHistory: '', tags: '', views: 0, isComingSoon: false });
+    setMovieForm({ title: '', description: '', videoUrl: '', hlsUrl: '', trailerUrl: '', thumbnail: '', releaseYear: 2025, ownerHistory: '', tags: '', views: 0, isComingSoon: false, genre: 'Divine', duration: 0 });
     setStoryForm({
       title: '',
       titleTelugu: '',
@@ -546,6 +546,7 @@ function AdminDashboardContent() {
       title: movie.title || '',
       description: movie.description || '',
       videoUrl: movie.videoUrl || '',
+      hlsUrl: movie.hlsUrl || '',
       thumbnail: movie.thumbnail || '',
       releaseYear: movie.releaseYear || 2025,
       ownerHistory: movie.ownerHistory || '',
@@ -950,9 +951,9 @@ function AdminDashboardContent() {
                   {data.movies.length === 0 ? (
                     <p className="text-gray-500 text-center py-12">No movies uploaded yet.</p>
                   ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 overflow-x-auto">
+                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                       {data.movies.map((movie) => (
-                        <div key={movie._id || movie.id} className="p-6 rounded-2xl border border-white/10 bg-white/5 flex flex-col">
+                        <div key={movie._id || movie.id} className="p-6 rounded-2xl border border-white/10 bg-white/5 flex flex-col min-w-0">
                           {movie.videoUrl && (
                             <div className="mb-4 rounded-xl overflow-hidden border border-devotion-gold/20 aspect-video bg-black">
                               <MediaPlayerHLS
@@ -1516,7 +1517,7 @@ function AdminDashboardContent() {
                  
                  {/* MOVIE FORM */}
                  {activeTab === 'movies' && (
-                   <div className="grid grid-cols-1 md:grid-cols-2 gap-10 overflow-x-auto">
+                   <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
                        {/* Quick Guide Banner */}
                        <div className="md:col-span-2 bg-devotion-gold/5 border border-devotion-gold/20 rounded-2xl p-5 mb-2">
                          <p className="text-[10px] font-black uppercase tracking-widest text-devotion-gold mb-3">📋 Upload Guide</p>
@@ -1605,6 +1606,62 @@ function AdminDashboardContent() {
                        <div className="md:col-span-2 space-y-4">
                           <label className="text-[10px] font-black uppercase tracking-widest text-devotion-gold ml-2">Owner's Selection Insight</label>
                           <textarea rows="3" className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-5 text-white focus:border-devotion-gold outline-none" placeholder="Why this movie?" value={movieForm.ownerHistory} onChange={e => setMovieForm({...movieForm, ownerHistory: e.target.value})} />
+                       </div>
+
+                       <div className="md:col-span-2 rounded-[2rem] border border-white/10 bg-black/25 p-6 sm:p-8 shadow-2xl shadow-black/20">
+                         <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-4 mb-6">
+                           <div>
+                             <p className="text-[10px] font-black uppercase tracking-[0.3em] text-devotion-gold mb-2">Live Movie Preview</p>
+                             <h3 className="text-2xl font-serif font-black text-white uppercase tracking-tight line-clamp-2">{movieForm.title || 'Movie title preview'}</h3>
+                           </div>
+                           <div className="text-[10px] font-black uppercase tracking-[0.25em] text-gray-500">
+                             {movieForm.trailerUrl || movieForm.videoUrl ? 'Trailer / Video Source Ready' : 'Add source to preview'}
+                           </div>
+                         </div>
+
+                         <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1.2fr)_minmax(260px,0.8fr)] gap-6">
+                           <div className="rounded-[1.75rem] overflow-hidden border border-devotion-gold/20 bg-black aspect-video relative">
+                             {movieForm.trailerUrl || movieForm.videoUrl ? (
+                               <MediaPlayerHLS
+                                 url={movieForm.trailerUrl || movieForm.videoUrl}
+                                 hlsUrl={movieForm.hlsUrl}
+                                 title={movieForm.title || 'Movie Preview'}
+                                 className="w-full h-full object-cover transform-gpu"
+                                 autoPlay={true}
+                                 muted={true}
+                                 loop={true}
+                                 controls={false}
+                                 playsInline={true}
+                                 instagramMode={true}
+                               />
+                             ) : movieForm.thumbnail ? (
+                               <img src={movieForm.thumbnail} alt={movieForm.title || 'Movie preview'} className="w-full h-full object-cover" />
+                             ) : (
+                               <div className="w-full h-full flex items-center justify-center bg-[radial-gradient(circle_at_top,_rgba(255,215,0,0.12),_transparent_60%)] text-center px-6">
+                                 <div>
+                                   <Film className="w-12 h-12 text-devotion-gold mx-auto mb-3" />
+                                   <p className="text-sm font-bold text-white">Add a trailer, video URL, or thumbnail to activate preview.</p>
+                                 </div>
+                               </div>
+                             )}
+                             <div className="absolute inset-0 bg-gradient-to-t from-[#06101E]/85 via-[#06101E]/20 to-transparent pointer-events-none" />
+                           </div>
+
+                           <div className="grid grid-cols-2 gap-3 text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 content-start">
+                             <div className="rounded-2xl bg-white/5 border border-white/5 p-4">
+                               <p className="text-gray-500 mb-1">Genre</p>
+                               <p className="text-white">{movieForm.genre || 'Divine'}</p>
+                             </div>
+                             <div className="rounded-2xl bg-white/5 border border-white/5 p-4">
+                               <p className="text-gray-500 mb-1">Release</p>
+                               <p className="text-white">{movieForm.releaseYear || '2025'}</p>
+                             </div>
+                             <div className="rounded-2xl bg-white/5 border border-white/5 p-4 col-span-2">
+                               <p className="text-gray-500 mb-1">Trailer / Video Source</p>
+                               <p className="text-white break-all leading-relaxed">{movieForm.trailerUrl || movieForm.videoUrl || 'Not set yet'}</p>
+                             </div>
+                           </div>
+                         </div>
                        </div>
                    </div>
                  )}

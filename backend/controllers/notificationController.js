@@ -1,11 +1,28 @@
 const Notification = require('../models/Notification');
 const User = require('../models/User');
 
+const normalizeNotificationForClient = (item = {}) => {
+  const raw = typeof item.toObject === 'function' ? item.toObject() : item;
+  const type = String(raw.type || 'system');
+  const fallbackTitle = type === 'promo' ? 'Special Offer' : type === 'content' ? 'New Content' : 'Notification';
+  const normalizedBody = String(raw.body || raw.message || raw.text || '').trim();
+
+  return {
+    ...raw,
+    type,
+    title: String(raw.title || fallbackTitle),
+    body: normalizedBody || 'You have a new update from Gita Wisdom.',
+    message: normalizedBody || 'You have a new update from Gita Wisdom.',
+    isRead: Boolean(raw.isRead || raw.read),
+    read: Boolean(raw.read || raw.isRead),
+  };
+};
+
 exports.getUserNotifications = async (req, res) => {
   try {
     const userId = String(req.user.id);
-    const notifications = await Notification.find({ userId }).sort({ createdAt: -1 }).limit(100);
-    res.json(notifications);
+    const notifications = await Notification.find({ userId }).sort({ createdAt: -1, _id: -1 }).limit(100);
+    res.json(notifications.map(normalizeNotificationForClient));
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -51,14 +68,17 @@ exports.subscribeToPush = async (req, res) => {
 exports.broadcastNotification = async (req, res) => {
   try {
     const { title, body, type } = req.body;
+    const safeTitle = String(title || '').trim() || 'Gita Wisdom Update';
+    const safeBody = String(body || '').trim() || 'You have a new update from Gita Wisdom.';
+    const safeType = String(type || 'system').trim() || 'system';
     const { sendPush, sendInApp } = require('../utils/notificationService');
     const users = await User.find({}, { _id: 1, email: 1, settings: 1, pushSubscriptions: 1 });
 
     for (const user of users) {
-      await sendInApp({ userId: String(user._id), type: type || 'system', title, body });
+      await sendInApp({ userId: String(user._id), type: safeType, title: safeTitle, body: safeBody });
       if (user.settings?.notifications && user.pushSubscriptions?.length) {
         for (const sub of user.pushSubscriptions) {
-          await sendPush({ subscription: sub, title, body }).catch(console.error);
+          await sendPush({ subscription: sub, title: safeTitle, body: safeBody }).catch(console.error);
         }
       }
     }

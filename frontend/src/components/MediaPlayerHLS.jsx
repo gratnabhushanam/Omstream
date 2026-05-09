@@ -136,10 +136,31 @@ export default function MediaPlayer({
   useEffect(() => {
     const v = videoRef.current;
     if (!v || loadingToken) return;
+
+    const attemptPlayback = () => {
+      if (!v || v.readyState < 2) return;
+      v.play().catch(() => {
+        v.muted = true;
+        setIsMuted(true);
+        v.play().catch(() => {});
+      });
+    };
+
     if (effectiveShouldPlay) {
-      v.play().catch(() => { v.muted = true; setIsMuted(true); v.play().catch(() => {}); });
-    } else { v.pause(); }
-  }, [effectiveShouldPlay, loadingToken]);
+      attemptPlayback();
+      v.addEventListener('loadeddata', attemptPlayback);
+      v.addEventListener('canplay', attemptPlayback);
+      v.addEventListener('canplaythrough', attemptPlayback);
+    } else {
+      v.pause();
+    }
+
+    return () => {
+      v.removeEventListener('loadeddata', attemptPlayback);
+      v.removeEventListener('canplay', attemptPlayback);
+      v.removeEventListener('canplaythrough', attemptPlayback);
+    };
+  }, [effectiveShouldPlay, loadingToken, secureHlsUrl, secureVideoUrl, hlsFallbackActive]);
 
   // Fullscreen listener
   useEffect(() => {
