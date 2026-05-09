@@ -148,7 +148,7 @@ export default function Sloka() {
     setPlaybackType(null);
   };
 
-  const startPlayback = (selectedLanguage = language) => {
+  const startPlayback = async (selectedLanguage = language) => {
     const currentAudioUrl = getAudioUrlByLanguage(sloka, selectedLanguage);
 
     if (currentAudioUrl) {
@@ -168,15 +168,55 @@ export default function Sloka() {
       return;
     }
 
-    if (!isSpeechSupported) {
-      return;
-    }
-
     const speechText = getSpeechText(sloka, selectedLanguage);
     if (!speechText) return;
 
+    setPlaybackType('loading');
+    setIsPlaying(true);
+
+    try {
+      const customTtsKey = localStorage.getItem('elevenlabsApiKey') || '';
+      const response = await axios.post(`${API_BASE_URL}/api/ai/tts`, {
+        text: speechText,
+        voiceType: 'narrator',
+        customAiKey: customTtsKey
+      }, {
+        headers: { 'x-api-key': API_KEY },
+        responseType: 'arraybuffer'
+      });
+
+      const blob = new Blob([response.data], { type: 'audio/mpeg' });
+      const audioUrl = URL.createObjectURL(blob);
+      const newAudio = new Audio(audioUrl);
+      
+      setAudio(newAudio);
+      setPlaybackType('api');
+      
+      newAudio.play().catch((e) => {
+        console.error('AI Audio playback failed', e);
+        fallbackToSpeech(speechText, selectedLanguage);
+      });
+
+      newAudio.onended = () => {
+        setIsPlaying(false);
+        setPlaybackType(null);
+        URL.revokeObjectURL(audioUrl);
+      };
+    } catch (error) {
+      console.warn('AI TTS failed, falling back to browser speech:', error);
+      fallbackToSpeech(speechText, selectedLanguage);
+    }
+  };
+
+  const fallbackToSpeech = (text, selectedLanguage) => {
+    if (!isSpeechSupported) {
+      setIsPlaying(false);
+      setPlaybackType(null);
+      return;
+    }
+
     window.speechSynthesis.cancel();
-    const utterance = new SpeechSynthesisUtterance(speechText);
+    const utterance = new SpeechSynthesisUtterance(text);
     utterance.lang = getSpeechLang(selectedLanguage);
     utterance.voice = getSpeechVoice(selectedLanguage);
     utterance.rate = 0.95;
@@ -414,12 +454,14 @@ export default function Sloka() {
 
             <div className="px-10 pb-3 text-center text-[10px] font-black uppercase tracking-[0.3em] text-gray-500">
               {isPlaying
-                ? playbackType === 'file'
-                  ? 'Playing uploaded audio'
-                  : 'Using browser narration'
+                ? playbackType === 'loading'
+                  ? 'Invoking Divine Voice...'
+                  : playbackType === 'file'
+                    ? 'Playing uploaded audio'
+                    : playbackType === 'api' ? 'Using Divine AI Narration' : 'Using browser narration'
                 : activeAudioUrl
                   ? 'Audio ready for selected language'
-                  : 'Browser narration ready for selected language'}
+                  : 'Divine AI Narration ready'}
             </div>
 
             <div className="px-10 pb-6 text-center text-[10px] font-black uppercase tracking-[0.25em] text-devotion-gold/70">
