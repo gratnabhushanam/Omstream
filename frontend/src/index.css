@@ -26,6 +26,27 @@
     @apply bg-gradient-to-br from-[#B66A2A] via-[#E6C38A] to-[#B66A2A] bg-clip-text text-transparent;
   }
 
+  /* Futuristic Cinematic Design Tokens */
+  .bg-cinematic-dark {
+    background: radial-gradient(circle at center, #0B1F3A 0%, #06101E 100%);
+  }
+  .bg-glass-cinematic {
+    @apply backdrop-blur-[40px] bg-black/40 border border-white/5 shadow-[0_30px_100px_rgba(0,0,0,0.8)];
+  }
+  .neon-blue-glow {
+    box-shadow: 0 0 20px rgba(79, 172, 254, 0.4), 0 0 60px rgba(79, 172, 254, 0.2);
+  }
+  .neon-purple-glow {
+    box-shadow: 0 0 20px rgba(118, 75, 162, 0.4), 0 0 60px rgba(118, 75, 162, 0.2);
+  }
+  .gpu-accelerated {
+    will-change: transform, opacity;
+    transform: translate3d(0, 0, 0);
+  }
+  .aspect-reel { aspect-ratio: 9/16; }
+  .aspect-cinema { aspect-ratio: 16/9; }
+
+
   /* Safe area insets for notched phones */
   .pb-safe { padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 1.5rem); }
   .pt-safe { padding-top: calc(env(safe-area-inset-top, 0px) + 1.5rem); }
