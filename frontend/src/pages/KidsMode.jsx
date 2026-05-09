@@ -16,6 +16,7 @@ export default function KidsMode() {
   const [videos, setVideos] = useState([]);
   const [stories, setStories] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [selectedVideo, setSelectedVideo] = useState(null);
   const [activeCategory, setActiveCategory] = useState('All');
   const [hoveredVideoId, setHoveredVideoId] = useState(null);
@@ -26,17 +27,19 @@ export default function KidsMode() {
   }, []);
 
   const fetchKidsContent = async () => {
+    setLoading(true);
+    setError(null);
     try {
       const [videoRes, storyRes] = await Promise.all([
         axios.get('/api/videos'),
         axios.get('/api/stories/kids')
       ]);
-      // Filter for animated/kids content
       const kidsContent = (videoRes.data || []).filter(v => v.isKids || v.category === 'animated');
       setVideos(kidsContent);
       setStories(storyRes.data || []);
     } catch (error) {
       console.error('Error fetching kids content:', error);
+      setError('Connection to Divine Cloud failed. Please check your internet.');
     } finally {
       setLoading(false);
     }
@@ -50,10 +53,28 @@ export default function KidsMode() {
     { name: 'Games', icon: <Gamepad2 className="w-5 h-5" />, color: 'bg-pink-500' },
   ];
 
+  if (error) {
+    return (
+      <div className="h-screen w-full bg-[#0F1014] flex flex-col items-center justify-center p-12 text-center">
+        <Sparkles className="w-20 h-20 text-pink-500 mb-8 animate-pulse" />
+        <h2 className="text-3xl font-black uppercase tracking-tighter mb-4 text-white">{error}</h2>
+        <button 
+          onClick={() => fetchKidsContent()} 
+          className="px-12 py-5 bg-pink-500 text-white rounded-3xl font-black uppercase tracking-widest hover:scale-105 transition-all shadow-2xl"
+        >
+          Try Again
+        </button>
+      </div>
+    );
+  }
+
   if (loading) {
     return (
       <div className="h-screen w-full bg-[#0F1014] flex items-center justify-center">
-        <div className="w-16 h-16 border-4 border-pink-500 border-t-transparent rounded-full animate-spin"></div>
+        <div className="flex flex-col items-center gap-8">
+           <div className="w-16 h-16 border-4 border-pink-500 border-t-transparent rounded-full animate-spin shadow-[0_0_40px_rgba(236,72,153,0.3)]"></div>
+           <p className="text-pink-500 text-[10px] font-black uppercase tracking-[0.5em] animate-pulse">Entering Kids Paradise...</p>
+        </div>
       </div>
     );
   }
@@ -70,6 +91,8 @@ export default function KidsMode() {
     { title: "Fun Educational Reels", filter: (v) => v.category === 'reels' && v.isKids },
     { title: "Mythological Cartoons", filter: (v) => v.category === 'animated' || v.isKids }
   ];
+
+  const hasContent = videos.length > 0 || stories.length > 0;
 
   return (
     <div className="min-h-screen bg-[#0F1014] text-white selection:bg-pink-500/30 font-['Nunito',sans-serif]">
@@ -179,6 +202,16 @@ export default function KidsMode() {
             ))}
          </div>
       </section>
+
+      {!hasContent && (
+        <div className="px-8 lg:px-24 pb-48">
+          <div className="bg-white/5 border-4 border-dashed border-white/10 rounded-[4rem] p-32 text-center">
+             <PartyPopper className="w-24 h-24 text-pink-500/20 mx-auto mb-8" />
+             <h2 className="text-4xl font-black text-white/30 uppercase tracking-[0.4em]">Divine Stories Coming Soon!</h2>
+             <p className="text-xl text-white/20 mt-4 uppercase tracking-widest">The spiritual masters are preparing your cartoons...</p>
+          </div>
+        </div>
+      )}
 
       {/* Video Content Rows */}
       <div className={`px-8 lg:px-24 pb-48 space-y-24 transition-all duration-700 ${hoveredVideoId ? 'blur-md brightness-50 scale-[0.98]' : ''}`}>
