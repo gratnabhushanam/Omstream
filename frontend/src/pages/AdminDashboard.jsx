@@ -1215,6 +1215,7 @@ function AdminDashboardContent() {
                               </button>
                             </div>
                           </div>
+                        </div>
                       ))}
                     </div>
                   )}
