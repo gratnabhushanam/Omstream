@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { useLocation } from 'react-router-dom';
-import { BookOpenText, ChevronRight, PlayCircle, Volume2, PauseCircle, Sparkles, Book, Heart, Star, Award, ArrowRight, MessageCircle, Send, X as CloseX, VolumeX } from 'lucide-react';
+import { BookOpenText, ChevronRight, PlayCircle, Volume2, PauseCircle, Sparkles, Book, Heart, Star, Award, ArrowRight, MessageCircle, Send, X as CloseX, VolumeX, Bookmark } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
+import { useAuth } from '../context/AuthContext';
 
 const CHAPTER_BACKGROUND_SCENES = [
   { image: '/scene-ram.svg', label: 'Ram' },
@@ -11,7 +12,8 @@ const CHAPTER_BACKGROUND_SCENES = [
 ];
 
 export default function Stories() {
-  const { language: globalLanguage } = useLanguage();
+  const { language: globalLanguage, setLanguage: setGlobalLanguage, languages } = useLanguage();
+  const { user, setUser } = useAuth();
   const location = useLocation();
   const [stories, setStories] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -19,7 +21,8 @@ export default function Stories() {
   const [activeChapterIndex, setActiveChapterIndex] = useState(0);
   const [activeCollection, setActiveCollection] = useState(null);
   const [bgIndex, setBgIndex] = useState(0);
-  const [selectedLanguage, setSelectedLanguage] = useState('en');
+  const [selectedLanguage, setSelectedLanguage] = useState(localStorage.getItem('preferred_story_lang') || globalLanguage || 'en');
+  const [translationWarning, setTranslationWarning] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [voices, setVoices] = useState([]);
   const speechQueueRef = useRef([]);
@@ -56,6 +59,13 @@ export default function Stories() {
       handleOpenStory(matchedStory);
     }
   }, [location.state, stories, activeStory]);
+
+  // Sync local selectedLanguage with global language context (e.g. if changed from Navbar)
+  useEffect(() => {
+    if (globalLanguage && globalLanguage !== selectedLanguage) {
+      setSelectedLanguage(globalLanguage);
+    }
+  }, [globalLanguage]);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -96,28 +106,71 @@ export default function Stories() {
     return CHAPTER_BACKGROUND_SCENES[(normalizedChapter - 1) % CHAPTER_BACKGROUND_SCENES.length];
   };
 
-  const getLocalizedContent = (story) => {
-    if (!story) return null;
-    const lang = selectedLanguage || globalLanguage || 'en';
+  const getLocalizedContent = (item, type = 'story') => {
+    if (!item) return null;
+    const lang = selectedLanguage;
     
-    // Check if we have translations in the new Map format
-    if (story.translations && story.translations[lang]) {
-      return story.translations[lang];
+    if (lang === 'en') return item;
+
+    // 1. New Map-based translation structure
+    // If it's a story object being passed
+    if (item.translations && item.translations[lang]) {
+      const trans = item.translations[lang];
+      if (type === 'chapter' && trans.chapters?.[activeChapterIndex]) {
+        return trans.chapters[activeChapterIndex];
+      }
+      return trans; // returns {title, description, etc.}
+    }
+    
+    // If we're inside a story and asking for a chapter translation from the story's translations
+    if (type === 'chapter' && activeStory?.translations?.[lang]?.chapters?.[activeChapterIndex]) {
+       return activeStory.translations[lang].chapters[activeChapterIndex];
     }
 
-    // Fallback to old field-based translations
-    const langName = lang === 'te' ? 'telugu' : lang === 'hi' ? 'hindi' : 'english';
-    return {
-      title: story[`title${langName.charAt(0).toUpperCase() + langName.slice(1)}`] || story.title,
-      description: story[`summary${langName.charAt(0).toUpperCase() + langName.slice(1)}`] || story.description,
-      content: story[`content${langName.charAt(0).toUpperCase() + langName.slice(1)}`] || story.content
-    };
+    // 2. Fallback to legacy field-based translations
+    const langMap = { te: 'Telugu', hi: 'Hindi', ta: 'Tamil', kn: 'Kannada', ml: 'Malayalam', bn: 'Bengali', mr: 'Marathi', sa: 'Sanskrit' };
+    const langName = langMap[lang];
+    if (langName) {
+      const target = type === 'chapter' ? item : (item || activeStory);
+      if (!target) return item;
+      
+      const title = target[`title${langName}`];
+      const desc = target[`summary${langName}`] || target[`description${langName}`];
+      const content = target[`content${langName}`];
+      if (title || desc || content) {
+        return { 
+          title: title || item.title, 
+          description: desc || item.description, 
+          content: content || item.content 
+        };
+      }
+    }
+
+    return item; // Fallback to original item
+  };
+
+  const handleLanguageChange = (lang) => {
+    setSelectedLanguage(lang);
+    setGlobalLanguage(lang); // Sync with global language state
+    localStorage.setItem('preferred_story_lang', lang);
+    
+    // Improved check for translation existence
+    const langMap = { te: 'Telugu', hi: 'Hindi', ta: 'Tamil', kn: 'Kannada', ml: 'Malayalam', bn: 'Bengali', mr: 'Marathi', sa: 'Sanskrit' };
+    const langName = langMap[lang];
+    const hasNewTranslation = activeStory?.translations && (activeStory.translations[lang] || activeStory.translations.get?.(lang));
+    const hasLegacyTranslation = langName && activeStory && (activeStory[`title${langName}`] || activeStory[`content${langName}`]);
+    
+    const hasTranslation = lang === 'en' || hasNewTranslation || hasLegacyTranslation;
+    setTranslationWarning(!hasTranslation);
   };
 
   const handleOpenStory = (story) => {
     setActiveStory(story);
     setActiveChapterIndex(0);
-    setSelectedLanguage(globalLanguage || 'en');
+    const savedLang = localStorage.getItem('preferred_story_lang');
+    const initialLang = savedLang || globalLanguage || 'en';
+    setSelectedLanguage(initialLang);
+    setTranslationWarning(initialLang !== 'en' && !story.translations?.[initialLang]);
   };
 
   const handleCloseStory = () => {
@@ -161,13 +214,42 @@ export default function Stories() {
         return;
       }
       window.speechSynthesis.cancel();
-      const langCode = selectedLanguage === 'hi' ? 'hi-IN' : selectedLanguage === 'te' ? 'te-IN' : 'en-IN';
+      const langCodeMap = {
+        hi: 'hi-IN',
+        te: 'te-IN',
+        ta: 'ta-IN',
+        kn: 'kn-IN',
+        ml: 'ml-IN',
+        bn: 'bn-IN',
+        mr: 'mr-IN',
+        sa: 'sa-IN'
+      };
+      const langCode = langCodeMap[selectedLanguage] || 'en-IN';
       const utterance = new SpeechSynthesisUtterance(text);
       utterance.lang = langCode;
       utterance.onend = () => setIsSpeaking(false);
       window.speechSynthesis.speak(utterance);
     }
   };
+
+  const toggleWatchlist = async () => {
+    if (!user) {
+      alert('Please sign in to save stories to your personal library.');
+      return;
+    }
+    try {
+      const token = localStorage.getItem('token');
+      const { data } = await axios.post(`/api/stories/${activeStory._id || activeStory.id}/toggle-watchlist`, {}, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setUser({ ...user, storyWatchlist: data.storyWatchlist });
+      localStorage.setItem('user', JSON.stringify({ ...user, storyWatchlist: data.storyWatchlist }));
+    } catch (error) {
+      console.error('Error toggling story watchlist:', error);
+    }
+  };
+
+  const isInWatchlist = user?.storyWatchlist?.includes(activeStory?._id || activeStory?.id);
 
   const handleSendChat = async () => {
     if (!chatInput.trim() || isAiLoading) return;
@@ -312,39 +394,57 @@ export default function Stories() {
                             </span>
                             {activeStory.isKids && <span className="px-3 py-1 bg-blue-500 text-white rounded-full text-[10px] font-black uppercase tracking-widest">KIDS MODE</span>}
                          </div>
-                         <h1 className="text-4xl sm:text-5xl font-serif font-black text-white">
-                            {getLocalizedContent(activeStory.chapters?.[activeChapterIndex])?.title || getLocalizedContent(activeStory)?.title}
-                         </h1>
+                          <h1 className="text-4xl sm:text-5xl font-serif font-black text-white transition-all duration-500">
+                             {getLocalizedContent(activeStory.chapters?.[activeChapterIndex], 'chapter')?.title || getLocalizedContent(activeStory)?.title}
+                          </h1>
                       </div>
                    </div>
 
                    <div className="bg-[#0B1F3A]/40 backdrop-blur-xl border border-white/10 rounded-[3rem] p-10 sm:p-14">
                       <div className="flex flex-wrap items-center justify-between gap-6 mb-12">
-                         <div className="flex flex-wrap gap-2">
-                            {['en', 'hi', 'te', 'ta', 'kn', 'ml', 'bn', 'mr', 'sa'].map(lang => (
-                               <button
-                                 key={lang}
-                                 onClick={() => setSelectedLanguage(lang)}
-                                 className={`px-4 py-2 rounded-xl border text-[10px] font-black uppercase tracking-widest transition-all ${selectedLanguage === lang ? 'bg-devotion-gold text-[#06101E] border-devotion-gold' : 'border-white/10 text-gray-400 hover:bg-white/5'}`}
-                               >
-                                 {lang === 'hi' ? 'Hindi' : lang === 'te' ? 'Telugu' : lang === 'ta' ? 'Tamil' : lang === 'kn' ? 'Kannada' : lang === 'ml' ? 'Malayalam' : lang === 'bn' ? 'Bengali' : lang === 'mr' ? 'Marathi' : lang === 'sa' ? 'Sanskrit' : 'English'}
-                               </button>
-                            ))}
-                         </div>
-                         <button
-                           onClick={() => handleToggleAudio(getLocalizedContent(activeStory.chapters?.[activeChapterIndex])?.content || getLocalizedContent(activeStory)?.content)}
-                           className="inline-flex items-center gap-3 px-8 py-4 bg-devotion-gold text-[#06101E] rounded-2xl font-black text-sm uppercase tracking-widest hover:bg-yellow-400 transition-all shadow-[0_0_30px_rgba(255,215,0,0.2)]"
-                         >
-                            {isSpeaking ? <PauseCircle className="w-5 h-5" /> : <Volume2 className="w-5 h-5" />}
-                            {isSpeaking ? 'Stop AI Narration' : 'Listen with AI'}
-                         </button>
+                          <div className="flex flex-wrap gap-2">
+                             {languages.map(lang => (
+                                <button
+                                  key={lang.code}
+                                  onClick={() => handleLanguageChange(lang.code)}
+                                  className={`px-4 py-2 rounded-xl border text-[10px] font-black uppercase tracking-widest transition-all ${selectedLanguage === lang.code ? 'bg-devotion-gold text-[#06101E] border-devotion-gold shadow-[0_0_20px_rgba(255,215,0,0.3)]' : 'border-white/10 text-gray-400 hover:bg-white/5'}`}
+                                >
+                                  {lang.native}
+                                </button>
+                             ))}
+                          </div>
+
+                          {translationWarning && (
+                             <div className="w-full mt-4 p-4 bg-orange-500/10 border border-orange-500/20 rounded-2xl flex items-center gap-3 animate-in fade-in slide-in-from-top-2">
+                                <Sparkles className="w-4 h-4 text-orange-400" />
+                                <p className="text-[10px] font-bold text-orange-300 uppercase tracking-widest">Translation not available, showing English version.</p>
+                             </div>
+                          )}
+
+                          <div className="flex items-center gap-3 mt-6 lg:mt-0">
+                            <button
+                              onClick={toggleWatchlist}
+                              className={`inline-flex items-center gap-3 px-6 py-4 rounded-2xl font-black text-sm uppercase tracking-widest transition-all ${isInWatchlist ? 'bg-devotion-gold/20 text-devotion-gold border border-devotion-gold' : 'bg-white/5 text-gray-400 border border-white/10 hover:bg-white/10'}`}
+                            >
+                              <Bookmark className={`w-5 h-5 ${isInWatchlist ? 'fill-current' : ''}`} />
+                              {isInWatchlist ? 'Saved' : 'Save Story'}
+                            </button>
+
+                            <button
+                              onClick={() => handleToggleAudio(getLocalizedContent(activeStory.chapters?.[activeChapterIndex], 'chapter')?.content || getLocalizedContent(activeStory)?.content)}
+                              className="inline-flex items-center gap-3 px-8 py-4 bg-devotion-gold text-[#06101E] rounded-2xl font-black text-sm uppercase tracking-widest hover:bg-yellow-400 transition-all shadow-[0_0_30px_rgba(255,215,0,0.2)]"
+                            >
+                              {isSpeaking ? <PauseCircle className="w-5 h-5" /> : <Volume2 className="w-5 h-5" />}
+                              {isSpeaking ? 'Stop AI Narration' : 'Listen with AI'}
+                            </button>
+                          </div>
                       </div>
 
-                       <div className="prose prose-invert max-w-none">
-                         <p className="text-xl sm:text-2xl leading-relaxed text-white/90 font-serif whitespace-pre-wrap">
-                            {getLocalizedContent(activeStory.chapters?.[activeChapterIndex])?.content || getLocalizedContent(activeStory)?.content || 'Seeking wisdom...'}
-                         </p>
-                      </div>
+                       <div className="prose prose-invert max-w-none min-h-[300px]">
+                          <p className="text-xl sm:text-2xl leading-relaxed text-white/90 font-serif whitespace-pre-wrap transition-all duration-700 ease-in-out">
+                             {getLocalizedContent(activeStory.chapters?.[activeChapterIndex], 'chapter')?.content || getLocalizedContent(activeStory)?.content || 'Seeking wisdom...'}
+                          </p>
+                       </div>
 
                       {getLocalizedContent(activeStory.chapters?.[activeChapterIndex])?.takeaways?.length > 0 && (
                         <div className="mt-16 pt-12 border-t border-white/10">

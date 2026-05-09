@@ -3,7 +3,7 @@ const mongoose = require('mongoose');
 const JobSchema = new mongoose.Schema({
   type: { 
     type: String, 
-    enum: ['translation', 'subtitle', 'dubbing', 'chaptering', 'all'], 
+    enum: ['translation', 'subtitle', 'dubbing', 'chaptering', 'quiz', 'reels_snippet', 'all'], 
     required: true 
   },
   contentId: { type: mongoose.Schema.Types.ObjectId, required: true },

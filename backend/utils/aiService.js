@@ -14,6 +14,30 @@ const SUPPORTED_LANGUAGES = [
   'Japanese', 'Korean', 'Arabic', 'Chinese'
 ];
 
+const LANGUAGE_CODE_MAP = {
+  'en': 'English',
+  'hi': 'Hindi',
+  'te': 'Telugu',
+  'ta': 'Tamil',
+  'kn': 'Kannada',
+  'ml': 'Malayalam',
+  'bn': 'Bengali',
+  'mr': 'Marathi',
+  'gu': 'Gujarati',
+  'pa': 'Punjabi',
+  'sa': 'Sanskrit',
+  'ur': 'Urdu',
+  'es': 'Spanish',
+  'fr': 'French',
+  'de': 'German',
+  'ja': 'Japanese',
+  'ko': 'Korean',
+  'ar': 'Arabic',
+  'zh': 'Chinese'
+};
+
+const CODE_TO_NAME = Object.fromEntries(Object.entries(LANGUAGE_CODE_MAP).map(([k, v]) => [v, k]));
+
 const STORY_CATEGORIES = [
   'Bhagavad Gita', 'Ramayana', 'Mahabharata', 'Shiva Puranas', 'Vishnu Puranas', 
   'Garuda Purana', 'Hanuman Stories', 'Krishna Stories', 'Indian Folklore', 
@@ -27,53 +51,99 @@ const STORY_CATEGORIES = [
 ];
 
 /**
+ * Automatically detects the language of the provided text
+ */
+async function detectLanguage(text) {
+  if (!text || text.length < 5) return 'en';
+  
+  const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+  try {
+    const prompt = `
+      Identify the primary language of the following text. 
+      Return ONLY the 2-letter language code (e.g. "hi", "te", "en", "sa").
+      If it is Sanskrit, return "sa".
+      
+      Text: "${text.substring(0, 500)}"
+    `;
+    const result = await model.generateContent(prompt);
+    const code = result.response.text().trim().toLowerCase().substring(0, 2);
+    return LANGUAGE_CODE_MAP[code] ? code : 'en';
+  } catch (error) {
+    console.error('[AI] Language detection failed:', error.message);
+    return 'en';
+  }
+}
+
+/**
  * Automatically translates text metadata into all supported languages
  */
-async function translateMetadata(content, contentType = 'Movie') {
+async function translateMetadata(content, contentType = 'Movie', targetLanguages = []) {
   let sourceText = "";
   if (contentType === 'Sloka') {
     sourceText = `Sanskrit Verse: "${content.sanskrit}"\nMeaning: "${content.englishMeaning || content.hindiMeaning || content.teluguMeaning}"`;
   } else if (contentType === 'Story') {
-    sourceText = `Title: "${content.title}"\nDescription: "${content.description || ''}"\nFirst Chapter Sample: "${content.content?.substring(0, 500) || ''}"`;
+    const chaptersText = (content.chapters || []).map((ch, i) => `Chapter ${i+1}: ${ch.title}\nContent: ${ch.content.substring(0, 500)}...`).join('\n\n');
+    sourceText = `Title: "${content.title}"\nDescription: "${content.description || ''}"\nChapters Summary:\n${chaptersText || (content.content ? content.content.substring(0, 1000) : '')}`;
   } else {
     sourceText = `Title: "${content.title}"\nDescription: "${content.description}"`;
   }
   
-  console.log(`[AI] Translating ${contentType} metadata: ${content.title || 'Sloka ' + content.verse}`);
+  const sourceLang = content.language || content.originalLanguage || 'auto';
+  const langsToProcess = (targetLanguages && targetLanguages.length > 0) 
+    ? targetLanguages.filter(l => l !== sourceLang && l !== 'en') 
+    : ['hi', 'te', 'ta', 'kn', 'ml', 'bn', 'mr', 'gu', 'pa', 'sa'];
+
+  console.log(`[AI] Translating ${contentType} into ${langsToProcess.length} languages one by one...`);
 
   const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+  const finalTranslations = {};
 
-  try {
-    const prompt = `
-      You are an expert spiritual and cinematic translator. 
-      Translate the following ${contentType} content metadata into THESE LANGUAGES: ${SUPPORTED_LANGUAGES.join(', ')}.
+  for (const langCode of langsToProcess) {
+    try {
+      const langName = LANGUAGE_CODE_MAP[langCode] || langCode;
+      console.log(`[AI] Translating to ${langName} (${langCode})...`);
       
-      Original Content (Source Language: English/Mix):
-      ${sourceText}
-      
-      Requirements:
-      1. Preserve spiritual, theological, mythological, and cinematic context accurately.
-      2. Use regional cultural nuances where appropriate.
-      3. Return a SINGLE JSON object where keys are the 2-letter language codes (e.g., "hi", "te", "en", "es") and values are objects.
-      4. For Slokas, the object should be {"meaning": "..."}.
-      5. For Movies/Videos, the object should be {"title": "...", "description": "..."}.
-      6. For Stories, the object should be {"title": "...", "description": "..."}.
-      7. Support these codes: ${SUPPORTED_LANGUAGES.map(l => l.toLowerCase().substring(0, 2)).join(', ')}.
-      8. Return ONLY the JSON object. No preamble.
-    `;
+      const prompt = `
+        You are a spiritual and cinematic translator for "Gita Wisdom".
+        Translate the following ${contentType} metadata into ${langName} (${langCode}).
+        
+        Original Content (Source: ${sourceLang}):
+        ${sourceText}
+        
+        Requirements:
+        1. Maintain spiritual depth and premium OTT tone.
+        2. Return ONLY a JSON object:
+           - For Stories: { "title": "...", "description": "...", "chapters": [{ "title": "...", "content": "...", "summary": "...", "takeaways": [...] }] }
+           - For Slokas: { "meaning": "..." }
+           - For Movies/Videos: { "title": "...", "description": "..." }
+        3. No markdown, no intro.
+      `;
 
-    const result = await model.generateContent(prompt);
-    const response = await result.response;
-    const text = response.text();
-    
-    const cleaned = text.replace(/```json|```/g, '').trim();
-    const translations = JSON.parse(cleaned);
-    
-    return translations;
-  } catch (error) {
-    console.error(`[AI] Batch translation failed:`, error.message);
-    return {};
+      try {
+        const result = await model.generateContent(prompt);
+        const text = result.response.text();
+        const cleaned = text.replace(/```json|```/g, '').trim();
+        finalTranslations[langCode] = JSON.parse(cleaned);
+      } catch (geminiError) {
+        console.warn(`[AI] Gemini failed for ${langCode}, falling back to OpenAI:`, geminiError.message);
+        const completion = await openai.chat.completions.create({
+          model: "gpt-4o-mini",
+          messages: [
+            { role: "system", content: "You are a spiritual translator. Return ONLY a valid JSON object." },
+            { role: "user", content: `Translate this ${contentType} metadata to ${langName} (${langCode}): ${sourceText.substring(0, 4000)}` }
+          ],
+          response_format: { type: "json_object" }
+        });
+        const res = JSON.parse(completion.choices[0].message.content);
+        finalTranslations[langCode] = res;
+      }
+    } catch (error) {
+      console.error(`[AI] Failed translation for ${langCode} entirely:`, error.message);
+      throw new Error(`Translation failed for ${langCode}: ${error.message}`);
+    }
   }
+
+  return finalTranslations;
 }
 
 /**
@@ -106,11 +176,30 @@ async function processStoryIntoChapters(fullContent, title) {
     const result = await model.generateContent(prompt);
     const response = await result.response;
     const text = response.text();
+    
     const cleaned = text.replace(/```json|```/g, '').trim();
     return JSON.parse(cleaned);
   } catch (error) {
-    console.error(`[AI] Story chaptering failed:`, error.message);
-    return [];
+    console.error(`[AI] Gemini chaptering failed, attempting OpenAI fallback:`, error.message);
+    try {
+      const completion = await openai.chat.completions.create({
+        model: "gpt-4o-mini",
+        messages: [
+          { role: "system", content: "You are an expert Indian storyteller. Return ONLY a valid JSON array." },
+          { role: "user", content: `
+            Break this story into chapters: "${title}"
+            Content: ${fullContent.substring(0, 5000)}
+            Return a JSON array of objects: {title, content, sequence, summary, takeaways}.
+          ` }
+        ],
+        response_format: { type: "json_object" }
+      });
+      const res = JSON.parse(completion.choices[0].message.content);
+      return Array.isArray(res) ? res : (res.chapters || []);
+    } catch (openaiError) {
+      console.error(`[AI] All chaptering providers failed:`, openaiError.message);
+      return [];
+    }
   }
 }
 
@@ -297,6 +386,7 @@ async function generateSubtitles(content, targetLang) {
 }
 
 module.exports = {
+  detectLanguage,
   translateMetadata,
   processStoryIntoChapters,
   generateDubbing,

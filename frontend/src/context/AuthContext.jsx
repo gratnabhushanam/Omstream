@@ -38,9 +38,10 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (email, password) => {
     const { data } = await axios.post('/api/auth/login', { email, password });
+    const userData = data.user || data;
     localStorage.setItem('token', data.token);
-    localStorage.setItem('user', JSON.stringify(data));
-    setUser(data);
+    localStorage.setItem('user', JSON.stringify(userData));
+    setUser(userData);
     return data;
   };
 
@@ -51,9 +52,10 @@ export const AuthProvider = ({ children }) => {
 
   const verifyRegisterOtp = async (email, otp) => {
     const { data } = await axios.post('/api/auth/register/verify-otp', { email, otp });
+    const userData = data.user || data;
     localStorage.setItem('token', data.token);
-    localStorage.setItem('user', JSON.stringify(data));
-    setUser(data);
+    localStorage.setItem('user', JSON.stringify(userData));
+    setUser(userData);
     return data;
   };
 

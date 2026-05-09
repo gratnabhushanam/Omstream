@@ -24,8 +24,9 @@ const separateVideos = (allVideos) => {
 
 exports.searchAll = async (req, res) => {
   try {
-    const { q } = req.query;
+    const { q, lang = 'en' } = req.query;
     const normalizedQuery = String(q || '').trim();
+    const langCode = String(lang).substring(0, 2).toLowerCase();
 
     if (!normalizedQuery) {
       const [slokas, stories, videos, movies] = await Promise.all([
@@ -47,6 +48,8 @@ exports.searchAll = async (req, res) => {
     }
 
     const qRegex = mongoRegex(normalizedQuery);
+    
+    // Build multilingual search filters
     const [slokas, stories, videos, movies] = await Promise.all([
       Sloka.find({
         $or: [
@@ -54,6 +57,7 @@ exports.searchAll = async (req, res) => {
           { englishMeaning: qRegex },
           { teluguMeaning: qRegex },
           { hindiMeaning: qRegex },
+          { [`translations.${langCode}.meaning`]: qRegex }
         ],
       }),
       Story.find({
@@ -61,6 +65,10 @@ exports.searchAll = async (req, res) => {
           { title: qRegex },
           { summary: qRegex },
           { content: qRegex },
+          { [`translations.${langCode}.title`]: qRegex },
+          { [`translations.${langCode}.description`]: qRegex },
+          { [`translations.${langCode}.content`]: qRegex },
+          { tags: qRegex }
         ],
       }),
       Video.find({
@@ -69,12 +77,19 @@ exports.searchAll = async (req, res) => {
           { description: qRegex },
           { category: qRegex },
           { language: qRegex },
+          { [`translations.${langCode}.title`]: qRegex },
+          { [`translations.${langCode}.description`]: qRegex },
+          { tags: qRegex }
         ],
       }),
       Movie.find({
         $or: [
           { title: qRegex },
           { description: qRegex },
+          { [`translations.${langCode}.title`]: qRegex },
+          { [`translations.${langCode}.description`]: qRegex },
+          { genre: qRegex },
+          { tags: qRegex }
         ],
       }),
     ]);

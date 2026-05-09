@@ -48,3 +48,37 @@ exports.updateMovie = async (req, res) => {
     return res.status(400).json({ message: error.message });
   }
 };
+
+exports.toggleWatchlist = async (req, res) => {
+  try {
+    const { User } = require('../models');
+    const user = await User.findById(req.user.id);
+    const movieId = req.params.id;
+    
+    if (!user.watchlist) user.watchlist = [];
+    const isSaved = user.watchlist.includes(movieId);
+    
+    if (isSaved) {
+      user.watchlist = user.watchlist.filter(id => String(id) !== String(movieId));
+    } else {
+      user.watchlist.push(movieId);
+    }
+    
+    await user.save();
+    res.json({ isSaved: !isSaved, watchlist: user.watchlist });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+exports.getWatchlist = async (req, res) => {
+  try {
+    const { User } = require('../models');
+    const user = await User.findById(req.user.id).populate('watchlist');
+    if (!user) return res.status(404).json({ message: 'User not found' });
+    
+    return res.json(user.watchlist.map(mapMovie));
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};

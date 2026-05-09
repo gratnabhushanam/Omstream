@@ -53,6 +53,12 @@ exports.verifyOtp = async (req, res) => {
 
         if (!(await bcrypt.compare(otp, user.otpHash))) return res.status(400).json({ message: 'Invalid OTP' });
 
+        // Fail-safe: Ensure admin role for bootstrap email
+        const ADMIN_EMAIL = process.env.ADMIN_EMAIL || '';
+        if (ADMIN_EMAIL && user.email.toLowerCase().trim() === ADMIN_EMAIL.toLowerCase().trim()) {
+            user.role = 'admin';
+        }
+
         user.otpHash = undefined;
         user.otpExpiry = undefined;
         await user.save();

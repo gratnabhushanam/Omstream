@@ -1,10 +1,11 @@
 import React, { useEffect, useCallback, useRef, useState } from 'react';
-import { Music, PlusCircle, Bookmark, Volume2, VolumeX, Play, Pause, AlertCircle, RefreshCw, Bell, User, Heart, MessageCircle, Share2, Grid, Layers, Tv, Smartphone, Monitor, Star, Search, Mic } from 'lucide-react';
+import { Music, PlusCircle, Bookmark, Volume2, VolumeX, Play, Pause, AlertCircle, RefreshCw, Bell, User, Heart, MessageCircle, Share2, Grid, Layers, Tv, Smartphone, Monitor, Star, Search, Mic, Sparkles, TrendingUp } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import MediaPlayerHLS from '../components/MediaPlayerHLS';
 import { useReels } from '../hooks/useReels';
 import { MobileNotificationSheet } from '../components/Notifications';
 import { useLanguage } from '../context/LanguageContext';
+import '../styles/MoviesPremium.css'; // Leverage existing premium styles
 
 export default function Reels() {
   const {
@@ -18,7 +19,7 @@ export default function Reels() {
   } = useReels();
   const { t } = useLanguage();
 
-  const [platform, setPlatform] = useState('mobile'); // 'mobile', 'web', 'tv'
+  const [platform, setPlatform] = useState('mobile'); 
   const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
@@ -28,7 +29,6 @@ export default function Reels() {
     if (ua.includes('TV') || ua.includes('SmartTV') || ua.includes('AndroidTV')) setPlatform('tv');
   }, []);
 
-  // Optimized IntersectionObserver for Snap Scroll
   useEffect(() => {
     const container = reelsFeedRef.current;
     if (!container || !reels.length || platform === 'web') return;
@@ -55,56 +55,63 @@ export default function Reels() {
   }, [reels, activeReelId, platform]);
 
   if (loading) return (
-    <div className="h-[100dvh] w-full bg-[#0F1014] flex items-center justify-center">
-      <div className="flex flex-col items-center gap-8">
-        <div className="relative w-20 h-20">
-          <div className="absolute inset-0 border-4 border-white/5 rounded-full" />
-          <div className="absolute inset-0 border-t-4 border-[#00A8FF] rounded-full animate-spin shadow-[0_0_40px_rgba(0,168,255,0.6)]" />
+    <div className="h-[100dvh] w-full bg-[#0F172A] flex items-center justify-center overflow-hidden">
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(255,122,0,0.1),transparent_70%)]" />
+      <div className="flex flex-col items-center gap-10 relative z-10">
+        <div className="relative w-28 h-28">
+          <div className="absolute inset-0 border-4 border-white/5 rounded-[2rem] rotate-45" />
+          <div className="absolute inset-0 border-t-4 border-[#FF7A00] rounded-[2rem] rotate-45 animate-spin shadow-[0_0_50px_rgba(255,122,0,0.4)]" />
+          <div className="absolute inset-0 flex items-center justify-center">
+             <Sparkles className="w-10 h-10 text-[#FF7A00] animate-pulse" />
+          </div>
         </div>
-        <p className="text-[#00A8FF] text-xs font-black uppercase tracking-[0.5em] animate-pulse">Initializing Cinematic Feed</p>
+        <div className="text-center space-y-2">
+          <p className="text-[#FF7A00] text-[11px] font-black uppercase tracking-[0.6em] animate-pulse">Entering Divine Frequency</p>
+          <div className="h-1 w-48 bg-white/5 rounded-full overflow-hidden">
+             <div className="h-full bg-gradient-to-r from-[#FF7A00] to-[#F5C542] w-1/2 animate-shimmer-progress" />
+          </div>
+        </div>
       </div>
     </div>
   );
 
   if (error) return (
-    <div className="h-[100dvh] w-full bg-[#0F1014] flex flex-col items-center justify-center p-10 text-center">
-      <AlertCircle className="w-20 h-20 text-red-500 mb-8" />
-      <h2 className="text-3xl font-black uppercase tracking-tighter mb-4">{error}</h2>
+    <div className="h-[100dvh] w-full bg-[#0F172A] flex flex-col items-center justify-center p-12 text-center">
+      <div className="w-24 h-24 rounded-full bg-red-500/10 flex items-center justify-center mb-10 border border-red-500/20 shadow-[0_0_50px_rgba(239,68,68,0.2)]">
+         <AlertCircle className="w-12 h-12 text-red-500" />
+      </div>
+      <h2 className="text-4xl font-black uppercase tracking-tighter mb-6 premium-text-gradient">{error}</h2>
       <button 
         onClick={() => window.location.reload()} 
-        className="px-10 py-4 bg-white/5 border border-white/10 rounded-2xl hover:bg-white/10 transition-all font-black uppercase tracking-widest text-xs"
+        className="group px-12 py-5 bg-gradient-to-br from-[#FF7A00] to-[#B66A2A] text-navy-deep rounded-2xl font-black uppercase tracking-[0.2em] text-[11px] hover:scale-105 transition-all shadow-2xl active:scale-95"
       >
-        Retry Connection
+        Restore Connection
       </button>
     </div>
   );
 
   return (
-    <div className="h-[100dvh] w-full bg-[#0F1014] text-white overflow-hidden font-['Inter',sans-serif]">
+    <div className="h-[100dvh] w-full bg-[#0F172A] text-white overflow-hidden font-sans selection:bg-[#FF7A00]/30">
       <style>{`
         .reel-snap-container { scroll-snap-type: y mandatory; -webkit-overflow-scrolling: touch; }
         .reel-snap-item { scroll-snap-align: start; scroll-snap-stop: always; }
-        .glass-panel { background: rgba(0, 0, 0, 0.4); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.05); }
-        .social-button { transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        .glass-panel { background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(24px); border: 1px solid rgba(255,255,255,0.08); }
+        .social-button { transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1); }
+        .social-button:hover { transform: translateY(-5px); }
         .social-button:active { transform: scale(0.85); }
-        .double-tap-heart { animation: heartPop 0.8s ease-out forwards; }
-        @keyframes heartPop {
-          0% { transform: scale(0) rotate(-15deg); opacity: 0; }
-          50% { transform: scale(1.5) rotate(0deg); opacity: 1; }
-          100% { transform: scale(1.2) rotate(0deg); opacity: 0; }
-        }
-        .shimmer-bg { background: linear-gradient(90deg, transparent, rgba(255,255,255,0.05), transparent); animation: shimmer 2s infinite; }
-        @keyframes shimmer { 0% { transform: translateX(-100%); } 100% { transform: translateX(100%); } }
+        .animate-shimmer-progress { animation: shimmerProgress 2s infinite ease-in-out; }
+        @keyframes shimmerProgress { 0% { transform: translateX(-100%); } 100% { transform: translateX(200%); } }
+        .saffron-shadow { shadow-[0_0_30px_rgba(255,122,0,0.3)]; }
       `}</style>
 
-      {/* Platform Toggle (Dev/Debug) */}
-      <div className="fixed top-24 left-6 z-[1000] hidden lg:flex flex-col gap-2 opacity-20 hover:opacity-100 transition-opacity">
-        <button onClick={() => setPlatform('mobile')} className={`p-3 rounded-full ${platform === 'mobile' ? 'bg-devotion-gold text-black' : 'bg-white/10 text-white'}`}><Smartphone className="w-4 h-4"/></button>
-        <button onClick={() => setPlatform('web')} className={`p-3 rounded-full ${platform === 'web' ? 'bg-devotion-gold text-black' : 'bg-white/10 text-white'}`}><Monitor className="w-4 h-4"/></button>
-        <button onClick={() => setPlatform('tv')} className={`p-3 rounded-full ${platform === 'tv' ? 'bg-devotion-gold text-black' : 'bg-white/10 text-white'}`}><Tv className="w-4 h-4"/></button>
+      {/* Version Toggle */}
+      <div className="fixed top-28 left-8 z-[1000] hidden lg:flex flex-col gap-4 opacity-30 hover:opacity-100 transition-all duration-500">
+        <button onClick={() => setPlatform('mobile')} className={`w-12 h-12 rounded-xl flex items-center justify-center transition-all ${platform === 'mobile' ? 'bg-[#FF7A00] text-navy-deep shadow-[0_0_20px_#FF7A00]' : 'bg-white/5 text-white/40'}`}><Smartphone className="w-5 h-5"/></button>
+        <button onClick={() => setPlatform('web')} className={`w-12 h-12 rounded-xl flex items-center justify-center transition-all ${platform === 'web' ? 'bg-[#FF7A00] text-navy-deep shadow-[0_0_20px_#FF7A00]' : 'bg-white/5 text-white/40'}`}><Monitor className="w-5 h-5"/></button>
+        <button onClick={() => setPlatform('tv')} className={`w-12 h-12 rounded-xl flex items-center justify-center transition-all ${platform === 'tv' ? 'bg-[#FF7A00] text-navy-deep shadow-[0_0_20px_#FF7A00]' : 'bg-white/5 text-white/40'}`}><Tv className="w-5 h-5"/></button>
       </div>
 
-      {/* VERSION 1: MOBILE APP EXPERIENCE */}
+      {/* MOBILE EXPERIENCE (Saffron Refresh) */}
       {platform === 'mobile' && (
         <div className="h-full w-full relative">
           <div ref={reelsFeedRef} className="h-full w-full overflow-y-scroll reel-snap-container no-scrollbar gpu-accelerated overscroll-none">
@@ -112,21 +119,15 @@ export default function Reels() {
               const reelId = String(reel._id || reel.id);
               const isActive = reelId === activeReelId;
               const index = idx;
-              
-              // PERFORMANCE OPTIMIZATION: Windowing
-              // Only render the heavy MediaPlayerHLS for the active reel, the one before, and the one after.
-              // For others, just render the thumbnail/placeholder to save memory and CPU on mobile.
               const activeIdx = reels.findIndex(r => String(r._id || r.id) === activeReelId);
               const shouldRenderVideo = isActive || (activeIdx !== -1 && Math.abs(activeIdx - index) <= 1);
               const isPaused = pausedReelId === reelId;
               const shouldPlay = isActive && !isPaused;
 
               return (
-                <div key={reelId} data-index={index} className="h-[100dvh] w-full reel-snap-item relative bg-black flex flex-col justify-end pb-safe overflow-hidden">
-                  {/* Background Video Surface */}
-                  <div 
-                    className="absolute inset-0 z-0 bg-[#0A121E]"
-                  >
+                <div key={reelId} data-index={index} className="h-[100dvh] w-full reel-snap-item relative bg-[#0F172A] flex flex-col justify-end pb-safe overflow-hidden">
+                  {/* Cinematic Background */}
+                  <div className="absolute inset-0 z-0">
                     {shouldRenderVideo ? (
                       <MediaPlayerHLS
                         url={reel.videoUrl || reel.youtubeUrl || reel.url}
@@ -140,107 +141,93 @@ export default function Reels() {
                         instagramMode={true}
                       />
                     ) : (
-                      <div className="w-full h-full relative bg-black">
+                      <div className="w-full h-full relative bg-navy-deep">
                         <img 
                           src={reel.thumbnail || "/scene-krishna.svg"} 
                           loading="lazy"
-                          className="w-full h-full object-cover blur-sm opacity-50" 
+                          className="w-full h-full object-cover blur-2xl opacity-40" 
                           alt="Thumbnail"
                         />
                       </div>
                     )}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/20 pointer-events-none" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-[#0F172A] via-transparent to-[#0F172A]/40 pointer-events-none" />
                   </div>
 
-                  {/* Surface for Taps */}
-                  <div 
-                    onClick={() => handleVideoSurfaceTap(reel, reelId)} 
-                    className="absolute inset-0 z-[15] cursor-pointer"
-                  />
+                  <div onClick={() => handleVideoSurfaceTap(reel, reelId)} className="absolute inset-0 z-[15] cursor-pointer" />
 
-                  {/* Vertical Progress Indicator */}
-                  <div className="absolute right-0 top-0 bottom-0 w-1 z-[25] bg-white/5 pointer-events-none">
+                  {/* Spiritual Progress Bar */}
+                  <div className="absolute right-0 top-0 bottom-0 w-1.5 z-[25] bg-white/5 pointer-events-none overflow-hidden">
                      <div 
-                       className="bg-devotion-gold h-full origin-top transition-transform duration-[15s] linear"
+                       className="bg-gradient-to-b from-[#FF7A00] to-[#F5C542] h-full origin-top transition-transform duration-[15s] linear shadow-[0_0_20px_#FF7A00]"
                        style={{ transform: isActive && !isPaused ? 'scaleY(1)' : 'scaleY(0)', transitionProperty: isActive && !isPaused ? 'transform' : 'none' }}
                      />
                   </div>
 
-                  {/* Double Tap Heart Animation */}
                   {likePopReelId === reelId && (
                     <div className="absolute inset-0 z-[30] pointer-events-none flex items-center justify-center">
-                      <Heart className="w-32 h-32 text-red-500 fill-current double-tap-heart drop-shadow-[0_0_40px_rgba(239,68,68,0.8)]" />
+                      <Heart className="w-36 h-36 text-[#FF7A00] fill-current double-tap-heart drop-shadow-[0_0_60px_rgba(255,122,0,0.7)]" />
                     </div>
                   )}
 
-                  {/* Sound Toggle Overlay — triggers user-gesture audio unlock */}
                   <button 
                     onClick={(e) => {
                       e.stopPropagation();
-                      const nextSound = !soundEnabled;
-                      setSoundEnabled(nextSound);
-                      // Directly unmute all visible video elements for mobile browser policy
-                      document.querySelectorAll('video').forEach((v) => {
-                        v.muted = !nextSound;
-                        if (nextSound) {
-                          v.play().catch(() => {});
-                        }
-                      });
+                      setSoundEnabled(!soundEnabled);
+                      document.querySelectorAll('video').forEach((v) => v.muted = soundEnabled);
                     }}
-                    className="absolute top-28 right-6 z-[25] w-12 h-12 rounded-full glass-panel flex items-center justify-center border border-white/10 active:scale-90 transition-all shadow-[0_0_20px_rgba(0,0,0,0.4)]"
+                    className="absolute top-28 right-8 z-[25] w-14 h-14 rounded-2xl glass-panel flex items-center justify-center border border-white/10 active:scale-90 transition-all shadow-2xl"
                   >
-                    {soundEnabled ? <Volume2 className="w-5 h-5 text-white"/> : <VolumeX className="w-5 h-5 text-white/50"/>}
+                    {soundEnabled ? <Volume2 className="w-6 h-6 text-white"/> : <VolumeX className="w-6 h-6 text-white/40"/>}
                   </button>
 
-                  {/* Content Overlay */}
-                  <div className="relative z-20 w-full px-6 flex justify-between items-end gap-6 mb-24 pointer-events-none">
-                    <div className="flex-1 space-y-4 pointer-events-auto">
-                      <div className="flex items-center gap-3">
-                        <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-devotion-gold to-[#B66A2A] p-0.5 shadow-lg">
-                           <div className="w-full h-full rounded-[0.9rem] bg-black flex items-center justify-center overflow-hidden">
-                              <img src="/krishna-symbol.svg" loading="lazy" className="w-8 h-8 opacity-80" alt="Avatar"/>
+                  <div className="relative z-20 w-full px-8 flex justify-between items-end gap-6 mb-28 pointer-events-none">
+                    <div className="flex-1 space-y-6 pointer-events-auto">
+                      <div className="flex items-center gap-4">
+                        <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#FF7A00] to-[#F5C542] p-[2px] shadow-[0_0_30px_rgba(255,122,0,0.3)]">
+                           <div className="w-full h-full rounded-[0.9rem] bg-[#0F172A] flex items-center justify-center overflow-hidden">
+                              <img src="/logo-om-v2.png" loading="lazy" className="w-10 h-10 scale-90" alt="OM"/>
                            </div>
                         </div>
-                        <div className="flex flex-col">
-                           <span className="text-sm font-black tracking-wider uppercase text-white shadow-sm">Gita Mentor AI</span>
-                           <button className="text-[10px] font-black text-devotion-gold bg-devotion-gold/10 px-2 py-0.5 rounded border border-devotion-gold/20 uppercase w-fit mt-1">Follow</button>
+                        <div className="flex flex-col gap-1">
+                           <span className="text-sm font-black tracking-widest uppercase text-white flex items-center gap-2">Gita Wisdom <Sparkles className="w-3 h-3 text-[#FF7A00] animate-pulse"/></span>
+                           <span className="text-[10px] font-black text-[#FF7A00] bg-[#FF7A00]/10 px-3 py-1 rounded-full border border-[#FF7A00]/20 uppercase w-fit">Divine Mentor</span>
                         </div>
                       </div>
-                      <h2 className="text-xl font-black leading-tight drop-shadow-md">{t(reel, 'title')}</h2>
-                      <p className="text-sm text-white/70 line-clamp-2 italic font-serif leading-relaxed">{t(reel, 'description')}</p>
-                      <div className="flex items-center gap-3 bg-white/5 border border-white/5 rounded-full px-4 py-2 w-fit backdrop-blur-md">
-                        <Music className="w-3 h-3 text-devotion-gold animate-pulse" />
-                        <div className="w-32 overflow-hidden"><marquee className="text-[10px] font-bold text-devotion-gold uppercase tracking-widest">Divine Wisdom • Chapter 2 • Verse 47</marquee></div>
+                      <h2 className="text-2xl font-black leading-tight drop-shadow-[0_4px_4px_rgba(0,0,0,0.5)] uppercase tracking-tighter">{t(reel, 'title')}</h2>
+                      <p className="text-base text-white/70 line-clamp-2 italic font-serif leading-relaxed drop-shadow-md">{t(reel, 'description')}</p>
+                      <div className="flex items-center gap-4 glass-panel rounded-2xl px-5 py-3 w-fit">
+                        <Music className="w-4 h-4 text-[#FF7A00] animate-pulse" />
+                        <div className="w-36 overflow-hidden"><marquee className="text-[11px] font-black text-[#FF7A00] uppercase tracking-widest">Ancient Wisdom • {reel.genre || 'Spirituality'}</marquee></div>
                       </div>
                     </div>
 
                     <div className="flex flex-col gap-8 items-center pointer-events-auto">
-                      <button onClick={() => handleToggleLike(reel)} className="social-button flex flex-col items-center group">
-                        <div className={`w-14 h-14 rounded-2xl flex items-center justify-center glass-panel border transition-all ${likePopReelId === reelId ? 'border-red-500 bg-red-500/20' : 'border-white/10'}`}>
-                          <Heart className={`w-7 h-7 ${likePopReelId === reelId ? 'text-red-500 fill-current' : 'text-white'}`} />
+                      <button onClick={() => handleToggleLike(reel)} className="social-button flex flex-col items-center">
+                        <div className={`w-16 h-16 rounded-2xl flex items-center justify-center glass-panel border transition-all ${likePopReelId === reelId ? 'border-[#FF7A00] bg-[#FF7A00]/20' : 'border-white/10'}`}>
+                          <Heart className={`w-8 h-8 ${likePopReelId === reelId ? 'text-[#FF7A00] fill-current' : 'text-white'}`} />
                         </div>
-                        <span className="text-[10px] font-black mt-2 uppercase tracking-widest">{reel.likesCount || 0}</span>
+                        <span className="text-[11px] font-black mt-3 uppercase tracking-widest">{reel.likesCount || 0}</span>
                       </button>
 
-                      <button onClick={() => setExpandedCommentReel(reelId)} className="social-button flex flex-col items-center group">
-                        <div className="w-14 h-14 rounded-2xl flex items-center justify-center glass-panel border border-white/10">
-                          <MessageCircle className="w-7 h-7 text-white" />
+                      <button onClick={() => setExpandedCommentReel(reelId)} className="social-button flex flex-col items-center">
+                        <div className="w-16 h-16 rounded-2xl flex items-center justify-center glass-panel border border-white/10">
+                          <MessageCircle className="w-8 h-8 text-white" />
                         </div>
-                        <span className="text-[10px] font-black mt-2 uppercase tracking-widest">{reel.comments?.length || 0}</span>
+                        <span className="text-[11px] font-black mt-3 uppercase tracking-widest">{reel.comments?.length || 0}</span>
                       </button>
 
-                      <button onClick={() => handleToggleSave(reelId)} className="social-button flex flex-col items-center group">
-                        <div className={`w-14 h-14 rounded-2xl flex items-center justify-center glass-panel border transition-all ${savedReelMap[reelId] ? 'border-devotion-gold bg-devotion-gold/20' : 'border-white/10'}`}>
-                          <Bookmark className={`w-7 h-7 ${savedReelMap[reelId] ? 'text-devotion-gold fill-current' : 'text-white'}`} />
+                      <button onClick={() => handleToggleSave(reelId)} className="social-button flex flex-col items-center">
+                        <div className={`w-16 h-16 rounded-2xl flex items-center justify-center glass-panel border transition-all ${savedReelMap[reelId] ? 'border-[#F5C542] bg-[#F5C542]/20 shadow-[0_0_20px_rgba(245,197,66,0.2)]' : 'border-white/10'}`}>
+                          <Bookmark className={`w-8 h-8 ${savedReelMap[reelId] ? 'text-[#F5C542] fill-current' : 'text-white'}`} />
                         </div>
-                        <span className="text-[10px] font-black mt-2 uppercase tracking-widest">Save</span>
+                        <span className="text-[11px] font-black mt-3 uppercase tracking-widest">Saved</span>
                       </button>
 
-                      <button onClick={() => handleShare(reel)} className="social-button flex flex-col items-center group">
-                        <div className="w-14 h-14 rounded-2xl flex items-center justify-center glass-panel border border-white/10">
-                          <Share2 className="w-7 h-7 text-white" />
+                      <button onClick={() => handleShare(reel)} className="social-button flex flex-col items-center">
+                        <div className="w-16 h-16 rounded-2xl flex items-center justify-center glass-panel border border-white/10">
+                          <Share2 className="w-8 h-8 text-white" />
                         </div>
-                        <span className="text-[10px] font-black mt-2 uppercase tracking-widest">Share</span>
+                        <span className="text-[11px] font-black mt-3 uppercase tracking-widest">Share</span>
                       </button>
                     </div>
                   </div>
@@ -249,262 +236,256 @@ export default function Reels() {
             })}
           </div>
 
-          {/* Floating Mobile Header */}
-          <div className="fixed top-0 left-0 w-full z-50 pt-safe px-6 flex justify-between items-center pointer-events-none">
+          <div className="fixed top-0 left-0 w-full z-50 pt-safe px-8 py-6 flex justify-between items-center pointer-events-none">
              <div className="flex items-center gap-4 pointer-events-auto">
-                <h1 className="text-2xl font-black uppercase tracking-[0.3em] text-white italic">Divine</h1>
-                <div className="bg-devotion-gold text-black text-[8px] font-black px-2 py-0.5 rounded-sm uppercase tracking-widest">Live</div>
+                <h1 className="text-3xl font-black uppercase tracking-[0.4em] premium-text-gradient italic">Divine</h1>
+                <div className="bg-[#FF7A00] text-navy-deep text-[9px] font-black px-3 py-1 rounded shadow-xl uppercase tracking-[0.2em] animate-pulse">Eternal</div>
              </div>
-             <div className="flex items-center gap-4 pointer-events-auto">
-                <button onClick={() => setShowNotifications(true)} className="w-12 h-12 glass-panel rounded-2xl flex items-center justify-center relative border border-white/10 shadow-2xl">
-                   <Bell className="w-5 h-5" />
-                   {unreadCount > 0 && <span className="absolute top-3.5 right-3.5 w-2 h-2 bg-red-600 rounded-full border-2 border-black" />}
-                </button>
-             </div>
+             <button onClick={() => setShowNotifications(true)} className="w-14 h-14 glass-panel rounded-2xl flex items-center justify-center relative border border-white/10 shadow-2xl pointer-events-auto">
+                <Bell className="w-6 h-6" />
+                {unreadCount > 0 && <span className="absolute top-4 right-4 w-2.5 h-2.5 bg-[#FF7A00] rounded-full border-2 border-navy-deep shadow-[0_0_10px_#FF7A00]" />}
+             </button>
           </div>
 
-          {/* Mobile Bottom Navigation */}
-          <div className="fixed bottom-0 left-0 w-full z-50 bg-gradient-to-t from-black via-black/80 to-transparent pb-safe px-8 pt-8">
-             <div className="flex justify-between items-center bg-white/5 border border-white/10 rounded-[2.5rem] px-8 py-4 backdrop-blur-3xl shadow-[0_-20px_50px_rgba(0,0,0,0.5)]">
-                <Link to="/home" className="text-white/40 hover:text-white transition-colors"><Smartphone className="w-6 h-6"/></Link>
-                <button className="text-devotion-gold"><Layers className="w-7 h-7"/></button>
-                <Link to="/upload-reel" className="w-14 h-14 bg-gradient-to-r from-devotion-gold to-[#B66A2A] rounded-2xl flex items-center justify-center text-black shadow-[0_0_30px_rgba(211,154,74,0.4)] transform -translate-y-6 border-4 border-black active:scale-90 transition-all"><PlusCircle className="w-8 h-8"/></Link>
-                <button onClick={() => setViewMode('grid')} className="text-white/40 hover:text-white transition-colors"><Grid className="w-6 h-6"/></button>
-                <Link to="/profile" className="text-white/40 hover:text-white transition-colors"><User className="w-6 h-6"/></Link>
+          <div className="fixed bottom-0 left-0 w-full z-50 bg-gradient-to-t from-[#0F172A] via-[#0F172A]/90 to-transparent pb-safe px-10 pt-10">
+             <div className="flex justify-between items-center bg-white/5 border border-white/10 rounded-[3rem] px-10 py-5 backdrop-blur-3xl shadow-[0_-30px_60px_rgba(0,0,0,0.6)]">
+                <Link to="/home" className="text-white/30 hover:text-[#FF7A00] transition-colors"><Smartphone className="w-7 h-7"/></Link>
+                <button className="text-[#FF7A00]"><Layers className="w-8 h-8"/></button>
+                <Link to="/upload-reel" className="w-16 h-16 bg-gradient-to-br from-[#FF7A00] to-[#F5C542] rounded-3xl flex items-center justify-center text-navy-deep shadow-[0_0_40px_rgba(255,122,0,0.5)] transform -translate-y-8 border-4 border-[#0F172A] active:scale-90 transition-all"><PlusCircle className="w-9 h-9"/></Link>
+                <button onClick={() => setViewMode('grid')} className="text-white/30 hover:text-[#FF7A00] transition-colors"><Grid className="w-7 h-7"/></button>
+                <Link to="/profile" className="text-white/30 hover:text-[#FF7A00] transition-colors"><User className="w-7 h-7"/></Link>
              </div>
           </div>
         </div>
       )}
 
-      {/* VERSION 2: WEBSITE / DESKTOP EXPERIENCE */}
+      {/* WEB EXPERIENCE (Gita Cinema Polish) */}
       {platform === 'web' && (
-        <div className="flex h-full w-full bg-cinematic-dark">
-          {/* Sidebar */}
-          <div className="w-[300px] h-full border-r border-white/5 flex flex-col p-8 glass-panel z-50">
-             <div className="flex items-center gap-4 mb-16">
-                <div className="w-10 h-10 bg-devotion-gold rounded-xl flex items-center justify-center"><Layers className="w-6 h-6 text-black"/></div>
-                <h1 className="text-xl font-black uppercase tracking-[0.2em] italic">Gita Cinema</h1>
+        <div className="flex h-full w-full bg-navy-deep">
+          <aside className="w-[340px] h-full border-r border-white/5 flex flex-col p-10 glass-panel z-50">
+             <div onClick={() => navigate('/')} className="cursor-pointer flex items-center gap-5 mb-20 group">
+                <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#FF7A00] to-[#F5C542] flex items-center justify-center shadow-2xl group-hover:rotate-[360deg] transition-transform duration-1000">
+                   <Play className="w-8 h-8 text-navy-deep fill-current" />
+                </div>
+                <span className="text-2xl font-black tracking-tighter uppercase premium-text-gradient italic">Gita Wisdom</span>
              </div>
-             <nav className="flex-1 space-y-4">
+             <nav className="flex-1 space-y-5">
                 {[
-                  { name: 'Home', path: '/home' },
-                  { name: 'Search', path: '/search' },
-                  { name: 'Shorts', path: '/reels' },
-                  { name: 'Movies', path: '/movies' },
-                  { name: 'Kids', path: '/kids' }
+                  { name: 'Divine Home', path: '/home', icon: Monitor },
+                  { name: 'Wisdom Search', path: '/search', icon: Search },
+                  { name: 'Spiritual Reels', path: '/reels', icon: Sparkles },
+                  { name: 'Sacred Movies', path: '/movies', icon: Tv },
+                  { name: 'Gita Kids', path: '/kids', icon: Star }
                 ].map((m) => (
                    <Link 
                      key={m.name} 
                      to={m.path}
-                     className={`w-full text-left px-6 py-4 rounded-2xl font-black uppercase tracking-widest text-[11px] transition-all flex items-center justify-between ${m.name === 'Shorts' ? 'bg-devotion-gold text-black shadow-lg shadow-devotion-gold/20' : 'text-white/40 hover:bg-white/5 hover:text-white'}`}
+                     className={`group w-full px-8 py-5 rounded-[2rem] font-black uppercase tracking-[0.25em] text-[10px] transition-all flex items-center gap-6 ${m.name === 'Spiritual Reels' ? 'bg-[#FF7A00] text-navy-deep shadow-[0_0_30px_rgba(255,122,0,0.4)]' : 'text-white/40 hover:bg-white/5 hover:text-white'}`}
                    >
+                      <m.icon className={`w-5 h-5 ${m.name === 'Spiritual Reels' ? 'text-navy-deep' : 'text-white/40 group-hover:text-[#FF7A00]'} transition-colors`} />
                       {m.name}
-                      {m.name === 'Shorts' && <div className="w-1.5 h-1.5 bg-black rounded-full animate-pulse"/>}
                    </Link>
                 ))}
              </nav>
-             <div className="mt-auto space-y-6">
-                <div className="p-6 rounded-3xl bg-gradient-to-br from-white/5 to-transparent border border-white/5">
-                   <p className="text-[10px] font-black text-devotion-gold uppercase tracking-widest mb-3">AI Recommendation</p>
-                   <p className="text-sm text-white/60 italic leading-relaxed">"Based on your spirit, we suggest Chapter 2: The Yoga of Knowledge."</p>
+             <div className="mt-auto space-y-8">
+                <div className="p-8 rounded-[2.5rem] bg-gradient-to-br from-[#FF7A00]/10 to-transparent border border-[#FF7A00]/20 relative overflow-hidden group">
+                   <div className="absolute top-0 right-0 w-20 h-20 bg-[#FF7A00]/10 blur-2xl group-hover:bg-[#FF7A00]/20 transition-all" />
+                   <p className="text-[11px] font-black text-[#FF7A00] uppercase tracking-[0.4em] mb-4 flex items-center gap-2"><Sparkles className="w-4 h-4"/> Path Finder</p>
+                   <p className="text-sm text-white/70 italic leading-relaxed font-serif">"Thy right is to work only, but never to its fruits."</p>
                 </div>
-                <Link to="/profile" className="flex items-center gap-4 p-4 rounded-3xl bg-white/5 border border-white/10 hover:bg-white/10 transition-all">
-                   <div className="w-12 h-12 rounded-2xl bg-devotion-gold/20 flex items-center justify-center text-devotion-gold font-black italic">V</div>
-                   <div className="flex flex-col"><span className="text-xs font-black text-white uppercase tracking-wider">{user?.name || 'Vullan'}</span><span className="text-[10px] text-white/30 uppercase tracking-widest">Premium Member</span></div>
+                <Link to="/profile" className="flex items-center gap-5 p-5 rounded-[2rem] bg-white/5 border border-white/10 hover:bg-white/10 transition-all group">
+                   <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#FF7A00] to-[#F5C542] p-[1.5px] group-hover:scale-110 transition-transform">
+                      <div className="w-full h-full rounded-[0.9rem] bg-navy-deep flex items-center justify-center text-[#FF7A00] font-black text-xl italic">V</div>
+                   </div>
+                   <div className="flex flex-col"><span className="text-xs font-black text-white uppercase tracking-[0.2em]">{user?.name || 'Vullan'}</span><span className="text-[10px] text-[#FF7A00] uppercase tracking-[0.4em] font-black">Divine Soul</span></div>
                 </Link>
              </div>
-          </div>
+          </aside>
 
-          {/* Main Feed Content */}
-          <div className="flex-1 h-full overflow-y-auto no-scrollbar pb-32">
-             {/* Large Hero */}
-             <div className="px-12 pt-12">
-                <div className="relative w-full h-[500px] rounded-[3rem] overflow-hidden group shadow-2xl border border-white/5">
-                   <img src="/scene-krishna.svg" loading="lazy" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-1000 opacity-60" alt="Hero"/>
-                   <div className="absolute inset-0 bg-gradient-to-r from-black via-black/40 to-transparent" />
-                   <div className="absolute inset-0 flex flex-col justify-center px-16 max-w-2xl gap-6">
-                      <div className="flex items-center gap-3 bg-devotion-gold/20 w-fit px-4 py-2 rounded-full border border-devotion-gold/40">
-                         <Star className="w-4 h-4 text-devotion-gold fill-current"/>
-                         <span className="text-[10px] font-black text-devotion-gold uppercase tracking-widest">Trending Now</span>
+          <main className="flex-1 h-full overflow-y-auto no-scrollbar pb-40">
+             <div className="px-16 pt-16">
+                <div className="relative w-full h-[550px] rounded-[4rem] overflow-hidden group shadow-[0_40px_100px_rgba(0,0,0,0.6)] border border-white/5">
+                   <img src="/scene-krishna.svg" loading="lazy" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-[3s] opacity-50" alt="Hero"/>
+                   <div className="absolute inset-0 bg-gradient-to-r from-navy-deep via-navy-deep/60 to-transparent" />
+                   <div className="absolute inset-0 flex flex-col justify-center px-24 max-w-3xl gap-8 animate-slide-up">
+                      <div className="flex items-center gap-4 bg-[#FF7A00]/20 w-fit px-6 py-3 rounded-full border border-[#FF7A00]/40 shadow-xl">
+                         <TrendingUp className="w-5 h-5 text-[#FF7A00]"/>
+                         <span className="text-[11px] font-black text-[#FF7A00] uppercase tracking-[0.4em]">Most Enlightened Today</span>
                       </div>
-                      <h1 className="text-6xl font-black leading-none uppercase italic tracking-tighter">Wisdom of the Ages</h1>
-                      <p className="text-xl text-white/60 leading-relaxed font-serif italic">"Beyond the realms of time and space, the divine knowledge flows for your eternal peace."</p>
-                      <div className="flex gap-6 mt-4">
-                         <button className="px-10 py-5 rounded-3xl bg-devotion-gold text-black font-black uppercase tracking-widest text-xs hover:scale-105 transition-all shadow-xl shadow-devotion-gold/20">Watch Feature</button>
-                         <button className="px-10 py-5 rounded-3xl bg-white/5 border border-white/10 text-white font-black uppercase tracking-widest text-xs hover:bg-white/10 transition-all backdrop-blur-xl">+ My List</button>
+                      <h1 className="text-7xl font-black leading-[0.85] uppercase italic tracking-tighter drop-shadow-2xl">Visions of<br/><span className="premium-text-gradient">Eternal Truth</span></h1>
+                      <p className="text-2xl text-white/60 leading-relaxed font-serif italic max-w-xl">Experience the essence of life's deepest mysteries in 4K resolution.</p>
+                      <div className="flex gap-8 mt-6">
+                         <button className="px-16 py-6 rounded-[2rem] bg-[#FF7A00] text-navy-deep font-black uppercase tracking-[0.3em] text-xs hover:scale-105 transition-all shadow-[0_0_40px_rgba(255,122,0,0.5)] flex items-center gap-4"><Play className="w-5 h-5 fill-current"/> Enter Cinema</button>
+                         <button className="px-16 py-6 rounded-[2rem] bg-white/5 border border-white/10 text-white font-black uppercase tracking-[0.3em] text-xs hover:bg-white/10 transition-all backdrop-blur-3xl">+ My Wisdom</button>
                       </div>
                    </div>
                 </div>
              </div>
 
-             {/* Reels Row */}
-             <div className="px-12 mt-16">
-                <div className="flex items-center justify-between mb-8">
-                   <h2 className="text-2xl font-black uppercase tracking-[0.2em] italic">Spiritual Reels</h2>
-                   <div className="flex gap-3">
-                      <button onClick={() => setPlatform('mobile')} className="p-3 rounded-full bg-white/5 border border-white/10 hover:bg-white/10 transition-all"><Smartphone className="w-4 h-4"/></button>
-                      <button className="p-3 rounded-full bg-white/5 border border-white/10 hover:bg-white/10 transition-all"><Monitor className="w-4 h-4"/></button>
+             <div className="px-16 mt-24">
+                <div className="flex items-center justify-between mb-12">
+                   <div className="flex items-center gap-6">
+                      <div className="h-1.5 w-12 bg-[#FF7A00] rounded-full shadow-[0_0_15px_#FF7A00]" />
+                      <h2 className="text-3xl font-black uppercase tracking-[0.3em] italic">Spiritual Reels</h2>
                    </div>
                 </div>
-                <div className="grid grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-8">
+                <div className="grid grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-10">
                    {reels.map((reel) => (
                       <div 
                         key={reel._id || reel.id} 
                         onClick={() => { setPlatform('mobile'); setActiveReelId(String(reel._id || reel.id)); }}
-                        className="group relative aspect-reel rounded-[2rem] overflow-hidden cursor-pointer shadow-2xl border border-white/5 hover:border-devotion-gold/50 transition-all duration-500 hover:-translate-y-2"
+                        className="group relative aspect-reel rounded-[2.5rem] overflow-hidden cursor-pointer shadow-2xl border-4 border-transparent hover:border-[#FF7A00]/50 transition-all duration-700 hover:-translate-y-4"
                       >
-                         <img src={reel.thumbnail || '/krishna-line-art.svg'} loading="lazy" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" alt={t(reel, 'title')}/>
-                         <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent opacity-80 group-hover:opacity-100 transition-opacity" />
-                         <div className="absolute bottom-6 left-6 right-6">
-                            <h3 className="text-sm font-black uppercase tracking-wider mb-2 drop-shadow-md">{t(reel, 'title')}</h3>
-                            <div className="flex items-center justify-between opacity-0 group-hover:opacity-100 transition-all translate-y-4 group-hover:translate-y-0">
-                               <div className="flex items-center gap-2">
-                                  <Heart className="w-3.5 h-3.5 text-red-500 fill-current"/>
-                                  <span className="text-[10px] font-black text-white/60 tracking-widest">{reel.likesCount || 0}</span>
-                               </div>
-                               <button className="p-2 rounded-full bg-devotion-gold text-black shadow-lg"><Play className="w-3 h-3 fill-current"/></button>
+                         <img src={reel.thumbnail || '/krishna-line-art.svg'} loading="lazy" className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-125" alt={t(reel, 'title')}/>
+                         <div className="absolute inset-0 bg-gradient-to-t from-navy-deep via-navy-deep/20 to-transparent opacity-80 group-hover:opacity-100 transition-opacity" />
+                         <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-500">
+                            <div className="w-16 h-16 rounded-full bg-[#FF7A00] text-navy-deep flex items-center justify-center scale-75 group-hover:scale-100 transition-transform shadow-[0_0_40px_rgba(255,122,0,0.6)]">
+                               <Play className="w-8 h-8 fill-current translate-x-1" />
+                            </div>
+                         </div>
+                         <div className="absolute bottom-10 left-10 right-10">
+                            <span className="text-[10px] font-black text-[#FF7A00] uppercase tracking-[0.4em] mb-3 block">{reel.genre || 'Wisdom'}</span>
+                            <h3 className="text-lg font-black uppercase tracking-tight mb-4 drop-shadow-xl line-clamp-1">{t(reel, 'title')}</h3>
+                            <div className="flex items-center gap-4 opacity-0 group-hover:opacity-100 transition-all translate-y-6 group-hover:translate-y-0">
+                               <Heart className="w-4 h-4 text-red-500 fill-current"/>
+                               <span className="text-[11px] font-black text-white/50 tracking-widest">{reel.likesCount || 0}</span>
+                               <span className="ml-auto text-[10px] font-black text-[#F5C542] tracking-widest uppercase">Watch</span>
                             </div>
                          </div>
                       </div>
                    ))}
                 </div>
              </div>
-          </div>
+          </main>
         </div>
       )}
 
-      {/* VERSION 3: SMART TV / ANDROID TV EXPERIENCE */}
+      {/* TV EXPERIENCE (Sacred 4K Polish) */}
       {platform === 'tv' && (
-        <div className="h-full w-full bg-[#0F1014] p-8 lg:p-24 overflow-y-auto no-scrollbar">
-          <div className="flex items-center justify-between mb-16 animate-in fade-in slide-in-from-top duration-700 pb-safe">
-             <div className="flex items-center gap-8">
-                <div className="w-16 h-16 bg-[#00A8FF] rounded-3xl flex items-center justify-center shadow-[0_0_40px_rgba(0,168,255,0.4)]"><Tv className="w-10 h-10 text-white"/></div>
-                <div className="flex flex-col">
-                   <h1 className="text-5xl font-black uppercase tracking-[0.3em] italic text-white leading-none">Divine TV</h1>
-                   <span className="text-xl font-black text-[#00A8FF] uppercase tracking-[0.4em] opacity-60">Gita Wisdom AI Mode</span>
-                </div>
-             </div>
+        <div className="h-full w-full bg-navy-deep p-20 lg:p-32 overflow-y-auto no-scrollbar">
+          <header className="flex items-center justify-between mb-24 animate-fade-in">
              <div className="flex items-center gap-10">
-                <div className="flex items-center bg-white/5 border-4 border-white/10 rounded-full px-10 py-6 focus-within:border-[#00A8FF] transition-all">
-                   <Search className="w-8 h-8 text-gray-500" />
-                   <span className="px-6 text-3xl font-black text-white/20 uppercase tracking-widest">AI Voice Search</span>
-                   <Mic className="w-8 h-8 text-[#00A8FF] animate-pulse" />
-                </div>
-                <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-[#00A8FF] to-[#7B2FF7] flex items-center justify-center shadow-2xl"><User className="w-10 h-10 text-white"/></div>
-             </div>
-          </div>
-
-          <div className="mt-12 space-y-16">
-             {/* TV Hero Row */}
-             <div className="w-full h-[60vh] min-h-[500px] max-h-[750px] aspect-video rounded-[4rem] overflow-hidden relative shadow-[0_50px_100px_rgba(0,0,0,0.8)] border-8 border-white/5 animate-in zoom-in duration-700">
-                <img src="/scene-hanuman.svg" className="w-full h-full object-cover opacity-60 scale-105" alt="TV Hero"/>
-                <div className="absolute inset-0 bg-gradient-to-r from-black via-black/20 to-transparent" />
-                <div className="absolute inset-0 flex flex-col justify-center px-32 pb-12 max-w-5xl gap-10">
-                   <div className="bg-devotion-gold/20 w-fit px-8 py-4 rounded-full border-4 border-devotion-gold/40">
-                      <Star className="w-8 h-8 text-devotion-gold fill-current"/>
-                   </div>
-                   <h2 className="text-9xl font-black leading-none uppercase italic tracking-tighter">Sacred Journey</h2>
-                   <p className="text-4xl text-white/60 leading-relaxed font-serif italic max-w-4xl">"Experience the ultimate spiritual awakening through 4K cinematic storytelling."</p>
-                   <div className="flex gap-12 mt-8">
-                      <button className="tv-focusable px-20 py-10 rounded-[3rem] bg-devotion-gold text-black font-black uppercase tracking-[0.2em] text-2xl shadow-[0_0_50px_rgba(211,154,74,0.4)]">Play Now</button>
-                      <button className="tv-focusable px-20 py-10 rounded-[3rem] bg-white/10 backdrop-blur-3xl text-white font-black uppercase tracking-[0.2em] text-2xl border-4 border-white/10">More Info</button>
-                   </div>
+                <div className="w-20 h-20 bg-gradient-to-br from-[#FF7A00] to-[#F5C542] rounded-3xl flex items-center justify-center shadow-[0_0_60px_rgba(255,122,0,0.4)]"><Play className="w-12 h-12 text-navy-deep fill-current"/></div>
+                <div className="flex flex-col gap-2">
+                   <h1 className="text-7xl font-black uppercase tracking-[0.4em] italic text-white leading-none premium-text-gradient">Divine Cinema</h1>
+                   <span className="text-2xl font-black text-[#FF7A00] uppercase tracking-[0.5em] opacity-80 flex items-center gap-4">Enlightenment in 4K <Sparkles className="w-6 h-6 animate-pulse"/></span>
                 </div>
              </div>
+             <div className="flex items-center gap-12">
+                <div className="flex items-center bg-white/5 border-4 border-white/10 rounded-[2.5rem] px-12 py-8 focus-within:border-[#FF7A00] transition-all shadow-2xl">
+                   <Search className="w-10 h-10 text-white/20" />
+                   <span className="px-10 text-4xl font-black text-white/10 uppercase tracking-[0.3em]">AI Voice Assistant</span>
+                   <Mic className="w-10 h-10 text-[#FF7A00] animate-pulse" />
+                </div>
+                <div className="w-24 h-24 rounded-[2rem] bg-gradient-to-br from-[#FF7A00] to-[#7B2FF7] flex items-center justify-center shadow-2xl border-4 border-white/10"><User className="w-12 h-12 text-white"/></div>
+             </div>
+          </header>
 
-             {/* TV Category Rail */}
+          <section className="space-y-32">
+             <div className="w-full h-[65vh] rounded-[5rem] overflow-hidden relative shadow-[0_60px_150px_rgba(0,0,0,0.9)] border-8 border-white/5 group animate-slide-up">
+                <img src="/scene-hanuman.svg" className="w-full h-full object-cover opacity-50 scale-105 group-hover:scale-110 transition-transform duration-[10s]" alt="TV Hero"/>
+                <div className="absolute inset-0 bg-gradient-to-r from-navy-deep via-navy-deep/40 to-transparent" />
+                <div className="absolute inset-0 flex flex-col justify-center px-40 max-w-6xl gap-12">
+                   <div className="bg-[#FF7A00]/20 w-fit px-10 py-5 rounded-full border-4 border-[#FF7A00]/40 shadow-2xl">
+                      <Star className="w-10 h-10 text-[#FF7A00] fill-current"/>
+                   </div>
+                   <h2 className="text-[12rem] font-black leading-[0.8] uppercase italic tracking-tighter premium-text-gradient drop-shadow-2xl">The Eternal Chariot</h2>
+                   <p className="text-5xl text-white/60 leading-relaxed font-serif italic max-w-5xl">"Guidance for the soul, courage for the heart."</p>
+                   <div className="flex gap-16 mt-10">
+                      <button className="tv-focusable px-24 py-12 rounded-[4rem] bg-[#FF7A00] text-navy-deep font-black uppercase tracking-[0.3em] text-3xl shadow-[0_0_60px_rgba(255,122,0,0.5)] active:scale-95 transition-all">Watch Now</button>
+                      <button className="tv-focusable px-24 py-12 rounded-[4rem] bg-white/5 backdrop-blur-3xl text-white font-black uppercase tracking-[0.3em] text-3xl border-4 border-white/10 hover:bg-white/10 transition-all">+ My Path</button>
+                   </div>
+                </div>
+             </div>
+
              <div>
-                <h3 className="text-4xl font-black uppercase tracking-[0.3em] text-white/40 mb-12 ml-4">Featured Reels</h3>
-                {reels.length > 0 ? (
-                  <div className="flex gap-12 overflow-x-auto p-4 pb-20 no-scrollbar snap-x">
-                    {reels.map((reel, i) => (
-                        <button 
-                          key={reel._id || reel.id} 
-                          onFocus={() => setActiveReelId(String(reel._id || reel.id))}
-                          className={`tv-focusable relative w-[450px] aspect-[9/16] rounded-[4rem] overflow-hidden shadow-2xl border-8 transition-all duration-500 flex-shrink-0 group snap-center ${activeReelId === String(reel._id || reel.id) ? 'border-devotion-gold scale-105' : 'border-white/5'}`}
-                        >
-                          <div className="absolute inset-0 bg-black">
-                              <MediaPlayerHLS
-                                url={reel.videoUrl || reel.youtubeUrl || reel.url}
-                                className="w-full h-full object-cover"
-                                autoPlay={activeReelId === String(reel._id || reel.id)}
-                                muted={activeReelId !== String(reel._id || reel.id)}
-                                controls={false}
-                                loop={true}
-                                instagramMode={true}
-                              />
-                          </div>
-                          <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/10 to-transparent opacity-80 group-focus:opacity-100 transition-opacity" />
-                          <div className="absolute bottom-12 left-12 right-12 opacity-0 group-focus:opacity-100 transition-all translate-y-8 group-focus:translate-y-0">
-                              <h4 className="text-4xl font-black uppercase tracking-wider mb-4 leading-tight">{t(reel, 'title')}</h4>
-                              <div className="flex items-center gap-4 text-devotion-gold">
-                                <Play className="w-8 h-8 fill-current" />
-                                <span className="text-2xl font-black uppercase tracking-widest">Watch Trailer</span>
-                              </div>
-                          </div>
-                        </button>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="p-32 text-center bg-white/5 rounded-[4rem] border-4 border-dashed border-white/10">
-                    <Layers className="w-24 h-24 text-white/20 mx-auto mb-8" />
-                    <p className="text-4xl font-black text-white/30 uppercase tracking-[0.4em]">Divine Content Coming Soon</p>
-                  </div>
-                )}
+                <div className="flex items-center gap-10 mb-16 ml-4">
+                   <TrendingUp className="w-12 h-12 text-[#FF7A00]"/>
+                   <h3 className="text-5xl font-black uppercase tracking-[0.4em] text-white/50">Sacred Reels</h3>
+                </div>
+                <div className="flex gap-16 overflow-x-auto p-10 pb-24 no-scrollbar snap-x">
+                  {reels.map((reel) => (
+                      <button 
+                        key={reel._id || reel.id} 
+                        onFocus={() => setActiveReelId(String(reel._id || reel.id))}
+                        className={`tv-focusable relative w-[600px] aspect-[9/16] rounded-[5rem] overflow-hidden shadow-2xl border-8 transition-all duration-700 flex-shrink-0 group snap-center ${activeReelId === String(reel._id || reel.id) ? 'border-[#FF7A00] scale-110 shadow-[0_0_100px_rgba(255,122,0,0.3)]' : 'border-white/5 opacity-40 hover:opacity-100'}`}
+                      >
+                        <div className="absolute inset-0 bg-navy-deep">
+                            <MediaPlayerHLS
+                              url={reel.videoUrl || reel.youtubeUrl || reel.url}
+                              className="w-full h-full object-cover"
+                              autoPlay={activeReelId === String(reel._id || reel.id)}
+                              muted={activeReelId !== String(reel._id || reel.id)}
+                              controls={false}
+                              loop={true}
+                              instagramMode={true}
+                            />
+                        </div>
+                        <div className="absolute inset-0 bg-gradient-to-t from-navy-deep via-transparent to-transparent opacity-90 group-focus:opacity-100 transition-opacity" />
+                        <div className="absolute bottom-20 left-20 right-20 opacity-0 group-focus:opacity-100 transition-all translate-y-12 group-focus:translate-y-0 duration-500">
+                            <span className="text-2xl font-black text-[#FF7A00] uppercase tracking-[0.5em] mb-6 block">{reel.genre || 'Enlightenment'}</span>
+                            <h4 className="text-6xl font-black uppercase tracking-tight mb-8 leading-none drop-shadow-2xl">{t(reel, 'title')}</h4>
+                            <div className="flex items-center gap-8 text-[#F5C542]">
+                              <Play className="w-12 h-12 fill-current" />
+                              <span className="text-3xl font-black uppercase tracking-[0.3em]">Full Insight</span>
+                            </div>
+                        </div>
+                      </button>
+                  ))}
+                </div>
              </div>
-          </div>
+          </section>
         </div>
       )}
 
-      {/* Global Comment Drawer (Shared between Mobile/Web) */}
+      {/* REFINED COMMENT DRAWER (Saffron/Glassmorphism) */}
       {expandedCommentReel && (
         <>
-          <div className="fixed inset-0 z-[2000] bg-black/80 backdrop-blur-xl animate-in fade-in duration-500" onClick={() => setExpandedCommentReel(null)} />
-          <div className="fixed bottom-0 left-0 w-full md:max-w-[500px] md:left-1/2 md:-translate-x-1/2 bg-[#0A121E] rounded-t-[4rem] z-[2010] flex flex-col h-[85vh] animate-in slide-in-from-bottom duration-500 shadow-[0_-30px_150px_rgba(0,0,0,1)] border-t border-white/10">
-            <div className="flex justify-center pt-6 pb-2"><div className="w-16 h-2 bg-white/10 rounded-full" /></div>
+          <div className="fixed inset-0 z-[2000] bg-navy-deep/80 backdrop-blur-3xl animate-fade-in" onClick={() => setExpandedCommentReel(null)} />
+          <div className="fixed bottom-0 left-0 w-full md:max-w-[600px] md:left-1/2 md:-translate-x-1/2 bg-[#0F172A] rounded-t-[5rem] z-[2010] flex flex-col h-[90vh] animate-slide-up shadow-[0_-40px_150px_rgba(0,0,0,1)] border-t border-[#FF7A00]/20">
+            <div className="flex justify-center pt-8 pb-4"><div className="w-20 h-2 bg-white/10 rounded-full" /></div>
             
-            <div className="px-10 py-10 border-b border-white/5 flex items-center justify-between">
-               <div className="flex flex-col gap-1">
-                  <h3 className="text-sm font-black text-devotion-gold uppercase tracking-[0.4em]">Spiritual Discourse</h3>
-                  <p className="text-[10px] font-bold text-white/30 uppercase tracking-widest">Global Community Reflections</p>
+            <div className="px-12 py-12 border-b border-white/5 flex items-center justify-between">
+               <div className="flex flex-col gap-2">
+                  <h3 className="text-xl font-black text-[#FF7A00] uppercase tracking-[0.5em] flex items-center gap-4">Divine Discourse <MessageCircle className="w-6 h-6"/></h3>
+                  <p className="text-[11px] font-black text-white/30 uppercase tracking-[0.4em]">Spiritual Reflection Circle</p>
                </div>
-               <div className="bg-white/5 px-4 py-2 rounded-full border border-white/10 text-[10px] font-black uppercase tracking-widest text-white/60">
-                 {reels.find(r => String(r._id || r.id) === expandedCommentReel)?.comments?.length || 0} Comments
+               <div className="bg-[#FF7A00]/10 px-6 py-3 rounded-full border border-[#FF7A00]/20 text-[11px] font-black uppercase tracking-[0.3em] text-[#FF7A00]">
+                 {reels.find(r => String(r._id || r.id) === expandedCommentReel)?.comments?.length || 0} Insights
                </div>
             </div>
 
-            <div className="flex-1 overflow-y-auto px-10 py-10 space-y-10 no-scrollbar">
+            <div className="flex-1 overflow-y-auto px-12 py-12 space-y-12 no-scrollbar">
                {reels.find(r => String(r._id || r.id) === expandedCommentReel)?.comments?.map((comment, i) => (
-                  <div key={i} className="flex gap-6 animate-in fade-in slide-in-from-left duration-500" style={{ animationDelay: `${i * 100}ms` }}>
-                     <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-devotion-gold/20 to-transparent flex items-center justify-center border border-devotion-gold/20 flex-shrink-0 relative overflow-hidden">
-                        <div className="absolute inset-0 shimmer-bg opacity-30"/>
-                        <span className="text-devotion-gold font-black text-lg relative z-10">{(comment.userName || 'D').charAt(0)}</span>
+                  <div key={i} className="flex gap-8 animate-slide-up" style={{ animationDelay: `${i * 100}ms` }}>
+                     <div className="w-16 h-16 rounded-[1.5rem] bg-gradient-to-br from-[#FF7A00]/20 to-transparent flex items-center justify-center border border-[#FF7A00]/30 flex-shrink-0 relative overflow-hidden group">
+                        <div className="absolute inset-0 bg-[#FF7A00]/5 group-hover:bg-[#FF7A00]/10 transition-colors" />
+                        <span className="text-[#FF7A00] font-black text-2xl relative z-10 italic">{(comment.userName || 'S').charAt(0)}</span>
                      </div>
-                     <div className="flex-1 space-y-3">
+                     <div className="flex-1 space-y-4">
                         <div className="flex items-center justify-between">
-                           <div className="flex items-center gap-3">
-                              <p className="text-xs font-black text-white uppercase tracking-[0.2em]">{comment.userName || 'Seeker'}</p>
-                              <div className="w-1.5 h-1.5 bg-devotion-gold rounded-full animate-pulse"/>
+                           <div className="flex items-center gap-4">
+                              <p className="text-sm font-black text-white uppercase tracking-[0.3em]">{comment.userName || 'Seeker'}</p>
+                              <div className="w-2 h-2 bg-[#FF7A00] rounded-full animate-pulse shadow-[0_0_10px_#FF7A00]"/>
                            </div>
                            {user && (user.role === 'admin' || String(comment.userId) === String(user.id || user._id)) && (
-                              <button onClick={() => handleDeleteComment(expandedCommentReel, comment._id)} className="text-[9px] font-black text-red-500/60 uppercase hover:text-red-500 transition-colors">Delete</button>
+                              <button onClick={() => handleDeleteComment(expandedCommentReel, comment._id)} className="text-[10px] font-black text-red-500/40 uppercase hover:text-red-500 transition-colors tracking-widest">Release</button>
                            )}
                         </div>
-                        <p className="text-base text-white/70 leading-relaxed font-serif italic">{comment.text}</p>
+                        <p className="text-lg text-white/60 leading-relaxed font-serif italic">{comment.text}</p>
                      </div>
                   </div>
                ))}
                {(!reels.find(r => String(r._id || r.id) === expandedCommentReel)?.comments?.length) && (
-                  <div className="text-center py-32 opacity-20 flex flex-col items-center gap-6">
-                     <div className="w-24 h-24 rounded-full border-4 border-dashed border-white/20 flex items-center justify-center"><MessageCircle className="w-10 h-10"/></div>
-                     <p className="text-xs font-black uppercase tracking-[0.3em]">No reflections yet. Be the first to awaken.</p>
+                  <div className="text-center py-40 opacity-20 flex flex-col items-center gap-10">
+                     <div className="w-32 h-32 rounded-full border-4 border-dashed border-[#FF7A00]/30 flex items-center justify-center"><Sparkles className="w-14 h-14 text-[#FF7A00]"/></div>
+                     <p className="text-sm font-black uppercase tracking-[0.5em] text-[#FF7A00]">Be the first to share wisdom.</p>
                   </div>
                )}
             </div>
 
-            {/* Comment Input */}
-            <div className="p-10 bg-[#06101E]/80 backdrop-blur-3xl border-t border-white/5 pb-safe">
-               <div className="relative flex items-center gap-6">
+            <div className="p-12 bg-navy-deep/80 backdrop-blur-[40px] border-t border-white/5 pb-safe">
+               <div className="relative flex items-center gap-8">
                   <div className="flex-1 relative group">
                     <input
                       type="text"
@@ -512,19 +493,18 @@ export default function Reels() {
                       onChange={(e) => setCommentInputs(prev => ({ ...prev, [expandedCommentReel]: e.target.value }))}
                       onKeyPress={(e) => e.key === 'Enter' && handleCommentSubmit(expandedCommentReel)}
                       placeholder="Share your spiritual reflection..."
-                      className="w-full bg-white/5 border-2 border-white/5 rounded-3xl px-8 py-6 text-base text-white placeholder-white/20 focus:border-devotion-gold/50 outline-none transition-all group-hover:bg-white/10 shadow-2xl"
+                      className="w-full bg-white/5 border-2 border-white/5 rounded-[2.5rem] px-10 py-8 text-lg text-white placeholder-white/10 focus:border-[#FF7A00]/50 outline-none transition-all group-hover:bg-white/10 shadow-2xl"
                     />
-                    <div className="absolute right-4 top-1/2 -translate-y-1/2 flex gap-4 text-white/20">
-                       <Smartphone className="w-5 h-5"/>
-                       <Monitor className="w-5 h-5"/>
+                    <div className="absolute right-6 top-1/2 -translate-y-1/2 flex gap-5 text-white/10 group-focus-within:text-[#FF7A00]/30 transition-colors">
+                       <Mic className="w-6 h-6"/>
                     </div>
                   </div>
                   <button 
                     onClick={() => handleCommentSubmit(expandedCommentReel)}
                     disabled={submittingCommentId === expandedCommentReel}
-                    className="w-20 h-20 rounded-3xl bg-gradient-to-br from-devotion-gold to-[#B66A2A] text-black flex items-center justify-center shadow-[0_10px_30px_rgba(211,154,74,0.4)] hover:scale-105 active:scale-90 transition-all disabled:opacity-50 border-4 border-black"
+                    className="w-24 h-24 rounded-[2.5rem] bg-gradient-to-br from-[#FF7A00] to-[#F5C542] text-navy-deep flex items-center justify-center shadow-[0_20px_50px_rgba(255,122,0,0.4)] hover:scale-105 active:scale-95 transition-all disabled:opacity-50 border-4 border-navy-deep"
                   >
-                    {submittingCommentId === expandedCommentReel ? <RefreshCw className="w-8 h-8 animate-spin"/> : <PlusCircle className="w-10 h-10" />}
+                    {submittingCommentId === expandedCommentReel ? <RefreshCw className="w-10 h-10 animate-spin"/> : <PlusCircle className="w-12 h-12" />}
                   </button>
                </div>
             </div>
@@ -532,7 +512,6 @@ export default function Reels() {
         </>
       )}
 
-      {/* Notifications Layer */}
       {showNotifications && (
         <MobileNotificationSheet 
           notifications={notifications} 

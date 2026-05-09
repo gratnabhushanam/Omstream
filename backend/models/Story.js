@@ -15,7 +15,7 @@ const StorySchema = new mongoose.Schema({
     summary:   String,
     takeaways: [String]
   }],
-  translations: { type: Map, of: Object }, // { 'hi': { title: '...', description: '...', chapters: [...] } }
+  translations: { type: mongoose.Schema.Types.Mixed, default: {} }, // { 'hi': { title: '...', description: '...', chapters: [...] } }
   author:    { type: String },
   category:  { type: String, default: 'General' }, // Ramayana, Mahabharata, Kids, etc.
   thumbnail: { type: String },

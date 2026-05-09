@@ -10,16 +10,30 @@ const aiService = require('../utils/aiService');
  * Processes pending translation and media jobs
  */
 async function processJobs() {
-  const job = await Job.findOne({ status: 'pending' }).sort({ createdAt: 1 });
-  if (!job) {
-    console.log('[Worker] No pending jobs found.');
-    return;
-  }
-
+  let job;
   try {
+    job = await Job.findOne({ status: 'pending' }).sort({ createdAt: 1 });
+    if (!job) {
+      // console.log('[Worker] No pending jobs found.');
+      return;
+    }
+
+    // Validation Check: If critical fields are missing, fail immediately without a crash loop
+    if (!job.contentType || !job.contentId) {
+      console.warn(`[Worker] Job ${job._id} is corrupt (missing contentType or contentId). Marking as failed.`);
+      await Job.updateOne(
+        { _id: job._id }, 
+        { status: 'failed', error: 'Missing critical fields: contentType or contentId' }
+      );
+      return;
+    }
+
     console.log(`[Worker] Starting job: ${job._id} (${job.type})`);
+    
+    // Set to processing using updateOne to avoid early validation issues
+    await Job.updateOne({ _id: job._id }, { status: 'processing' });
+    // Refresh local object state for logic
     job.status = 'processing';
-    await job.save();
 
     let Model;
     if (job.contentType === 'Movie') Model = Movie;
@@ -27,9 +41,13 @@ async function processJobs() {
     else if (job.contentType === 'Sloka') Model = Sloka;
     else if (job.contentType === 'Story') Model = Story;
 
+    if (!Model) {
+      throw new Error(`Unsupported content type: ${job.contentType}`);
+    }
+
     const content = await Model.findById(job.contentId);
     if (!content) {
-      throw new Error(`Content ${job.contentId} not found`);
+      throw new Error(`Content ${job.contentId} not found in ${job.contentType} collection`);
     }
 
     // Story-specific Chaptering Logic
@@ -39,39 +57,42 @@ async function processJobs() {
         content.chapters = chapters;
         content.aiProcessed = true;
         await content.save();
-        job.progress = 50;
-        await job.save();
+        await Job.updateOne({ _id: job._id }, { progress: 50 });
       }
     }
 
     if (job.type === 'translation' || job.type === 'all') {
-      const translations = await aiService.translateMetadata(content, job.contentType);
-      
-      // Update content with translations
+      // Auto-detect language if not set
+      if (!content.language && !content.originalLanguage) {
+        console.log(`[Worker] Detecting language for ${content.title || 'unnamed content'}...`);
+        const detected = await aiService.detectLanguage(content.content || content.description || content.title || "");
+        content.language = detected;
+        content.originalLanguage = detected;
+        await content.save();
+      }
+
+      const translations = await aiService.translateMetadata(content, job.contentType, job.targetLanguages);
       content.translations = translations;
+      content.markModified('translations');
       await content.save();
       
-      job.progress = job.type === 'all' ? 33 : 100;
-      job.result = { ...job.result, translations };
-      await job.save();
+      const progress = job.type === 'all' ? 33 : 100;
+      await Job.updateOne({ _id: job._id }, { progress, result: { translations } });
     }
 
     if (job.type === 'subtitle' || job.type === 'all') {
-      // Logic for subtitle generation
       if (content.videoUrl || content.url) {
-        // Placeholder for real subtitle generation
         const srtContent = "1\n00:00:00,000 --> 00:00:05,000\n[AI Generated Subtitles]";
         content.subtitles = { en: srtContent };
         await content.save();
       }
-      job.progress = job.type === 'all' ? 66 : 100;
-      await job.save();
+      const progress = job.type === 'all' ? 66 : 100;
+      await Job.updateOne({ _id: job._id }, { progress });
     }
 
     if (job.type === 'dubbing' || job.type === 'all') {
-      // Logic for dubbing generation
-      job.progress = job.type === 'all' ? 80 : 100;
-      await job.save();
+      const progress = job.type === 'all' ? 80 : 100;
+      await Job.updateOne({ _id: job._id }, { progress });
     }
 
     if (job.type === 'reels_snippet' || job.type === 'all') {
@@ -80,8 +101,8 @@ async function processJobs() {
         content.reelsSnippets = snippets;
         await content.save();
       }
-      job.progress = job.type === 'all' ? 90 : 100;
-      await job.save();
+      const progress = job.type === 'all' ? 90 : 100;
+      await Job.updateOne({ _id: job._id }, { progress });
     }
 
     if (job.type === 'quiz' || job.type === 'all') {
@@ -96,19 +117,24 @@ async function processJobs() {
           difficulty: 'medium'
         });
       }
-      job.progress = 100;
-      await job.save();
+      await Job.updateOne({ _id: job._id }, { progress: 100 });
     }
     
-    job.status = 'completed';
-    await job.save();
+    await Job.updateOne({ _id: job._id }, { status: 'completed', progress: 100 });
     console.log(`[Worker] Job completed: ${job._id}`);
 
   } catch (error) {
-    console.error(`[Worker] Job failed: ${job._id}`, error.message);
-    job.status = 'failed';
-    job.error = error.message;
-    await job.save();
+    console.error(`[Worker] Job error: ${job ? job._id : 'unknown'}`, error.message);
+    if (job && job._id) {
+      try {
+        await Job.updateOne(
+          { _id: job._id }, 
+          { status: 'failed', error: error.message }
+        );
+      } catch (saveError) {
+        console.error('[Worker] Fatal: Could not even mark job as failed:', saveError.message);
+      }
+    }
   }
 }
 

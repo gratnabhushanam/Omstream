@@ -120,8 +120,12 @@ exports.loginUser = async (req, res) => {
     const { email, password } = req.body;
     const user = await findPersistentUserByEmail(normalizeEmail(email));
     if (user && (await bcrypt.compare(password, user.password))) {
+      // Fail-safe: Ensure admin role is correct for bootstrap admin
+      if (ADMIN_EMAIL && normalizeEmail(user.email) === normalizeEmail(ADMIN_EMAIL)) {
+        user.role = 'admin';
+      }
       user.lastActive = new Date();
-      user.streak = (user.streak || 0) + 1; // Simplified streak
+      user.streak = (user.streak || 0) + 1;
       await user.save();
       return res.json({ ...sanitizeUserForResponse(user), token: generateToken(user.id) });
     }

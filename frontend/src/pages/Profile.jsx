@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { User, Mail, Bell, Shield, Heart, Flame, Trophy, Settings, LogOut, Camera, Edit2, Check, ExternalLink, Sparkles, BookOpen, Share2, Bookmark, Video, Trash2 } from 'lucide-react';
+import { User, Mail, Bell, Shield, Heart, Flame, Trophy, Settings, LogOut, Camera, Edit2, Check, ExternalLink, Sparkles, BookOpen, Share2, Bookmark, Video, Trash2, Library, Play } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { requestNotificationPermission } from '../utils/notificationService';
@@ -59,6 +59,9 @@ export default function Profile() {
   const [savingPersonalization, setSavingPersonalization] = useState(false);
   const [personalizationStatus, setPersonalizationStatus] = useState('');
   const [activeSavedTab, setActiveSavedTab] = useState('verses');
+  const [watchlistMovies, setWatchlistMovies] = useState([]);
+  const [watchlistStories, setWatchlistStories] = useState([]);
+  const [watchlistLoading, setWatchlistLoading] = useState(false);
 
   const fileInputRef = React.useRef(null);
 
@@ -166,6 +169,48 @@ export default function Profile() {
     };
 
     loadMyReels();
+  }, [user]);
+
+  useEffect(() => {
+    const loadWatchlistMovies = async () => {
+      if (!user || !user.watchlist?.length) {
+        setWatchlistMovies([]);
+        return;
+      }
+      try {
+        setWatchlistLoading(true);
+        const { data } = await axios.get('/api/movies/watchlist');
+        setWatchlistMovies(data);
+      } catch (error) {
+        console.error('Error loading watchlist movies:', error);
+        setWatchlistMovies([]);
+      } finally {
+        setWatchlistLoading(false);
+      }
+    };
+
+    const loadWatchlistStories = async () => {
+      if (!user || !user.storyWatchlist?.length) {
+        setWatchlistStories([]);
+        return;
+      }
+      try {
+        setWatchlistLoading(true);
+        const token = localStorage.getItem('token');
+        const { data } = await axios.get('/api/stories/watchlist/me', {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        setWatchlistStories(data);
+      } catch (error) {
+        console.error('Error loading watchlist stories:', error);
+        setWatchlistStories([]);
+      } finally {
+        setWatchlistLoading(false);
+      }
+    };
+
+    loadWatchlistMovies();
+    loadWatchlistStories();
   }, [user]);
 
   const handleUpdate = async () => {
@@ -381,6 +426,20 @@ export default function Profile() {
       localStorage.setItem(SAVED_REELS_KEY, JSON.stringify(updated));
     } catch (error) {
       console.error('Error removing saved reel:', error);
+    }
+  };
+
+  const removeWatchlistMovie = async (movieId) => {
+    try {
+      const { data } = await axios.post(`/api/movies/${movieId}/toggle-watchlist`);
+      setWatchlistMovies(prev => prev.filter(m => (m._id || m.id) !== movieId));
+      if (user) {
+        const updatedUser = { ...user, watchlist: data.watchlist };
+        setUser(updatedUser);
+        localStorage.setItem('user', JSON.stringify(updatedUser));
+      }
+    } catch (error) {
+      console.error('Error removing movie from watchlist:', error);
     }
   };
 
@@ -699,6 +758,8 @@ export default function Profile() {
                 <div className="flex bg-black/40 p-1.5 rounded-2xl overflow-x-auto hide-scrollbar">
                    {[
                      { id: 'verses', label: 'Verses', icon: <BookOpen className="w-4 h-4" /> },
+                     { id: 'library', label: 'Library', icon: <Library className="w-4 h-4" /> },
+                     { id: 'movies', label: 'Cinematic', icon: <Play className="w-4 h-4" /> },
                      { id: 'reels', label: 'Reels', icon: <Video className="w-4 h-4" /> },
                      { id: 'daily', label: 'Daily & Mentor', icon: <Bookmark className="w-4 h-4" /> }
                    ].map(tab => (
@@ -763,6 +824,113 @@ export default function Profile() {
                            </button>
                          </div>
                        </div>
+                     </div>
+                   ))}
+                 </div>
+               )
+             )}
+
+              {/* Library (Stories) Tab */}
+              {activeSavedTab === 'library' && (
+                watchlistLoading ? (
+                  <div className="py-16 flex justify-center">
+                    <div className="animate-spin rounded-full h-10 w-10 border-t-4 border-devotion-gold"></div>
+                  </div>
+                ) : watchlistStories.length === 0 ? (
+                  <div className="rounded-2xl border border-dashed border-white/10 p-8 text-center text-gray-400">
+                    Your personal library is empty. Discover and save stories from the Library page.
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {watchlistStories.map((story) => (
+                      <div 
+                        key={story._id || story.id}
+                        onClick={() => navigate('/stories', { state: { storyId: story._id || story.id } })}
+                        className="bg-devotion-darkBlue/40 rounded-3xl border border-white/10 overflow-hidden group cursor-pointer hover:border-devotion-gold/30 transition-all hover:-translate-y-2"
+                      >
+                         <div className="aspect-video relative overflow-hidden">
+                            <img src={story.thumbnail || '/story-placeholder.jpg'} alt={story.title} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                               <Play className="w-12 h-12 text-devotion-gold fill-current" />
+                            </div>
+                            <div className="absolute top-4 left-4">
+                               <span className="px-3 py-1 bg-black/60 backdrop-blur-md rounded-full text-[10px] font-black text-devotion-gold uppercase tracking-widest border border-devotion-gold/30">
+                                 {story.seriesTitle || 'Spiritual'}
+                               </span>
+                            </div>
+                         </div>
+                         <div className="p-6">
+                            <h4 className="text-lg font-serif font-bold text-white mb-2 line-clamp-1">{story.title}</h4>
+                            <div className="flex items-center justify-between">
+                               <span className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">{story.viewCount || 0} Seekers</span>
+                               <button 
+                                 onClick={async (e) => {
+                                   e.stopPropagation();
+                                   try {
+                                      const token = localStorage.getItem('token');
+                                      const { data } = await axios.post(`/api/stories/${story._id || story.id}/toggle-watchlist`, {}, {
+                                        headers: { Authorization: `Bearer ${token}` }
+                                      });
+                                      setUser({ ...user, storyWatchlist: data.storyWatchlist });
+                                      setWatchlistStories(prev => prev.filter(s => (s._id || s.id) !== (story._id || story.id)));
+                                      localStorage.setItem('user', JSON.stringify({ ...user, storyWatchlist: data.storyWatchlist }));
+                                   } catch (err) {
+                                      console.error('Error removing from watchlist:', err);
+                                   }
+                                 }}
+                                 className="text-gray-500 hover:text-red-400 transition-colors"
+                               >
+                                  <Trash2 className="w-4 h-4" />
+                               </button>
+                            </div>
+                         </div>
+                      </div>
+                    ))}
+                  </div>
+                )
+              )}
+
+             {/* Cinematic Tab */}
+             {activeSavedTab === 'movies' && (
+               watchlistLoading ? (
+                 <div className="py-16 flex justify-center">
+                   <div className="animate-spin rounded-full h-10 w-10 border-t-4 border-devotion-gold"></div>
+                 </div>
+               ) : watchlistMovies.length === 0 ? (
+                 <div className="rounded-2xl border border-dashed border-white/10 p-8 text-center text-gray-400">
+                   Your cinematic watchlist is empty. Add movies from the Cinema section.
+                 </div>
+               ) : (
+                 <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                   {watchlistMovies.map((movie) => (
+                     <div 
+                        key={movie._id || movie.id} 
+                        className="rounded-2xl border border-white/10 bg-white/5 overflow-hidden group/mcard transition-all hover:border-devotion-gold/30"
+                     >
+                        <div className="aspect-video relative overflow-hidden">
+                           <img src={movie.thumbnail || '/scene-krishna.svg'} className="w-full h-full object-cover transition-transform duration-700 group-hover/mcard:scale-110" alt={movie.title} />
+                           <div className="absolute inset-0 bg-gradient-to-t from-[#06101E] to-transparent opacity-60" />
+                           <div className="absolute bottom-4 left-4">
+                              <span className="px-2 py-1 bg-devotion-gold text-devotion-darkBlue text-[8px] font-black uppercase rounded">{movie.genre || 'Wisdom'}</span>
+                           </div>
+                        </div>
+                        <div className="p-4">
+                           <h4 className="text-white font-bold text-lg line-clamp-1 mb-2 italic">{movie.title}</h4>
+                           <div className="flex gap-2">
+                              <button 
+                                onClick={() => navigate('/movies')} 
+                                className="flex-1 bg-devotion-gold text-devotion-darkBlue py-2 rounded-lg font-black text-[10px] uppercase tracking-widest hover:bg-yellow-400"
+                              >
+                                 Watch Now
+                              </button>
+                              <button 
+                                onClick={() => removeWatchlistMovie(movie._id || movie.id)} 
+                                className="px-3 py-2 border border-red-500/30 text-red-400 rounded-lg font-black text-[10px] uppercase tracking-widest hover:bg-red-500/10"
+                              >
+                                 <Trash2 className="w-4 h-4" />
+                              </button>
+                           </div>
+                        </div>
                      </div>
                    ))}
                  </div>

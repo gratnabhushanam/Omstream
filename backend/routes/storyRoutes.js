@@ -18,4 +18,8 @@ router.delete('/:id', protect, admin, storyController.deleteStory);
 router.post('/:id/publish', protect, admin, storyController.publishStory);
 router.post('/:id/process', protect, admin, storyController.processStory);
 
+// Watchlist / Personal Library
+router.get('/watchlist/me', protect, storyController.getWatchlistStories);
+router.post('/:id/toggle-watchlist', protect, storyController.toggleStoryWatchlist);
+
 module.exports = router;

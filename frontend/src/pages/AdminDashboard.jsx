@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ErrorBoundary } from '../components/ErrorBoundary';
 import axios from 'axios';
-import { Database, Upload, Users, BookOpen, Video, LogOut, Settings, Film, Plus, X, Check, AlertCircle, Image as ImageIcon, Link as LinkIcon, FileText, Flame, Trash2, Pencil, Menu, Eye, Sparkles, RefreshCw, Cpu, Bell, BarChart3, Layers } from 'lucide-react';
+import { Database, Upload, Users, BookOpen, Video, LogOut, Settings, Film, Plus, X, Check, AlertCircle, Image as ImageIcon, Link as LinkIcon, FileText, Flame, Trash2, Pencil, Menu, Eye, Sparkles, RefreshCw, Cpu, Bell, BarChart3, Layers, Zap } from 'lucide-react';
 import { resumableUpload } from '../utils/resumableUpload';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
@@ -45,22 +45,20 @@ function AdminDashboardContent() {
   const [movieForm, setMovieForm] = useState({ title: '', description: '', videoUrl: '', hlsUrl: '', trailerUrl: '', thumbnail: '', releaseYear: 2025, ownerHistory: '', tags: '', views: 0, isComingSoon: false, isKids: false, genre: 'Divine', duration: 0 });
   const [storyForm, setStoryForm] = useState({
     title: '',
-    titleTelugu: '',
-    titleHindi: '',
-    titleEnglish: '',
-    seriesTitle: 'Bhagavad Gita',
+    description: '',
     content: '',
-    chapter: 1,
-    summary: '',
-    summaryTelugu: '',
-    summaryHindi: '',
-    summaryEnglish: '',
-    contentTelugu: '',
-    contentHindi: '',
-    contentEnglish: '',
-    language: 'english',
+    category: 'Bhagavad Gita',
+    status: 'published',
     thumbnail: '',
     tags: '',
+    isKids: false,
+    chapters: [],
+    translations: {},
+    selectedLang: 'en',
+    rootTitle: '',
+    rootDescription: '',
+    rootContent: '',
+    rootChapters: []
   });
   const [videoForm, setVideoForm] = useState({ title: '', description: '', videoUrl: '', trailerUrl: '', category: 'reels', collectionTitle: 'Bhagavad Gita', isKids: false, isComingSoon: false, tags: '', quizSetId: '', views: 0 });
   // Quiz builder state for video upload
@@ -181,6 +179,8 @@ function AdminDashboardContent() {
   };
 
   const currentContentLabel = contentLabels[activeTab] || 'Content';
+  // eslint-disable-next-line no-unused-vars
+  const publishLabel = contentLabels[activeTab] || 'Content';
   const collectionSet = new Set((data.videos || []).map((item) => String(item.collectionTitle || 'Bhagavad Gita').trim()).filter(Boolean));
   const prioritizedCollections = VIDEO_COLLECTION_PRESETS.filter((item) => collectionSet.has(item));
   const customCollections = Array.from(collectionSet)
@@ -191,17 +191,7 @@ function AdminDashboardContent() {
     ? (data.videos || [])
     : (data.videos || []).filter((item) => String(item.collectionTitle || 'Bhagavad Gita').trim() === videoCollectionFilter);
   
-  useEffect(() => {
-    if (!authLoading && (!user || user.role !== 'admin')) {
-      console.warn('Unauthorized access to admin dashboard');
-      navigate('/');
-    } else if (user?.role === 'admin') {
-      fetchAdminData();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user, authLoading, activeTab, pendingContentFilter, navigate]);
-
-  const fetchAdminData = async () => {
+  const fetchAdminData = React.useCallback(async () => {
     try {
       const token = localStorage.getItem('token');
       const headers = { Authorization: `Bearer ${token}` };
@@ -253,7 +243,17 @@ function AdminDashboardContent() {
       }
       console.error('Error fetching admin data:', error);
     }
-  };
+  }, [activeTab, data.videos, navigate, pendingContentFilter]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    if (!authLoading && (!user || user.role !== 'admin')) {
+      console.warn('Unauthorized access to admin dashboard');
+      navigate('/');
+    } else if (user?.role === 'admin') {
+      fetchAdminData();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, authLoading, activeTab, pendingContentFilter, navigate]);
 
   const handleModerateUserReel = async (id, status) => {
     try {
@@ -294,14 +294,46 @@ function AdminDashboardContent() {
         payload = { ...movieForm, tags: movieForm.tags.split(',').map(tag => tag.trim()) };
       } else if (activeTab === 'stories') {
         endpoint = editingStoryId ? `/api/stories/${editingStoryId}` : '/api/stories';
-        const languageKey = storyForm.language.charAt(0).toUpperCase() + storyForm.language.slice(1);
+        
+        // Merge current form fields into the translations map for the selectedLang
+        const updatedTranslations = { ...(storyForm.translations || {}) };
+        if (storyForm.selectedLang !== 'en') {
+          updatedTranslations[storyForm.selectedLang] = {
+            title: storyForm.title,
+            description: storyForm.description,
+            content: storyForm.content,
+            chapters: storyForm.chapters
+          };
+        }
+
         payload = {
           ...storyForm,
-          tags: storyForm.tags.split(',').map(tag => tag.trim()).filter(Boolean),
-          title: storyForm.title || storyForm[`title${languageKey}`] || storyForm.titleEnglish || storyForm.titleHindi || storyForm.titleTelugu || '',
-          summary: storyForm.summary || storyForm[`summary${languageKey}`] || '',
-          content: storyForm.content || storyForm[`content${languageKey}`] || '',
+          tags: (storyForm.tags || '').split(',').map(tag => tag.trim()).filter(Boolean),
+          translations: updatedTranslations
         };
+
+        // If we are saving the 'en' version, also update root fields
+        if (storyForm.selectedLang === 'en') {
+          payload.title = storyForm.title;
+          payload.description = storyForm.description;
+          payload.content = storyForm.content;
+          payload.chapters = storyForm.chapters;
+        } else {
+          // Keep root fields unchanged if editing a translation
+          const originalStory = data.stories.find(s => String(s._id || s.id) === String(editingStoryId));
+          if (originalStory) {
+             payload.title = originalStory.title;
+             payload.description = originalStory.description;
+             payload.content = originalStory.content;
+             payload.chapters = originalStory.chapters;
+          } else {
+             // For new stories being created in non-english
+             payload.title = storyForm.rootTitle || storyForm.title;
+             payload.description = storyForm.rootDescription || storyForm.description;
+             payload.content = storyForm.rootContent || storyForm.content;
+             payload.chapters = storyForm.rootChapters || storyForm.chapters;
+          }
+        }
       } else if (activeTab === 'quizzes') {
         endpoint = editingQuizSetId ? `/api/quiz/admin/sets/${editingQuizSetId}` : '/api/quiz/admin/sets';
         payload = {
@@ -401,14 +433,22 @@ function AdminDashboardContent() {
           headers: { Authorization: `Bearer ${token}` }
         });
         
+        const newlyCreatedId = newlyCreated?._id || newlyCreated?.id || newlyCreated?.videoId;
+        if (newlyCreatedId && !editingStoryId && !editingMovieId && !editingVideoId) {
+           // Auto-trigger AI Globalization for new content
+           handleAIProcess(newlyCreatedId, activeTab === 'stories' ? 'Story' : activeTab === 'movies' ? 'Movie' : 'Video', 'all');
+        }
+
         if (activeTab === 'stories') {
            setData(prev => ({ ...prev, stories: [newlyCreated, ...prev.stories] }));
         } else if (activeTab === 'movies') {
            setData(prev => ({ ...prev, movies: [newlyCreated, ...prev.movies] }));
+        } else if (activeTab === 'videos' && videosUploadType === 'video') {
+           await fetchAdminData();
         }
       }
 
-      setMessage({ type: 'success', text: (editingStoryId || editingMovieId || editingVideoId) ? 'Updated successfully!' : `${publishLabel} published successfully!` });
+      setMessage({ type: 'success', text: (editingStoryId || editingMovieId || editingVideoId) ? 'Updated successfully!' : `${publishLabel} published successfully! AI processing started.` });
       setShowAddModal(false);
       resetForms();
       setVideoQuizList([]);
@@ -433,9 +473,7 @@ function AdminDashboardContent() {
         contentType,
         type: processType,
         languages: [
-          'English', 'Hindi', 'Telugu', 'Tamil', 'Kannada', 'Malayalam', 'Bengali', 'Marathi', 
-          'Gujarati', 'Punjabi', 'Sanskrit', 'Urdu', 'Spanish', 'French', 'German', 
-          'Japanese', 'Korean', 'Arabic', 'Chinese', 'Russian', 'Portuguese'
+          'en', 'hi', 'te', 'ta', 'kn', 'ml', 'bn', 'mr', 'gu', 'pa', 'sa', 'ur', 'es', 'fr', 'de', 'ja', 'ko', 'ar', 'zh', 'ru', 'pt'
         ]
       }, {
         headers: { Authorization: `Bearer ${token}` }
@@ -534,28 +572,26 @@ function AdminDashboardContent() {
   };
 
   const resetForms = () => {
-    setMovieForm({ title: '', description: '', videoUrl: '', hlsUrl: '', trailerUrl: '', thumbnail: '', releaseYear: 2025, ownerHistory: '', tags: '', views: 0, isComingSoon: false, isKids: false, genre: 'Divine', duration: 0 });
+    setMovieForm({ title: '', description: '', videoUrl: '', hlsUrl: '', trailerUrl: '', thumbnail: '', releaseYear: 2025, ownerHistory: '', tags: '', views: 0, isComingSoon: false, isKids: false, genre: 'Divine', duration: 0, originalLanguage: 'en' });
     setStoryForm({
       title: '',
-      titleTelugu: '',
-      titleHindi: '',
-      titleEnglish: '',
-      seriesTitle: 'Bhagavad Gita',
+      description: '',
       content: '',
-      chapter: 1,
-      summary: '',
-      summaryTelugu: '',
-      summaryHindi: '',
-      summaryEnglish: '',
-      contentTelugu: '',
-      contentHindi: '',
-      contentEnglish: '',
-      language: 'english',
+      category: 'Bhagavad Gita',
+      status: 'published',
       thumbnail: '',
       tags: '',
+      isKids: false,
       chapters: [],
+      translations: {},
+      selectedLang: 'en',
+      language: 'en',
+      rootTitle: '',
+      rootDescription: '',
+      rootContent: '',
+      rootChapters: []
     });
-    setVideoForm({ title: '', description: '', videoUrl: '', trailerUrl: '', category: 'reels', collectionTitle: 'Bhagavad Gita', isKids: false, isComingSoon: false, tags: '', quizSetId: '', views: 0 });
+    setVideoForm({ title: '', description: '', videoUrl: '', trailerUrl: '', category: 'reels', collectionTitle: 'Bhagavad Gita', isKids: false, isComingSoon: false, tags: '', quizSetId: '', views: 0, language: 'en' });
     setQuizSetForm({ title: '', description: '', category: 'General', difficulty: 'medium', timeLimit: 0, thumbnail: '', tags: '', isPublished: false, questions: [] });
     setEditingQuizSetId(null);
     setQuizForm({
@@ -581,23 +617,20 @@ function AdminDashboardContent() {
     setEditingVideoId(null);
     setStoryForm({
       title: story.title || '',
-      titleTelugu: story.titleTelugu || '',
-      titleHindi: story.titleHindi || '',
-      titleEnglish: story.titleEnglish || '',
-      seriesTitle: story.seriesTitle || 'Bhagavad Gita',
+      description: story.description || story.summary || '',
       content: story.content || '',
-      chapter: story.chapter || 1,
-      summary: story.summary || '',
-      summaryTelugu: story.summaryTelugu || '',
-      summaryHindi: story.summaryHindi || '',
-      summaryEnglish: story.summaryEnglish || '',
-      contentTelugu: story.contentTelugu || '',
-      contentHindi: story.contentHindi || '',
-      contentEnglish: story.contentEnglish || '',
-      language: story.language || 'english',
+      category: story.category || story.seriesTitle || 'Bhagavad Gita',
+      status: story.status || 'published',
       thumbnail: story.thumbnail || '',
       tags: Array.isArray(story.tags) ? story.tags.join(', ') : (story.tags || ''),
+      isKids: story.isKids || false,
       chapters: story.chapters || [],
+      translations: story.translations || {},
+      selectedLang: 'en',
+      rootTitle: story.title || '',
+      rootDescription: story.description || story.summary || '',
+      rootContent: story.content || '',
+      rootChapters: story.chapters || []
     });
     setShowAddModal(true);
   };
@@ -850,6 +883,12 @@ function AdminDashboardContent() {
          </div>
 
           <div className="grid grid-cols-1 gap-6">
+            {activeTab === 'dashboard' && !data.stats && (
+               <div className="flex flex-col items-center justify-center py-32 space-y-4">
+                  <div className="w-16 h-16 border-4 border-devotion-gold/20 border-t-devotion-gold rounded-full animate-spin"></div>
+                  <p className="text-devotion-gold/60 font-serif italic animate-pulse">Syncing spiritual analytics...</p>
+               </div>
+            )}
             {activeTab === 'dashboard' && data.stats && (
               <div className="space-y-12">
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
@@ -1018,79 +1057,30 @@ function AdminDashboardContent() {
                </div>
             )}
 
-            {activeTab === 'ai-jobs' && (
-               <div className="bg-white/5 border border-white/10 rounded-[3rem] p-12 backdrop-blur-3xl">
-                  <div className="flex justify-between items-center mb-10">
-                     <h3 className="text-3xl font-serif font-black text-white uppercase tracking-tighter">AI Processing <span className="text-devotion-gold">Engine</span></h3>
-                     <button
-                       onClick={() => fetchAdminData()}
-                       className="p-3 rounded-xl bg-white/5 hover:bg-white/10 text-devotion-gold transition-all"
-                     >
-                        <RefreshCw className="w-5 h-5" />
-                     </button>
-                  </div>
-                  <JobTracker />
-               </div>
-            )}
-
-            {activeTab === 'translations' && (
-               <div className="bg-white/5 border border-white/10 rounded-[3rem] p-12 backdrop-blur-3xl">
-                 <div className="flex justify-between items-center mb-6">
-                    <h3 className="text-2xl font-serif font-black text-white uppercase tracking-wider">Pending Translation Jobs</h3>
-                    <button
-                      onClick={() => fetchAdminData()}
-                      className="p-2 rounded-xl bg-devotion-gold/10 hover:bg-devotion-gold/20 text-devotion-gold border border-devotion-gold/30 transition-all flex items-center gap-2"
-                    >
-                       <RefreshCw className="w-4 h-4" /> Refresh
-                    </button>
-                 </div>
-                 {translationJobs.length === 0 ? (
-                   <p className="text-gray-400 text-center py-8">No pending translation jobs.</p>
-                 ) : (
-                   <div className="overflow-x-auto">
-                     <table className="w-full text-sm text-left text-gray-300">
-                       <thead className="text-xs uppercase bg-white/5">
-                         <tr>
-                           <th className="px-4 py-2">Content</th>
-                           <th className="px-4 py-2">Type</th>
-                           <th className="px-4 py-2">Languages</th>
-                           <th className="px-4 py-2">Status</th>
-                           <th className="px-4 py-2">Actions</th>
-                         </tr>
-                       </thead>
-                       <tbody>
-                         {translationJobs.map((job) => (
-                           <tr key={job._id} className="border-b border-white/5 hover:bg-white/5">
-                             <td className="px-4 py-2 font-medium">{job.contentType}</td>
-                             <td className="px-4 py-2 capitalize">{job.type}</td>
-                             <td className="px-4 py-2">{(job.targetLanguages || []).join(', ')}</td>
-                             <td className="px-4 py-2 capitalize">{job.status}</td>
-                             <td className="px-4 py-2">
-                               {job.status === 'pending' && (
-                                 <button
-                                   onClick={() => handleAIProcess(job.contentId, job.contentType, job.type)}
-                                   className="px-3 py-1 bg-devotion-gold text-devotion-darkBlue rounded-md text-xs font-black hover:bg-devotion-gold/80 transition"
-                                 >
-                                   Run
-                                 </button>
-                               )}
-                             </td>
-                           </tr>
-                         ))}
-                       </tbody>
-                     </table>
-                   </div>
-                 )}
-               </div>
-            )}
 
 
             {activeTab === 'movies' && (
                <div className="bg-white/5 border border-white/10 rounded-[3rem] p-12 backdrop-blur-3xl">
-                  <div className="flex justify-between items-center mb-10">
-                     <h3 className="text-3xl font-serif font-black text-white uppercase tracking-tighter">Movie <span className="text-devotion-gold">Library</span></h3>
-                     <span className="bg-devotion-gold/10 text-devotion-gold px-6 py-2 rounded-full font-black text-[10px] uppercase tracking-widest border border-devotion-gold/30">Total: {data.movies.length}</span>
-                  </div>
+                   <div className="flex justify-between items-center mb-10">
+                      <div className="flex flex-col">
+                         <h3 className="text-3xl font-serif font-black text-white uppercase tracking-tighter">Movie <span className="text-devotion-gold">Library</span></h3>
+                         <span className="text-[10px] font-black uppercase tracking-[0.4em] text-white/30">Premium Cinema Management</span>
+                      </div>
+                      <div className="flex items-center gap-4">
+                         <button 
+                           onClick={() => {
+                             if (window.confirm(`Globalize ${data.movies.length} movies? This will queue AI translation jobs for all content.`)) {
+                               data.movies.forEach(m => handleAIProcess(m._id || m.id, 'Movie', 'all'));
+                               setMessage({ type: 'success', text: `Queued ${data.movies.length} movies for globalization.` });
+                             }
+                           }}
+                           className="hidden md:flex items-center gap-2 px-6 py-2 rounded-xl bg-devotion-gold/10 border border-devotion-gold/30 text-devotion-gold font-black text-[10px] uppercase tracking-widest hover:bg-devotion-gold/20 transition-all"
+                         >
+                            <Sparkles className="w-4 h-4" /> Globalize All Movies
+                         </button>
+                         <span className="bg-devotion-gold/10 text-devotion-gold px-6 py-2 rounded-full font-black text-[10px] uppercase tracking-widest border border-devotion-gold/30">Total: {data.movies.length}</span>
+                      </div>
+                   </div>
                   {data.movies.length === 0 ? (
                     <p className="text-gray-500 text-center py-12">No movies uploaded yet.</p>
                   ) : (
@@ -1169,10 +1159,26 @@ function AdminDashboardContent() {
 
             {activeTab === 'stories' && (
                <div className="bg-white/5 border border-white/10 rounded-[3rem] p-12 backdrop-blur-3xl">
-                  <div className="flex justify-between items-center mb-10">
-                     <h3 className="text-3xl font-serif font-black text-white uppercase tracking-tighter">Indian Story <span className="text-devotion-gold">Vault</span></h3>
-                     <span className="bg-devotion-gold/10 text-devotion-gold px-6 py-2 rounded-full font-black text-[10px] uppercase tracking-widest border border-devotion-gold/30">Total: {data.stories.length}</span>
-                  </div>
+                   <div className="flex justify-between items-center mb-10">
+                      <div className="flex flex-col">
+                         <h3 className="text-3xl font-serif font-black text-white uppercase tracking-tighter">Indian Story <span className="text-devotion-gold">Vault</span></h3>
+                         <span className="text-[10px] font-black uppercase tracking-[0.4em] text-white/30">Spiritual Wisdom Archive</span>
+                      </div>
+                      <div className="flex items-center gap-4">
+                         <button 
+                           onClick={() => {
+                             if (window.confirm(`Globalize ${data.stories.length} stories? This will queue AI translation and chaptering jobs.`)) {
+                               data.stories.forEach(s => handleAIProcess(s._id || s.id, 'Story', 'all'));
+                               setMessage({ type: 'success', text: `Queued ${data.stories.length} stories for globalization.` });
+                             }
+                           }}
+                           className="hidden md:flex items-center gap-2 px-6 py-2 rounded-xl bg-[#00A8FF]/10 border border-[#00A8FF]/30 text-[#00A8FF] font-black text-[10px] uppercase tracking-widest hover:bg-[#00A8FF]/20 transition-all"
+                         >
+                            <Sparkles className="w-4 h-4" /> Globalize All Stories
+                         </button>
+                         <span className="bg-devotion-gold/10 text-devotion-gold px-6 py-2 rounded-full font-black text-[10px] uppercase tracking-widest border border-devotion-gold/30">Total: {data.stories.length}</span>
+                      </div>
+                   </div>
 
                   {data.stories.length === 0 ? (
                     <p className="text-gray-500 text-center py-12">No stories uploaded yet.</p>
@@ -1867,6 +1873,7 @@ function AdminDashboardContent() {
                          <label className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-devotion-gold ml-2"><FileText className="w-3 h-3"/> Movie Title</label>
                          <input required className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-5 text-white focus:border-devotion-gold outline-none" placeholder="e.g. Shri Krishna" value={movieForm.title} onChange={e => setMovieForm({...movieForm, title: e.target.value})} />
                       </div>
+                      <LanguageSelector value={movieForm.originalLanguage} onChange={val => setMovieForm({...movieForm, originalLanguage: val})} />
                       <div className="space-y-4">
                           <label className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-devotion-gold ml-2"><LinkIcon className="w-3 h-3"/> Direct File Upload (HQ Netflix/Hotstar Range)</label>
                           <div className="flex flex-col gap-3">
@@ -2007,6 +2014,7 @@ function AdminDashboardContent() {
                            <label className="text-[10px] font-black uppercase tracking-widest text-devotion-gold ml-2">Story Title</label>
                            <input required className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-5 text-white focus:border-devotion-gold outline-none" placeholder="The Legend of Hanuman" value={storyForm.title} onChange={e => setStoryForm({...storyForm, title: e.target.value})} />
                          </div>
+                         <LanguageSelector value={storyForm.language} onChange={val => setStoryForm({...storyForm, language: val})} />
                          <div className="space-y-4">
                             <label className="text-[10px] font-black uppercase tracking-widest text-devotion-gold ml-2">Category / Series</label>
                             <select className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-5 text-white focus:border-devotion-gold outline-none" value={storyForm.category} onChange={e => setStoryForm({...storyForm, category: e.target.value})}>
@@ -2255,6 +2263,7 @@ function AdminDashboardContent() {
                          <label className="text-[10px] font-black uppercase tracking-widest text-devotion-gold ml-2">Video Title</label>
                          <input required className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-5 text-white focus:border-devotion-gold outline-none" value={videoForm.title} onChange={e => setVideoForm({...videoForm, title: e.target.value})} />
                       </div>
+                      <LanguageSelector value={videoForm.language} onChange={val => setVideoForm({...videoForm, language: val})} />
                       <div className="space-y-4">
                          <label className="text-[10px] font-black uppercase tracking-widest text-devotion-gold ml-2">High Quality File Upload</label>
                          <div className="flex flex-col gap-3">

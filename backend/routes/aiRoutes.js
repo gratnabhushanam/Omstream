@@ -25,7 +25,7 @@ router.post('/process', protect, admin, async (req, res) => {
       type: type || 'all',
       contentId,
       contentType,
-      targetLanguages: languages || ['hi', 'te', 'ta', 'kn', 'ml', 'ur', 'ru', 'pt'],
+      targetLanguages: languages || ['hi', 'te', 'ta', 'kn', 'ml', 'bn', 'mr', 'gu', 'pa', 'sa'],
       status: 'pending'
     });
 
