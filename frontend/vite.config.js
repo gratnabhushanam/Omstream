@@ -16,6 +16,7 @@ export default defineConfig({
         rollupOptions: {
           output: {
             codeSplitting: false,
+            manualChunks: undefined,
             format: 'es'
           }
         }
