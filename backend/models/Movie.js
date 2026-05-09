@@ -13,7 +13,8 @@ const MovieSchema = new mongoose.Schema({
   trailerUrl: { type: String },
   hlsUrl: { type: String },
   views: { type: Number, default: 0 },
-  isComingSoon: { type: Boolean, default: false }
+  isComingSoon: { type: Boolean, default: false },
+  isKids: { type: Boolean, default: false }
 }, {
   timestamps: true,
   strict: false

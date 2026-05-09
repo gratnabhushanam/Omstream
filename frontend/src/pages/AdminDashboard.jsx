@@ -29,7 +29,7 @@ function AdminDashboardContent() {
   const [quickFillStoryId, setQuickFillStoryId] = useState(null);
   const [moderationNotes, setModerationNotes] = useState({});
   const [message, setMessage] = useState({ type: '', text: '' });
-  const [movieForm, setMovieForm] = useState({ title: '', description: '', videoUrl: '', hlsUrl: '', trailerUrl: '', thumbnail: '', releaseYear: 2025, ownerHistory: '', tags: '', views: 0, isComingSoon: false, genre: 'Divine', duration: 0 });
+  const [movieForm, setMovieForm] = useState({ title: '', description: '', videoUrl: '', hlsUrl: '', trailerUrl: '', thumbnail: '', releaseYear: 2025, ownerHistory: '', tags: '', views: 0, isComingSoon: false, isKids: false, genre: 'Divine', duration: 0 });
   const [storyForm, setStoryForm] = useState({
     title: '',
     titleTelugu: '',
@@ -471,7 +471,7 @@ function AdminDashboardContent() {
   };
 
   const resetForms = () => {
-    setMovieForm({ title: '', description: '', videoUrl: '', hlsUrl: '', trailerUrl: '', thumbnail: '', releaseYear: 2025, ownerHistory: '', tags: '', views: 0, isComingSoon: false, genre: 'Divine', duration: 0 });
+    setMovieForm({ title: '', description: '', videoUrl: '', hlsUrl: '', trailerUrl: '', thumbnail: '', releaseYear: 2025, ownerHistory: '', tags: '', views: 0, isComingSoon: false, isKids: false, genre: 'Divine', duration: 0 });
     setStoryForm({
       title: '',
       titleTelugu: '',
@@ -553,6 +553,7 @@ function AdminDashboardContent() {
       tags: Array.isArray(movie.tags) ? movie.tags.join(', ') : (movie.tags || ''),
       views: movie.views || 0,
       isComingSoon: movie.isComingSoon || false,
+      isKids: movie.isKids || false,
       genre: movie.genre || 'Divine',
       duration: movie.duration || 0,
     });
@@ -1585,9 +1586,15 @@ function AdminDashboardContent() {
                              )}
                           </div>
                        </div>
-                      <div className="md:col-span-2 flex items-center gap-4 bg-white/5 p-5 rounded-[2rem] border border-white/10 mb-6">
-                         <input type="checkbox" id="isComingSoon" className="w-6 h-6 accent-devotion-gold" checked={movieForm.isComingSoon} onChange={e => setMovieForm({...movieForm, isComingSoon: e.target.checked})} />
-                         <label htmlFor="isComingSoon" className="text-sm font-black uppercase tracking-widest text-white cursor-pointer">Mark as "Coming Soon" (Upcoming Movie)</label>
+                      <div className="md:col-span-2 flex flex-wrap items-center gap-8 bg-white/5 p-5 rounded-[2rem] border border-white/10 mb-6">
+                         <div className="flex items-center gap-4">
+                           <input type="checkbox" id="isComingSoon" className="w-6 h-6 accent-devotion-gold" checked={movieForm.isComingSoon} onChange={e => setMovieForm({...movieForm, isComingSoon: e.target.checked})} />
+                           <label htmlFor="isComingSoon" className="text-sm font-black uppercase tracking-widest text-white cursor-pointer">Mark as "Coming Soon" (Upcoming Movie)</label>
+                         </div>
+                         <div className="flex items-center gap-4">
+                           <input type="checkbox" id="isKidsMovie" className="w-6 h-6 accent-devotion-gold" checked={movieForm.isKids} onChange={e => setMovieForm({...movieForm, isKids: e.target.checked})} />
+                           <label htmlFor="isKidsMovie" className="text-sm font-black uppercase tracking-widest text-white cursor-pointer">Show on Kids Page</label>
+                         </div>
                       </div>
                       <div className="space-y-4">
                           <label className="text-[10px] font-black uppercase tracking-widest text-devotion-gold ml-2">Genre</label>

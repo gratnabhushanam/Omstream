@@ -248,6 +248,11 @@ function MovieCard({ movie, onSelect, colorClass }) {
         <div className={`absolute top-4 left-4 z-20 px-4 py-1.5 bg-gradient-to-r ${colorClass} text-white font-black text-[11px] rounded-full uppercase tracking-widest shadow-md border-2 border-white`}>
           {movie.duration ? `${movie.duration} MINS` : 'FEATURE'}
         </div>
+        {movie.isComingSoon && (
+          <div className="absolute top-4 right-4 z-20 px-4 py-1.5 bg-devotion-gold text-black font-black text-[11px] rounded-full uppercase tracking-widest shadow-lg border-2 border-white">
+            COMING SOON
+          </div>
+        )}
         
         {/* Play Button Overlay */}
         <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center z-20 pointer-events-none">
@@ -263,7 +268,7 @@ function MovieCard({ movie, onSelect, colorClass }) {
           {movie.genre || 'Action & Drama'}
         </p>
         <span className="text-[#4FACFE] font-black text-xs uppercase tracking-[0.2em] opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-          PLAY TRAILER
+          {movie.isComingSoon ? 'TRAILER / TEASER' : 'PLAY TRAILER'}
         </span>
       </div>
     </div>
