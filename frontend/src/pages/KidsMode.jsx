@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Play, Star, Sparkles, BrainCircuit, Heart, Search, Mic, Settings, Lock, Volume2, VolumeX, ArrowLeft } from 'lucide-react';
+import { Play, Star, Sparkles, BrainCircuit, Heart, Search, Mic, Settings, Lock, Volume2, VolumeX, ArrowLeft, X } from 'lucide-react';
 import MediaPlayerHLS from '../components/MediaPlayerHLS';
 
 export default function KidsMode() {
