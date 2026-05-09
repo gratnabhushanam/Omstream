@@ -153,12 +153,23 @@ export default function Reels() {
                     </div>
                   )}
 
-                  {/* Sound Toggle Overlay */}
+                  {/* Sound Toggle Overlay — triggers user-gesture audio unlock */}
                   <button 
-                    onClick={() => setSoundEnabled(!soundEnabled)}
-                    className="absolute top-28 right-6 z-[25] w-12 h-12 rounded-full glass-panel flex items-center justify-center border border-white/10"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      const nextSound = !soundEnabled;
+                      setSoundEnabled(nextSound);
+                      // Directly unmute all visible video elements for mobile browser policy
+                      document.querySelectorAll('video').forEach((v) => {
+                        v.muted = !nextSound;
+                        if (nextSound) {
+                          v.play().catch(() => {});
+                        }
+                      });
+                    }}
+                    className="absolute top-28 right-6 z-[25] w-12 h-12 rounded-full glass-panel flex items-center justify-center border border-white/10 active:scale-90 transition-all shadow-[0_0_20px_rgba(0,0,0,0.4)]"
                   >
-                    {soundEnabled ? <Volume2 className="w-5 h-5"/> : <VolumeX className="w-5 h-5"/>}
+                    {soundEnabled ? <Volume2 className="w-5 h-5 text-white"/> : <VolumeX className="w-5 h-5 text-white/50"/>}
                   </button>
 
                   {/* Content Overlay */}
