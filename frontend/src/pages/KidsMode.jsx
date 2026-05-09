@@ -324,7 +324,7 @@ export default function KidsMode() {
              </button>
           ))}
        </div>
-       <div className={`px-6 lg:px-24 space-y-20 lg:space-y-32 transition-all duration-1000 ${hoveredVideoId ? 'brightness-[0.85]' : ''}`}>
+       <div className={`px-6 lg:px-24 mt-12 lg:mt-24 tv:mt-32 space-y-24 lg:space-y-40 tv:space-y-48 pb-40 transition-all duration-1000 ${hoveredVideoId ? 'brightness-[0.85]' : ''}`}>
           {/* Sacred Stories Row */}
           {stories.length > 0 && (
             <KidsRow 

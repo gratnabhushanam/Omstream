@@ -251,8 +251,8 @@ export default function Movies() {
 
 
 
-       {/* Main Content Sections */}
-       <main className={`relative z-20 -mt-24 lg:-mt-32 pb-40 space-y-24 lg:space-y-32 transition-all duration-700 ${hoveredMovieId ? 'brightness-[0.85]' : ''}`}>
+        {/* Main Content Sections - FIXED: Safe spacing from Hero and TV optimization */}
+        <main className={`relative z-20 mt-12 lg:mt-24 tv:mt-32 pb-40 space-y-24 lg:space-y-40 tv:space-y-48 transition-all duration-700 ${hoveredMovieId ? 'brightness-[0.85]' : ''}`}>
           <Suspense fallback={<div className="h-96 w-full skeleton" />}>
             {categories.map((cat, idx) => (
               <MovieRowComponent 
