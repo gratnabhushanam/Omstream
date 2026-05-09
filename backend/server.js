@@ -30,16 +30,12 @@ const isOriginAllowed = (origin = '') => {
   if (!origin) {
     return true;
   }
-  const isDevOrigin = origin.includes('vercel.app') || origin.includes('localhost') || origin.includes('127.0.0.1');
   
-  // Permanent override: ALWAYS allow the official Vercel app regardless of production status or env variables!
-  if (origin.includes('gitawisdom.vercel.app')) {
+  // Always allow all Vercel preview and production deployments, and localhost
+  if (origin.endsWith('.vercel.app') || origin.includes('vercel.app') || origin.includes('localhost') || origin.includes('127.0.0.1')) {
     return true;
   }
 
-  if (!isProduction && isDevOrigin) {
-    return true;
-  }
   if (!corsAllowlist.length) {
     return !isProduction;
   }
