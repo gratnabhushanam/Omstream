@@ -99,7 +99,13 @@ export default function MediaPlayer({
     if (sourceToUse.includes('.m3u8')) {
       if (video.canPlayType('application/vnd.apple.mpegurl')) { video.src = sourceToUse; }
       else if (Hls && Hls.isSupported()) {
-        hlsInstance = new Hls({ enableWorker: true, lowLatencyMode: true });
+        hlsInstance = new Hls({ 
+          enableWorker: true, 
+          lowLatencyMode: true,
+          backBufferLength: 30, // Limit back buffer to save memory on mobile
+          maxBufferLength: 60,
+          maxMaxBufferLength: 120
+        });
         hlsInstance.loadSource(sourceToUse);
         hlsInstance.attachMedia(video);
         hlsInstance.on(Hls.Events.ERROR, (_, d) => { if (d.fatal) setHlsFallbackActive(true); });

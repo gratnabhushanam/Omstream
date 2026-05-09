@@ -154,9 +154,15 @@ export default function Movies() {
                 <div className="absolute right-0 bottom-0 w-[400px] h-[400px] bg-[#7B2FF7]/10 rounded-full blur-[100px] translate-z-40 pointer-events-none" />
                 
                 <div className="flex items-center gap-3 animate-in fade-in slide-in-from-left duration-700 translate-z-50">
-                   <span className="px-3 py-1 bg-[#00A8FF] text-black text-[10px] font-black rounded-md tracking-tighter shadow-[0_0_20px_rgba(0,168,255,0.5)]">FEATURED</span>
+                   <div className="flex items-center">
+                     <span className="px-3 py-1 bg-[#00A8FF] text-black text-[10px] font-black rounded-l-md tracking-tighter shadow-[0_0_20px_rgba(0,168,255,0.5)]">FEATURED</span>
+                     <span className="px-3 py-1 bg-white/10 text-white text-[10px] font-black rounded-r-md border-r border-t border-b border-white/20 tracking-[0.1em] uppercase">Now Streaming</span>
+                   </div>
                    <div className="h-px w-12 bg-white/20" />
-                   <span className="text-[#00A8FF] font-black text-[10px] tracking-[0.3em] uppercase">Now Streaming</span>
+                   <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-red-600/20 border border-red-500/50 text-red-500 animate-pulse">
+                      <Flame className="w-3 h-3 fill-current" />
+                      <span className="text-[10px] font-black uppercase tracking-widest">Trending Now</span>
+                   </div>
                 </div>
                
                <h1 className="text-7xl lg:text-9xl font-black uppercase tracking-tighter leading-none animate-in fade-in slide-in-from-left duration-1000 delay-200">
@@ -265,9 +271,14 @@ function MovieRow({ title, movies, onSelect, setHoveredMovieId, wideTeaser = fal
     <div className="px-8 lg:px-24">
        <div className="flex justify-between items-end mb-8">
           <div className="space-y-2">
-             <div className="h-1 w-16 bg-[#00A8FF] rounded-full shadow-[0_0_10px_#00A8FF]" />
-             <h2 className="text-3xl lg:text-4xl font-black uppercase tracking-tight text-white">{title}</h2>
-          </div>
+              <div className="h-1 w-16 bg-[#00A8FF] rounded-full shadow-[0_0_10px_#00A8FF]" />
+              <div className="flex items-center gap-4">
+                 <h2 className="text-3xl lg:text-4xl font-black uppercase tracking-tight text-white">{title}</h2>
+                 {title.toLowerCase().includes('trending') && (
+                   <div className="px-3 py-1 bg-red-600 text-white text-[10px] font-black rounded-md animate-bounce shadow-[0_5px_15px_rgba(220,38,38,0.4)]">HOT</div>
+                 )}
+              </div>
+           </div>
           <div className="flex gap-3">
              <button onClick={() => scroll('left')} className="p-4 rounded-full bg-white/5 hover:bg-[#00A8FF]/20 transition-all border border-white/10 group"><ChevronLeft className="w-6 h-6 group-hover:scale-125 transition-transform"/></button>
              <button onClick={() => scroll('right')} className="p-4 rounded-full bg-white/5 hover:bg-[#00A8FF]/20 transition-all border border-white/10 group"><ChevronRight className="w-6 h-6 group-hover:scale-125 transition-transform"/></button>

@@ -84,7 +84,7 @@ export default function Reels() {
       <style>{`
         .reel-snap-container { scroll-snap-type: y mandatory; -webkit-overflow-scrolling: touch; }
         .reel-snap-item { scroll-snap-align: start; scroll-snap-stop: always; }
-        .glass-panel { background: rgba(0, 0, 0, 0.4); backdrop-filter: blur(40px); border: 1px border rgba(255,255,255,0.05); }
+        .glass-panel { background: rgba(0, 0, 0, 0.4); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.05); }
         .social-button { transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
         .social-button:active { transform: scale(0.85); }
         .double-tap-heart { animation: heartPop 0.8s ease-out forwards; }
@@ -108,27 +108,46 @@ export default function Reels() {
       {platform === 'mobile' && (
         <div className="h-full w-full relative">
           <div ref={reelsFeedRef} className="h-full w-full overflow-y-scroll reel-snap-container no-scrollbar gpu-accelerated overscroll-none">
-            {reels.map((reel, index) => {
+            {reels.map((reel, idx) => {
               const reelId = String(reel._id || reel.id);
               const isActive = reelId === activeReelId;
+              const index = idx;
+              
+              // PERFORMANCE OPTIMIZATION: Windowing
+              // Only render the heavy MediaPlayerHLS for the active reel, the one before, and the one after.
+              // For others, just render the thumbnail/placeholder to save memory and CPU on mobile.
+              const activeIdx = reels.findIndex(r => String(r._id || r.id) === activeReelId);
+              const shouldRenderVideo = isActive || (activeIdx !== -1 && Math.abs(activeIdx - index) <= 1);
               const isPaused = pausedReelId === reelId;
               const shouldPlay = isActive && !isPaused;
 
               return (
                 <div key={reelId} data-index={index} className="h-[100dvh] w-full reel-snap-item relative bg-black flex flex-col justify-end pb-safe overflow-hidden">
-                  {/* Vertical Video */}
-                  <div className="absolute inset-0 z-0 bg-[#0A121E]">
-                    <MediaPlayerHLS
-                      url={reel.videoUrl || reel.youtubeUrl || reel.url}
-                      title={reel.title}
-                      className="w-full h-full object-cover"
-                      autoPlay={shouldPlay}
-                      shouldPlay={shouldPlay}
-                      muted={!shouldPlay || !soundEnabled}
-                      loop={true}
-                      controls={false}
-                      instagramMode={true}
-                    />
+                  {/* Background Video Surface */}
+                  <div 
+                    className="absolute inset-0 z-0 bg-[#0A121E]"
+                  >
+                    {shouldRenderVideo ? (
+                      <MediaPlayerHLS
+                        url={reel.videoUrl || reel.youtubeUrl || reel.url}
+                        title={reel.title}
+                        className="w-full h-full object-cover"
+                        autoPlay={shouldPlay}
+                        shouldPlay={shouldPlay}
+                        muted={!shouldPlay || !soundEnabled}
+                        loop={true}
+                        controls={false}
+                        instagramMode={true}
+                      />
+                    ) : (
+                      <div className="w-full h-full relative bg-black">
+                        <img 
+                          src={reel.thumbnail || "/scene-krishna.svg"} 
+                          className="w-full h-full object-cover blur-sm opacity-50" 
+                          alt="Thumbnail"
+                        />
+                      </div>
+                    )}
                     <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/20 pointer-events-none" />
                   </div>
 
