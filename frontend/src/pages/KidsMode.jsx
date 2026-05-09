@@ -102,6 +102,7 @@ export default function KidsMode() {
           <div className="relative group">
              <img 
                src="/kids_mascot_1778310861074.png" 
+               loading="lazy"
                className="absolute -top-12 -left-16 w-32 h-32 object-contain animate-float drop-shadow-[0_20px_50px_rgba(255,217,61,0.5)] z-10 cursor-pointer hover:scale-110 active:scale-95 transition-transform" 
                alt="Mascot"
                onClick={() => {
@@ -152,7 +153,7 @@ export default function KidsMode() {
          <div className="relative w-full h-full rounded-[4rem] overflow-hidden border-[6px] border-white/5 bg-gradient-to-br from-purple-900 via-pink-900 to-orange-900 group shadow-[0_40px_100px_rgba(0,0,0,0.6)]">
             {videos.length > 0 && (
               <>
-                <img src={videos[0].thumbnail || "/scene-krishna.svg"} className="w-full h-full object-cover opacity-60 scale-105 group-hover:scale-110 transition-transform duration-1000" alt="Hero" />
+                <img src={videos[0].thumbnail || "/scene-krishna.svg"} loading="lazy" className="w-full h-full object-cover opacity-60 scale-105 group-hover:scale-110 transition-transform duration-1000" alt="Hero" />
                 <div className="absolute inset-0 bg-gradient-to-t from-[#0F1014] via-transparent to-transparent" />
                 <div className="absolute inset-0 bg-gradient-to-r from-[#0F1014] via-[#0F1014]/30 to-transparent w-[50%]" />
                 
@@ -385,7 +386,7 @@ function KidsCard({ video, onSelect, setHoveredVideoId, setOpenQuizVideo, wideTe
       onKeyDown={handleKeyDown}
     >
        <div className="absolute inset-0 rounded-[2.5rem] lg:rounded-[4rem] overflow-hidden border-[6px] lg:border-[10px] border-white/10 group-hover:border-pink-500 transition-all duration-700 bg-white/5 shadow-3xl tilt-on-hover bouncy-hover">
-          <img src={thumbUrl} className={`w-full h-full object-cover transition-all duration-1000 ${isHovered ? 'scale-125 opacity-0 blur-3xl' : 'opacity-90'}`} alt={video.title} />
+          <img src={thumbUrl} loading="lazy" className={`w-full h-full object-cover transition-all duration-1000 ${isHovered ? 'scale-125 opacity-0 blur-3xl' : 'opacity-90'}`} alt={video.title} />
           
           {isHovered && currentTrailer && (
             <div className="absolute inset-0 z-0 animate-in fade-in zoom-in-110 duration-1000">

@@ -983,7 +983,7 @@ function AdminDashboardContent() {
                        <div key={u._id || u.id || u.email} className="p-8 bg-white/5 rounded-[2.5rem] border border-white/5 hover:border-devotion-gold/30 transition-all shadow-xl group">
                           <div className="flex items-center gap-6 mb-6">
                              <div className="w-16 h-16 rounded-2xl overflow-hidden bg-devotion-maroon flex items-center justify-center border-2 border-devotion-gold/20">
-                                {u.profilePicture ? <img src={u.profilePicture} className="w-full h-full object-cover" /> : <span className="text-2xl font-black text-devotion-gold">{u.name[0]}</span>}
+                                {u.profilePicture ? <img src={u.profilePicture} loading="lazy" className="w-full h-full object-cover" /> : <span className="text-2xl font-black text-devotion-gold">{u.name[0]}</span>}
                              </div>
                              <div>
                                 <h4 className="font-serif font-bold text-xl text-white group-hover:text-devotion-gold transition-colors">{u.name}</h4>
@@ -1182,7 +1182,7 @@ function AdminDashboardContent() {
                         <div key={story._id || story.id} className="p-6 rounded-2xl border border-white/10 bg-white/5 group relative overflow-hidden">
                           {story.thumbnail && (
                             <div className="mb-4 aspect-video rounded-xl overflow-hidden border border-white/10">
-                              <img src={story.thumbnail} alt="" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
+                              <img src={story.thumbnail} alt="" loading="lazy" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
                             </div>
                           )}
                           <div className="flex justify-between items-start mb-2">

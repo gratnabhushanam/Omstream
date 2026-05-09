@@ -141,7 +141,7 @@ export default function Movies() {
                    </button>
                  </div>
                ) : (
-                 <img src={featured.thumbnail || "/scene-krishna.svg"} className="w-full h-full object-cover scale-105 animate-slow-zoom" alt="Hero" />
+                 <img src={featured.thumbnail || "/scene-krishna.svg"} loading="lazy" className="w-full h-full object-cover scale-105 animate-slow-zoom" alt="Hero" />
                )}
                <div className="absolute inset-0 bg-gradient-to-r from-[#00A8FF] via-[#0F1014]/40 to-transparent" />
                <div className="absolute inset-0 bg-gradient-to-t from-[#0F1014] via-transparent to-transparent h-[40%] top-0" />
@@ -357,7 +357,7 @@ function MovieCard({ movie, onSelect, setHoveredMovieId, wideTeaser = false }) {
       onKeyDown={handleKeyDown}
     >
        <div className="relative w-full h-full">
-         <img src={thumbUrl} className={`w-full h-full object-cover transition-all duration-1000 ${isHovered ? 'scale-125 opacity-0 blur-3xl' : 'opacity-80'}`} alt={movie.title} />
+         <img src={thumbUrl} loading="lazy" className={`w-full h-full object-cover transition-all duration-1000 ${isHovered ? 'scale-125 opacity-0 blur-3xl' : 'opacity-80'}`} alt={movie.title} />
          {movie.isComingSoon && (
            <div className="absolute top-6 lg:top-10 left-6 lg:left-10 z-20 px-6 py-2 bg-devotion-gold text-black text-[10px] lg:text-xs font-black rounded-xl uppercase tracking-widest shadow-[0_0_30px_rgba(211,154,74,0.5)]">Coming Soon</div>
          )}
@@ -413,7 +413,7 @@ function MovieCard({ movie, onSelect, setHoveredMovieId, wideTeaser = false }) {
              <div className="flex flex-col gap-2 mb-4">
                 {wideTeaser && (
                   <div className="flex items-center gap-3">
-                    <span className="px-4 py-1.5 bg-[#00A8FF] text-black text-[11px] font-black rounded-lg uppercase tracking-widest shadow-[0_0_20px_rgba(0,168,255,0.4)]">Divine Preview</span>
+                    <span className="px-4 py-1.5 bg-[#00A8FF] text-black text-[11px] font-black rounded-lg uppercase tracking-widest shadow-[0_0_20px_rgba(0,168,255,0.4)]">NOW STREAMING</span>
                     <div className="h-px w-12 bg-white/20" />
                   </div>
                 )}

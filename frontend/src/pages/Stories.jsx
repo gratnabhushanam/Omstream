@@ -257,7 +257,7 @@ export default function Stories() {
                       >
                         <div className="aspect-[16/10] overflow-hidden relative">
                            {story.thumbnail ? (
-                             <img src={story.thumbnail} alt="" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
+                             <img src={story.thumbnail} alt="" loading="lazy" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
                            ) : (
                              <div className={`w-full h-full bg-gradient-to-br ${theme.accent} opacity-20`} />
                            )}
@@ -302,7 +302,7 @@ export default function Stories() {
                 <div className="lg:col-span-8 space-y-8">
                    <div className="relative aspect-video rounded-[3rem] overflow-hidden border border-white/10 shadow-2xl">
                       {activeStory.thumbnail && (
-                        <img src={activeStory.thumbnail} alt="" className="w-full h-full object-cover" />
+                        <img src={activeStory.thumbnail} alt="" loading="lazy" className="w-full h-full object-cover" />
                       )}
                       <div className="absolute inset-0 bg-gradient-to-t from-[#06101E] via-[#06101E]/20 to-transparent" />
                       <div className="absolute bottom-10 left-10 right-10">

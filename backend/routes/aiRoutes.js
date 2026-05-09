@@ -95,4 +95,27 @@ router.post('/tts', async (req, res) => {
   }
 });
 
+/**
+ * @route GET /api/ai/trigger-worker
+ * @desc Manually trigger the AI worker for serverless environments
+ */
+router.get('/trigger-worker', async (req, res) => {
+  const authHeader = req.headers.authorization;
+  const cronSecret = process.env.CRON_SECRET || 'gita_wisdom_secret_2026';
+  
+  if (authHeader !== `Bearer ${cronSecret}`) {
+    return res.status(401).json({ message: 'Unauthorized' });
+  }
+
+  const { processJobs } = require('../services/aiWorker');
+  
+  try {
+    // Process one or more jobs
+    await processJobs();
+    res.json({ message: 'Worker triggered and processed a pass' });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
 module.exports = router;

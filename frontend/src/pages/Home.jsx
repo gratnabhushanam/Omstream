@@ -90,7 +90,7 @@ export default function Home() {
 
         {/* Decorative Krishna art */}
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-4xl tv:max-w-6xl opacity-[0.02] pointer-events-none select-none animate-float">
-          <img src="/krishna-line-art.svg" alt="" className="w-full h-auto" />
+          <img src="/krishna-line-art.svg" alt="" loading="lazy" className="w-full h-auto" />
         </div>
 
         {/* Streak badge */}
@@ -136,7 +136,7 @@ export default function Home() {
           {/* Floating Branded Logo */}
           <div className="mb-10 animate-float flex justify-center">
             <div className="w-24 h-24 sm:w-32 sm:h-32 rounded-full border border-devotion-gold/30 bg-devotion-gold/5 backdrop-blur-xl flex items-center justify-center shadow-[0_0_50px_rgba(255,215,0,0.15)] group hover:scale-110 transition-transform duration-700">
-               <img src="/logo-om-v2.png" alt="Gita Wisdom Logo" className="w-full h-full object-contain scale-90 drop-shadow-[0_0_15px_rgba(255,215,0,0.4)]" />
+               <img src="/logo-om-v2.png" alt="Gita Wisdom Logo" loading="lazy" className="w-full h-full object-contain scale-90 drop-shadow-[0_0_15px_rgba(255,215,0,0.4)]" />
             </div>
           </div>
 

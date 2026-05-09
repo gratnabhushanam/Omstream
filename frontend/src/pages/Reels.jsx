@@ -143,6 +143,7 @@ export default function Reels() {
                       <div className="w-full h-full relative bg-black">
                         <img 
                           src={reel.thumbnail || "/scene-krishna.svg"} 
+                          loading="lazy"
                           className="w-full h-full object-cover blur-sm opacity-50" 
                           alt="Thumbnail"
                         />
@@ -197,7 +198,7 @@ export default function Reels() {
                       <div className="flex items-center gap-3">
                         <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-devotion-gold to-[#B66A2A] p-0.5 shadow-lg">
                            <div className="w-full h-full rounded-[0.9rem] bg-black flex items-center justify-center overflow-hidden">
-                              <img src="/krishna-symbol.svg" className="w-8 h-8 opacity-80" alt="Avatar"/>
+                              <img src="/krishna-symbol.svg" loading="lazy" className="w-8 h-8 opacity-80" alt="Avatar"/>
                            </div>
                         </div>
                         <div className="flex flex-col">
@@ -319,7 +320,7 @@ export default function Reels() {
              {/* Large Hero */}
              <div className="px-12 pt-12">
                 <div className="relative w-full h-[500px] rounded-[3rem] overflow-hidden group shadow-2xl border border-white/5">
-                   <img src="/scene-krishna.svg" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-1000 opacity-60" alt="Hero"/>
+                   <img src="/scene-krishna.svg" loading="lazy" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-1000 opacity-60" alt="Hero"/>
                    <div className="absolute inset-0 bg-gradient-to-r from-black via-black/40 to-transparent" />
                    <div className="absolute inset-0 flex flex-col justify-center px-16 max-w-2xl gap-6">
                       <div className="flex items-center gap-3 bg-devotion-gold/20 w-fit px-4 py-2 rounded-full border border-devotion-gold/40">
@@ -352,7 +353,7 @@ export default function Reels() {
                         onClick={() => { setPlatform('mobile'); setActiveReelId(String(reel._id || reel.id)); }}
                         className="group relative aspect-reel rounded-[2rem] overflow-hidden cursor-pointer shadow-2xl border border-white/5 hover:border-devotion-gold/50 transition-all duration-500 hover:-translate-y-2"
                       >
-                         <img src={reel.thumbnail || '/krishna-line-art.svg'} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" alt={t(reel, 'title')}/>
+                         <img src={reel.thumbnail || '/krishna-line-art.svg'} loading="lazy" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" alt={t(reel, 'title')}/>
                          <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent opacity-80 group-hover:opacity-100 transition-opacity" />
                          <div className="absolute bottom-6 left-6 right-6">
                             <h3 className="text-sm font-black uppercase tracking-wider mb-2 drop-shadow-md">{t(reel, 'title')}</h3>

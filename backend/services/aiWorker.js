@@ -11,7 +11,10 @@ const aiService = require('../utils/aiService');
  */
 async function processJobs() {
   const job = await Job.findOne({ status: 'pending' }).sort({ createdAt: 1 });
-  if (!job) return;
+  if (!job) {
+    console.log('[Worker] No pending jobs found.');
+    return;
+  }
 
   try {
     console.log(`[Worker] Starting job: ${job._id} (${job.type})`);
@@ -115,4 +118,4 @@ function startWorker() {
   setInterval(processJobs, 10000); // Check every 10 seconds
 }
 
-module.exports = { startWorker };
+module.exports = { startWorker, processJobs };
