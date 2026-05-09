@@ -110,10 +110,10 @@ export default function KidsMode() {
       {featuredVideo && (
         <div className="relative w-full h-[75vh] md:h-[85vh] flex items-end pb-24 md:pb-32 px-6 md:px-16 pt-32">
           <div className="absolute inset-4 md:inset-8 z-0 rounded-[3rem] overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.15)] border-8 border-white bg-[#0F1014]">
-            {featuredVideo.trailerUrl ? (
+            {(featuredVideo.trailerUrl || featuredVideo.videoUrl || featuredVideo.youtubeUrl || featuredVideo.url) ? (
               <div className="w-full h-full relative">
                 <MediaPlayerHLS
-                  url={featuredVideo.trailerUrl}
+                  url={featuredVideo.trailerUrl || featuredVideo.videoUrl || featuredVideo.youtubeUrl || featuredVideo.url}
                   className="w-full h-full object-cover scale-105"
                   autoPlay={true}
                   muted={isMuted}
@@ -242,8 +242,9 @@ function KidsCard({ video, onSelect, colorClass }) {
       onMouseLeave={() => setIsHovered(false)}
     >
       <div className="absolute top-0 inset-x-0 h-[60%] rounded-b-[2rem] overflow-hidden bg-black card-3d-inner">
-        {isHovered && (video.trailerUrl || video.videoUrl || video.youtubeUrl || video.url) ? (
-          <div className="w-full h-full scale-110">
+        <img src={thumbUrl} alt={video.title} className="w-full h-full object-cover" />
+        {isHovered && (video.trailerUrl || video.videoUrl || video.youtubeUrl || video.url) && (
+          <div className="absolute inset-0 scale-110">
             <MediaPlayerHLS
               url={video.trailerUrl || video.videoUrl || video.youtubeUrl || video.url}
               className="w-full h-full object-cover pointer-events-none"
@@ -254,8 +255,6 @@ function KidsCard({ video, onSelect, colorClass }) {
               instagramMode={true}
             />
           </div>
-        ) : (
-          <img src={thumbUrl} alt={video.title} className="w-full h-full object-cover" />
         )}
         <div className={`absolute top-4 left-4 z-20 px-4 py-1.5 bg-gradient-to-r ${colorClass} text-white font-black text-[11px] rounded-full uppercase tracking-widest shadow-md border-2 border-white`}>
           {video.duration ? `${video.duration} MINS` : 'SHORT'}
@@ -300,7 +299,7 @@ function VideoModal({ video, onClose, navigate }) {
 
         <div className="w-full aspect-video bg-black rounded-b-[2rem] overflow-hidden shadow-xl relative z-20">
           <MediaPlayerHLS
-            url={video.videoUrl || video.youtubeUrl || video.url}
+            url={video.isComingSoon ? (video.trailerUrl || video.videoUrl || video.youtubeUrl || video.url) : (video.videoUrl || video.trailerUrl || video.youtubeUrl || video.url)}
             title={video.title}
             className="w-full h-full"
             autoPlay={true}
