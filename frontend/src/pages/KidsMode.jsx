@@ -266,7 +266,7 @@ export default function KidsMode() {
              <X className="w-8 h-8" />
           </button>
           
-          <div className="w-full max-w-7xl aspect-video rounded-[4rem] overflow-hidden border-[8px] border-white/10 bg-black relative shadow-[0_0_150px_rgba(236,72,153,0.3)]">
+          <div className="w-full max-w-full lg:max-w-7xl aspect-video rounded-3xl md:rounded-[4rem] overflow-hidden border-4 md:border-[8px] border-white/10 bg-black relative shadow-[0_0_150px_rgba(236,72,153,0.3)] mx-auto">
              <MediaPlayerHLS 
                url={selectedVideo.videoUrl} 
                hlsUrl={selectedVideo.hlsUrl}
