@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Target, AlertTriangle, MessageSquarePlus, Wind, Zap, PlayCircle, BookOpen, X, Bookmark, Volume2, Pause, ChevronRight, FileText, Film } from 'lucide-react';
 import MediaPlayerHLS from '../components/MediaPlayerHLS';
 import { useMentor } from '../hooks/useMentor';
+import { useLanguage } from '../context/LanguageContext';
 
 export default function Mentor() {
   const {
@@ -35,6 +36,7 @@ export default function Mentor() {
     getMeaningByLanguage,
     handleNavigateToContent
   } = useMentor();
+  const { language: globalLang, setLanguage: setGlobalLang, tLabel } = useLanguage();
 
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [customApiKey, setCustomApiKey] = useState(() => localStorage.getItem('geminiApiKey') || '');
@@ -242,26 +244,26 @@ export default function Mentor() {
                   <h4 className="text-blue-400 text-[10px] font-black uppercase tracking-[0.2em] mb-4">Meaning</h4>
                   <div className="mb-4 flex bg-devotion-darkBlue/60 rounded-full p-1 border border-white/10 backdrop-blur-md w-fit">
                     <button
-                      onClick={() => setLanguage('english')}
-                      className={`tv-focusable px-4 py-1.5 tv:px-6 tv:py-3 rounded-full text-[10px] tv:text-sm font-black uppercase tracking-widest transition-all ${language === 'english' ? 'bg-devotion-gold text-devotion-darkBlue shadow-lg' : 'text-gray-400 hover:text-white'}`}
+                      onClick={() => setGlobalLang('en')}
+                      className={`tv-focusable px-4 py-1.5 tv:px-6 tv:py-3 rounded-full text-[10px] tv:text-sm font-black uppercase tracking-widest transition-all ${globalLang === 'en' ? 'bg-devotion-gold text-devotion-darkBlue shadow-lg' : 'text-gray-400 hover:text-white'}`}
                     >
                       English
                     </button>
                     <button
-                      onClick={() => setLanguage('hindi')}
-                      className={`tv-focusable px-4 py-1.5 tv:px-6 tv:py-3 rounded-full text-[10px] tv:text-sm font-black uppercase tracking-widest transition-all ${language === 'hindi' ? 'bg-devotion-gold text-devotion-darkBlue shadow-lg' : 'text-gray-400 hover:text-white'}`}
+                      onClick={() => setGlobalLang('hi')}
+                      className={`tv-focusable px-4 py-1.5 tv:px-6 tv:py-3 rounded-full text-[10px] tv:text-sm font-black uppercase tracking-widest transition-all ${globalLang === 'hi' ? 'bg-devotion-gold text-devotion-darkBlue shadow-lg' : 'text-gray-400 hover:text-white'}`}
                     >
                       Hindi
                     </button>
                     <button
-                      onClick={() => setLanguage('telugu')}
-                      className={`tv-focusable px-4 py-1.5 tv:px-6 tv:py-3 rounded-full text-[10px] tv:text-sm font-black uppercase tracking-widest transition-all ${language === 'telugu' ? 'bg-devotion-gold text-devotion-darkBlue shadow-lg' : 'text-gray-400 hover:text-white'}`}
+                      onClick={() => setGlobalLang('te')}
+                      className={`tv-focusable px-4 py-1.5 tv:px-6 tv:py-3 rounded-full text-[10px] tv:text-sm font-black uppercase tracking-widest transition-all ${globalLang === 'te' ? 'bg-devotion-gold text-devotion-darkBlue shadow-lg' : 'text-gray-400 hover:text-white'}`}
                     >
                       తెలుగు
                     </button>
                   </div>
-                  <p className={`text-white text-lg font-medium leading-relaxed ${language === 'telugu' ? 'font-telugu text-xl' : ''}`}>
-                    {getMeaningByLanguage(solution, language)}
+                  <p className={`text-white text-lg font-medium leading-relaxed ${globalLang === 'te' ? 'font-telugu text-xl' : ''}`}>
+                    {getMeaningByLanguage(solution, globalLang)}
                   </p>
                 </div>
 
@@ -392,7 +394,7 @@ export default function Mentor() {
                         {sloka.chapter && sloka.verse ? `Ch ${sloka.chapter}: V ${sloka.verse}` : 'Sacred Verse'}
                       </p>
                       <p className="text-sm font-serif text-white mb-4 line-clamp-3 italic">{sloka.sanskrit}</p>
-                      <p className="text-xs text-gray-400 mb-4 line-clamp-2">{getMeaningByLanguage(sloka, language)}</p>
+                      <p className="text-xs text-gray-400 mb-4 line-clamp-2">{getMeaningByLanguage(sloka, globalLang)}</p>
                       <div className="flex items-center text-devotion-gold text-xs font-black uppercase tracking-wider group-hover:translate-x-1 transition-transform">
                         View <ChevronRight className="w-4 h-4 ml-1" />
                       </div>

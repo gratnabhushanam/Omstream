@@ -175,6 +175,14 @@ export default function MediaPlayer({
     };
   }, []);
 
+  // Sync muted prop to state
+  useEffect(() => {
+    setIsMuted(muted);
+    if (videoRef.current) {
+      videoRef.current.muted = muted;
+    }
+  }, [muted]);
+
   // Keyboard Shortcuts
   useEffect(() => {
     const handleKeyDown = (e) => {

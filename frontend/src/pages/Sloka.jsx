@@ -6,9 +6,10 @@ export default function Sloka() {
   const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
   const API_KEY = String(import.meta.env.VITE_APP_API_KEY || import.meta.env.VITE_PERMANENT_API_KEY || '').trim();
   const API_REQUEST_CONFIG = { headers: { 'x-api-key': API_KEY } };
+  const { language: globalLanguage } = useLanguage();
   const [sloka, setSloka] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [language, setLanguage] = useState('english');
+  const [language, setLanguage] = useState(globalLanguage);
   const [isPlaying, setIsPlaying] = useState(false);
   const [audio, setAudio] = useState(null);
   const [playbackType, setPlaybackType] = useState(null);
@@ -21,16 +22,16 @@ export default function Sloka() {
   const getMeaningByLanguage = (currentSloka, selectedLanguage) => {
     if (!currentSloka) return '';
     const localized = currentSloka.localizedMeaning || {};
+    
+    // Check for specific localized meaning first
+    if (localized[selectedLanguage]) return localized[selectedLanguage];
+    
+    // Fallback based on field naming convention
+    const fieldMap = { hi: 'hindiMeaning', te: 'teluguMeaning', en: 'englishMeaning', ta: 'tamilMeaning', kn: 'kannadaMeaning', sa: 'sanskritMeaning' };
+    const field = fieldMap[selectedLanguage];
+    if (field && currentSloka[field]) return currentSloka[field];
 
-    if (selectedLanguage === 'telugu') {
-      return localized.telugu || currentSloka.teluguMeaning || currentSloka.englishMeaning || '';
-    }
-
-    if (selectedLanguage === 'hindi') {
-      return localized.hindi || currentSloka.hindiMeaning || currentSloka.englishMeaning || '';
-    }
-
-    return localized.english || currentSloka.englishMeaning || currentSloka.teluguMeaning || '';
+    return currentSloka.englishMeaning || currentSloka.hindiMeaning || currentSloka.teluguMeaning || '';
   };
 
   const getAudioUrlByLanguage = (currentSloka, selectedLanguage) => {
@@ -61,8 +62,10 @@ export default function Sloka() {
   }, []);
 
   const getSpeechLang = (selectedLanguage) => {
-    if (selectedLanguage === 'hindi') return 'hi-IN';
-    if (selectedLanguage === 'telugu') return 'te-IN';
+    if (selectedLanguage === 'hi') return 'hi-IN';
+    if (selectedLanguage === 'te') return 'te-IN';
+    if (selectedLanguage === 'ta') return 'ta-IN';
+    if (selectedLanguage === 'kn') return 'kn-IN';
     return 'en-US';
   };
 
@@ -74,12 +77,14 @@ export default function Sloka() {
 
   const getSpeechVoice = (selectedLanguage) => {
     const voiceLanguageHints = {
-      english: ['en-us', 'en-gb', 'en-in'],
-      hindi: ['hi-in', 'hi'],
-      telugu: ['te-in', 'te'],
+      en: ['en-us', 'en-gb', 'en-in'],
+      hi: ['hi-in', 'hi'],
+      te: ['te-in', 'te'],
+      ta: ['ta-in', 'ta'],
+      kn: ['kn-in', 'kn'],
     };
 
-    const hints = voiceLanguageHints[selectedLanguage] || voiceLanguageHints.english;
+    const hints = voiceLanguageHints[selectedLanguage] || voiceLanguageHints.en;
     const normalizedVoices = voices.map((voice) => ({ ...voice, normalizedLang: String(voice.lang || '').toLowerCase(), normalizedName: String(voice.name || '').toLowerCase() }));
 
     for (const hint of hints) {
@@ -103,15 +108,23 @@ export default function Sloka() {
     const normalizedName = String(voice.name || '').toLowerCase();
     const normalizedLang = String(voice.lang || '').toLowerCase();
 
-    if (language === 'hindi' && (normalizedLang.startsWith('hi') || normalizedName.includes('hindi'))) {
+    if (language === 'hi' && (normalizedLang.startsWith('hi') || normalizedName.includes('hindi'))) {
       return `Hindi voice: ${voice.name}`;
     }
 
-    if (language === 'telugu' && (normalizedLang.startsWith('te') || normalizedName.includes('telugu'))) {
+    if (language === 'te' && (normalizedLang.startsWith('te') || normalizedName.includes('telugu'))) {
       return `Telugu voice: ${voice.name}`;
     }
+    
+    if (language === 'ta' && (normalizedLang.startsWith('ta') || normalizedName.includes('tamil'))) {
+      return `Tamil voice: ${voice.name}`;
+    }
 
-    if (language === 'english' && normalizedLang.startsWith('en')) {
+    if (language === 'kn' && (normalizedLang.startsWith('kn') || normalizedName.includes('kannada'))) {
+      return `Kannada voice: ${voice.name}`;
+    }
+
+    if (language === 'en' && normalizedLang.startsWith('en')) {
       return `English voice: ${voice.name}`;
     }
 
@@ -332,25 +345,23 @@ export default function Sloka() {
                 CHAPTER {sloka.chapter} • VERSE {sloka.verse}
               </span>
               
-              <div className="flex bg-devotion-darkBlue/60 rounded-full p-1 border border-white/10 backdrop-blur-md">
-                <button 
-                  onClick={() => setLanguage('english')}
-                  className={`tv-focusable px-6 py-1.5 tv:px-8 tv:py-3 rounded-full text-[10px] tv:text-sm font-black uppercase tracking-widest transition-all ${language === 'english' ? 'bg-devotion-gold text-devotion-darkBlue shadow-lg' : 'text-gray-400 hover:text-white'}`}
-                >
-                  English
-                </button>
-                <button 
-                  onClick={() => setLanguage('hindi')}
-                  className={`tv-focusable px-6 py-1.5 tv:px-8 tv:py-3 rounded-full text-[10px] tv:text-sm font-black uppercase tracking-widest transition-all ${language === 'hindi' ? 'bg-devotion-gold text-devotion-darkBlue shadow-lg' : 'text-gray-400 hover:text-white'}`}
-                >
-                  Hindi
-                </button>
-                <button 
-                  onClick={() => setLanguage('telugu')}
-                  className={`tv-focusable px-6 py-1.5 tv:px-8 tv:py-3 rounded-full text-[10px] tv:text-sm font-black uppercase tracking-widest transition-all ${language === 'telugu' ? 'bg-devotion-gold text-devotion-darkBlue shadow-lg' : 'text-gray-400 hover:text-white'}`}
-                >
-                  తెలుగు
-                </button>
+              <div className="flex flex-wrap gap-2 bg-devotion-darkBlue/60 rounded-3xl p-1 border border-white/10 backdrop-blur-md">
+                {[
+                  { id: 'en', label: 'English' },
+                  { id: 'hi', label: 'Hindi' },
+                  { id: 'te', label: 'తెలుగు' },
+                  { id: 'ta', label: 'தமிழ்' },
+                  { id: 'kn', label: 'ಕನ್ನಡ' },
+                  { id: 'sa', label: 'संस्कृतम्' }
+                ].map(lang => (
+                  <button 
+                    key={lang.id}
+                    onClick={() => setLanguage(lang.id)}
+                    className={`tv-focusable px-4 py-1.5 tv:px-6 tv:py-2.5 rounded-full text-[9px] tv:text-xs font-black uppercase tracking-widest transition-all ${language === lang.id ? 'bg-devotion-gold text-devotion-darkBlue shadow-lg' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}
+                  >
+                    {lang.label}
+                  </button>
+                ))}
               </div>
             </div>
 

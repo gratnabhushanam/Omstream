@@ -23,6 +23,8 @@ const VideoSchema = new mongoose.Schema({
   moderationStatus: { type: String, default: 'approved' },
   moderationNote: { type: String, default: '' },
   contentType: { type: String, default: 'spiritual' },
+  isComingSoon: { type: Boolean, default: false },
+  trailerUrl: { type: String },
   likesCount: { type: Number, default: 0 },
   likedBy: { type: [String], default: [] },
   savedBy: { type: [String], default: [] },
@@ -44,6 +46,8 @@ const VideoSchema = new mongoose.Schema({
   description: { type: String },
   views: { type: Number, default: 0 },
   uploadedBy: { type: String },
+  translations: { type: mongoose.Schema.Types.Mixed, default: {} },
+  subtitles: { type: mongoose.Schema.Types.Mixed, default: {} }
 }, {
   timestamps: true,
   strict: false 

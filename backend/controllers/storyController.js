@@ -27,7 +27,12 @@ exports.addStory = async (req, res) => {
 
 exports.getKidsStories = async (req, res) => {
   try {
-    const stories = await Story.find({ tags: { $regex: 'kids', $options: 'i' } });
+    const stories = await Story.find({ 
+      $or: [
+        { isKids: true },
+        { tags: { $regex: 'kids', $options: 'i' } }
+      ]
+    });
     res.json(stories.map(mapStory));
   } catch (error) {
     res.status(500).json({ message: error.message });

@@ -24,7 +24,7 @@ exports.grantStreamingToken = async (req, res) => {
 
 exports.addVideo = async (req, res) => {
   try {
-    const { title, description, videoUrl, hlsUrl, category, collectionTitle, isKids, tags } = req.body;
+    const { title, description, videoUrl, hlsUrl, category, collectionTitle, isKids, tags, isComingSoon, trailerUrl } = req.body;
     if (!title || !videoUrl) return res.status(400).json({ message: 'Title and videoUrl are required' });
 
     const newVideo = await Video.create({
@@ -32,6 +32,8 @@ exports.addVideo = async (req, res) => {
       description: description || '',
       videoUrl,
       hlsUrl: hlsUrl || null,
+      trailerUrl: trailerUrl || null,
+      isComingSoon: isComingSoon || false,
       category: category || 'reels',
       collectionTitle: collectionTitle || 'Bhagavad Gita',
       isKids: isKids || false,

@@ -104,7 +104,7 @@ export const useMentor = () => {
     
     try {
       const customAiKey = localStorage.getItem('geminiApiKey') || '';
-      const data = await sendAiChat(inputCopy, customAiKey);
+      const data = await sendAiChat(inputCopy, customAiKey, language);
       const aiReply = { role: 'ai', content: data.reply || 'Divine connectivity interrupted.' };
       setChatMessages(prev => [...prev, aiReply]);
     } catch (error) {

@@ -1,9 +1,10 @@
 import React, { useEffect, useCallback, useRef, useState } from 'react';
-import { Music, PlusCircle, Bookmark, Volume2, VolumeX, Play, Pause, AlertCircle, RefreshCw, Bell, User, Heart, MessageCircle, Share2, Grid, Layers, Tv, Smartphone, Monitor } from 'lucide-react';
+import { Music, PlusCircle, Bookmark, Volume2, VolumeX, Play, Pause, AlertCircle, RefreshCw, Bell, User, Heart, MessageCircle, Share2, Grid, Layers, Tv, Smartphone, Monitor, Star, Search, Mic } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import MediaPlayerHLS from '../components/MediaPlayerHLS';
 import { useReels } from '../hooks/useReels';
 import { MobileNotificationSheet } from '../components/Notifications';
+import { useLanguage } from '../context/LanguageContext';
 
 export default function Reels() {
   const {
@@ -15,6 +16,7 @@ export default function Reels() {
     setPausedReelId, handleVideoSurfaceTap, fetchReels, handleCommentSubmit, handleDeleteComment, handleToggleSave,
     showNotifications, setShowNotifications, unreadCount, handleMarkAsRead, notifications
   } = useReels();
+  const { t } = useLanguage();
 
   const [platform, setPlatform] = useState('mobile'); // 'mobile', 'web', 'tv'
   const [isClient, setIsClient] = useState(false);
@@ -53,22 +55,35 @@ export default function Reels() {
   }, [reels, activeReelId, platform]);
 
   if (loading) return (
-    <div className="h-[100dvh] w-full bg-cinematic-dark flex items-center justify-center">
+    <div className="h-[100dvh] w-full bg-[#0F1014] flex items-center justify-center">
       <div className="flex flex-col items-center gap-8">
         <div className="relative w-20 h-20">
           <div className="absolute inset-0 border-4 border-white/5 rounded-full" />
-          <div className="absolute inset-0 border-t-4 border-devotion-gold rounded-full animate-spin shadow-[0_0_40px_rgba(211,154,74,0.6)]" />
+          <div className="absolute inset-0 border-t-4 border-[#00A8FF] rounded-full animate-spin shadow-[0_0_40px_rgba(0,168,255,0.6)]" />
         </div>
-        <p className="text-devotion-gold text-xs font-black uppercase tracking-[0.5em] animate-pulse">Initializing Cinematic Feed</p>
+        <p className="text-[#00A8FF] text-xs font-black uppercase tracking-[0.5em] animate-pulse">Initializing Cinematic Feed</p>
       </div>
     </div>
   );
 
+  if (error) return (
+    <div className="h-[100dvh] w-full bg-[#0F1014] flex flex-col items-center justify-center p-10 text-center">
+      <AlertCircle className="w-20 h-20 text-red-500 mb-8" />
+      <h2 className="text-3xl font-black uppercase tracking-tighter mb-4">{error}</h2>
+      <button 
+        onClick={() => window.location.reload()} 
+        className="px-10 py-4 bg-white/5 border border-white/10 rounded-2xl hover:bg-white/10 transition-all font-black uppercase tracking-widest text-xs"
+      >
+        Retry Connection
+      </button>
+    </div>
+  );
+
   return (
-    <div className="h-[100dvh] w-full bg-black text-white overflow-hidden font-['Inter',sans-serif]">
+    <div className="h-[100dvh] w-full bg-[#0F1014] text-white overflow-hidden font-['Inter',sans-serif]">
       <style>{`
-        .reel-snap-container { scroll-snap-type: y mandatory; }
-        .reel-snap-item { scroll-snap-align: start; }
+        .reel-snap-container { scroll-snap-type: y mandatory; -webkit-overflow-scrolling: touch; }
+        .reel-snap-item { scroll-snap-align: start; scroll-snap-stop: always; }
         .glass-panel { background: rgba(0, 0, 0, 0.4); backdrop-filter: blur(40px); border: 1px border rgba(255,255,255,0.05); }
         .social-button { transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
         .social-button:active { transform: scale(0.85); }
@@ -83,7 +98,7 @@ export default function Reels() {
       `}</style>
 
       {/* Platform Toggle (Dev/Debug) */}
-      <div className="fixed top-24 left-6 z-[1000] hidden md:flex flex-col gap-2 opacity-20 hover:opacity-100 transition-opacity">
+      <div className="fixed top-24 left-6 z-[1000] hidden lg:flex flex-col gap-2 opacity-20 hover:opacity-100 transition-opacity">
         <button onClick={() => setPlatform('mobile')} className={`p-3 rounded-full ${platform === 'mobile' ? 'bg-devotion-gold text-black' : 'bg-white/10 text-white'}`}><Smartphone className="w-4 h-4"/></button>
         <button onClick={() => setPlatform('web')} className={`p-3 rounded-full ${platform === 'web' ? 'bg-devotion-gold text-black' : 'bg-white/10 text-white'}`}><Monitor className="w-4 h-4"/></button>
         <button onClick={() => setPlatform('tv')} className={`p-3 rounded-full ${platform === 'tv' ? 'bg-devotion-gold text-black' : 'bg-white/10 text-white'}`}><Tv className="w-4 h-4"/></button>
@@ -100,7 +115,7 @@ export default function Reels() {
               const shouldPlay = isActive && !isPaused;
 
               return (
-                <div key={reelId} data-index={index} className="h-full w-full reel-snap-item relative bg-black flex flex-col justify-end pb-safe">
+                <div key={reelId} data-index={index} className="h-[100dvh] w-full reel-snap-item relative bg-black flex flex-col justify-end pb-safe overflow-hidden">
                   {/* Vertical Video */}
                   <div className="absolute inset-0 z-0 bg-[#0A121E]">
                     <MediaPlayerHLS
@@ -118,7 +133,18 @@ export default function Reels() {
                   </div>
 
                   {/* Surface for Taps */}
-                  <button onClick={() => handleVideoSurfaceTap(reel, reelId)} className="absolute inset-0 z-[15]" />
+                  <div 
+                    onClick={() => handleVideoSurfaceTap(reel, reelId)} 
+                    className="absolute inset-0 z-[15] cursor-pointer"
+                  />
+
+                  {/* Vertical Progress Indicator */}
+                  <div className="absolute right-0 top-0 bottom-0 w-1 z-[25] bg-white/5 pointer-events-none">
+                     <div 
+                       className="bg-devotion-gold h-full origin-top transition-transform duration-[15s] linear"
+                       style={{ transform: isActive && !isPaused ? 'scaleY(1)' : 'scaleY(0)', transitionProperty: isActive && !isPaused ? 'transform' : 'none' }}
+                     />
+                  </div>
 
                   {/* Double Tap Heart Animation */}
                   {likePopReelId === reelId && (
@@ -149,8 +175,8 @@ export default function Reels() {
                            <button className="text-[10px] font-black text-devotion-gold bg-devotion-gold/10 px-2 py-0.5 rounded border border-devotion-gold/20 uppercase w-fit mt-1">Follow</button>
                         </div>
                       </div>
-                      <h2 className="text-xl font-black leading-tight drop-shadow-md">{reel.title}</h2>
-                      <p className="text-sm text-white/70 line-clamp-2 italic font-serif leading-relaxed">{reel.description || 'Embark on a spiritual journey of self-discovery.'}</p>
+                      <h2 className="text-xl font-black leading-tight drop-shadow-md">{t(reel, 'title')}</h2>
+                      <p className="text-sm text-white/70 line-clamp-2 italic font-serif leading-relaxed">{t(reel, 'description')}</p>
                       <div className="flex items-center gap-3 bg-white/5 border border-white/5 rounded-full px-4 py-2 w-fit backdrop-blur-md">
                         <Music className="w-3 h-3 text-devotion-gold animate-pulse" />
                         <div className="w-32 overflow-hidden"><marquee className="text-[10px] font-bold text-devotion-gold uppercase tracking-widest">Divine Wisdom • Chapter 2 • Verse 47</marquee></div>
@@ -229,11 +255,21 @@ export default function Reels() {
                 <h1 className="text-xl font-black uppercase tracking-[0.2em] italic">Gita Cinema</h1>
              </div>
              <nav className="flex-1 space-y-4">
-                {['Home', 'Explore', 'Shorts', 'Movies', 'Library'].map((m) => (
-                   <button key={m} className={`w-full text-left px-6 py-4 rounded-2xl font-black uppercase tracking-widest text-[11px] transition-all flex items-center justify-between ${m === 'Shorts' ? 'bg-devotion-gold text-black shadow-lg shadow-devotion-gold/20' : 'text-white/40 hover:bg-white/5 hover:text-white'}`}>
-                      {m}
-                      {m === 'Shorts' && <div className="w-1.5 h-1.5 bg-black rounded-full animate-pulse"/>}
-                   </button>
+                {[
+                  { name: 'Home', path: '/home' },
+                  { name: 'Search', path: '/search' },
+                  { name: 'Shorts', path: '/reels' },
+                  { name: 'Movies', path: '/movies' },
+                  { name: 'Kids', path: '/kids' }
+                ].map((m) => (
+                   <Link 
+                     key={m.name} 
+                     to={m.path}
+                     className={`w-full text-left px-6 py-4 rounded-2xl font-black uppercase tracking-widest text-[11px] transition-all flex items-center justify-between ${m.name === 'Shorts' ? 'bg-devotion-gold text-black shadow-lg shadow-devotion-gold/20' : 'text-white/40 hover:bg-white/5 hover:text-white'}`}
+                   >
+                      {m.name}
+                      {m.name === 'Shorts' && <div className="w-1.5 h-1.5 bg-black rounded-full animate-pulse"/>}
+                   </Link>
                 ))}
              </nav>
              <div className="mt-auto space-y-6">
@@ -286,10 +322,10 @@ export default function Reels() {
                         onClick={() => { setPlatform('mobile'); setActiveReelId(String(reel._id || reel.id)); }}
                         className="group relative aspect-reel rounded-[2rem] overflow-hidden cursor-pointer shadow-2xl border border-white/5 hover:border-devotion-gold/50 transition-all duration-500 hover:-translate-y-2"
                       >
-                         <img src={reel.thumbnail || '/krishna-line-art.svg'} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" alt={reel.title}/>
+                         <img src={reel.thumbnail || '/krishna-line-art.svg'} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" alt={t(reel, 'title')}/>
                          <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent opacity-80 group-hover:opacity-100 transition-opacity" />
                          <div className="absolute bottom-6 left-6 right-6">
-                            <h3 className="text-sm font-black uppercase tracking-wider mb-2 drop-shadow-md">{reel.title}</h3>
+                            <h3 className="text-sm font-black uppercase tracking-wider mb-2 drop-shadow-md">{t(reel, 'title')}</h3>
                             <div className="flex items-center justify-between opacity-0 group-hover:opacity-100 transition-all translate-y-4 group-hover:translate-y-0">
                                <div className="flex items-center gap-2">
                                   <Heart className="w-3.5 h-3.5 text-red-500 fill-current"/>
@@ -308,18 +344,31 @@ export default function Reels() {
 
       {/* VERSION 3: SMART TV / ANDROID TV EXPERIENCE */}
       {platform === 'tv' && (
-        <div className="h-full w-full bg-cinematic-dark p-24 overflow-hidden relative">
-          <div className="absolute top-24 left-24 flex items-center gap-8 mb-16">
-             <div className="w-16 h-16 bg-devotion-gold rounded-3xl flex items-center justify-center shadow-2xl"><Layers className="w-10 h-10 text-black"/></div>
-             <h1 className="text-5xl font-black uppercase tracking-[0.3em] italic text-gold-gradient">Divine TV</h1>
+        <div className="h-full w-full bg-[#0F1014] p-8 lg:p-24 overflow-y-auto no-scrollbar">
+          <div className="flex items-center justify-between mb-16 animate-in fade-in slide-in-from-top duration-700 pb-safe">
+             <div className="flex items-center gap-8">
+                <div className="w-16 h-16 bg-[#00A8FF] rounded-3xl flex items-center justify-center shadow-[0_0_40px_rgba(0,168,255,0.4)]"><Tv className="w-10 h-10 text-white"/></div>
+                <div className="flex flex-col">
+                   <h1 className="text-5xl font-black uppercase tracking-[0.3em] italic text-white leading-none">Divine TV</h1>
+                   <span className="text-xl font-black text-[#00A8FF] uppercase tracking-[0.4em] opacity-60">Gita Wisdom AI Mode</span>
+                </div>
+             </div>
+             <div className="flex items-center gap-10">
+                <div className="flex items-center bg-white/5 border-4 border-white/10 rounded-full px-10 py-6 focus-within:border-[#00A8FF] transition-all">
+                   <Search className="w-8 h-8 text-gray-500" />
+                   <span className="px-6 text-3xl font-black text-white/20 uppercase tracking-widest">AI Voice Search</span>
+                   <Mic className="w-8 h-8 text-[#00A8FF] animate-pulse" />
+                </div>
+                <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-[#00A8FF] to-[#7B2FF7] flex items-center justify-center shadow-2xl"><User className="w-10 h-10 text-white"/></div>
+             </div>
           </div>
 
-          <div className="mt-32 space-y-24">
+          <div className="mt-12 space-y-16">
              {/* TV Hero Row */}
-             <div className="w-full h-[600px] rounded-[4rem] overflow-hidden relative shadow-[0_50px_100px_rgba(0,0,0,0.8)] border-8 border-white/5 animate-in zoom-in duration-700">
-                <img src="/scene-hanuman.svg" className="w-full h-full object-cover opacity-60 scale-110 animate-cinematic-pulse" alt="TV Hero"/>
+             <div className="w-full h-[60vh] min-h-[500px] max-h-[750px] aspect-video rounded-[4rem] overflow-hidden relative shadow-[0_50px_100px_rgba(0,0,0,0.8)] border-8 border-white/5 animate-in zoom-in duration-700">
+                <img src="/scene-hanuman.svg" className="w-full h-full object-cover opacity-60 scale-105" alt="TV Hero"/>
                 <div className="absolute inset-0 bg-gradient-to-r from-black via-black/20 to-transparent" />
-                <div className="absolute inset-0 flex flex-col justify-center px-32 max-w-5xl gap-12">
+                <div className="absolute inset-0 flex flex-col justify-center px-32 pb-12 max-w-5xl gap-10">
                    <div className="bg-devotion-gold/20 w-fit px-8 py-4 rounded-full border-4 border-devotion-gold/40">
                       <Star className="w-8 h-8 text-devotion-gold fill-current"/>
                    </div>
@@ -335,24 +384,42 @@ export default function Reels() {
              {/* TV Category Rail */}
              <div>
                 <h3 className="text-4xl font-black uppercase tracking-[0.3em] text-white/40 mb-12 ml-4">Featured Reels</h3>
-                <div className="flex gap-12 overflow-x-hidden p-4">
-                   {reels.map((reel, i) => (
-                      <button 
-                        key={reel._id || reel.id} 
-                        className="tv-focusable relative w-[400px] aspect-reel rounded-[4rem] overflow-hidden shadow-2xl border-8 border-white/5 text-left flex-shrink-0 group"
-                      >
-                         <img src={reel.thumbnail || '/krishna-line-art.svg'} className="w-full h-full object-cover opacity-80" alt="Rail Card"/>
-                         <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/10 to-transparent opacity-80 group-focus:opacity-100 transition-opacity" />
-                         <div className="absolute bottom-12 left-12 right-12 opacity-0 group-focus:opacity-100 transition-all translate-y-8 group-focus:translate-y-0">
-                            <h4 className="text-4xl font-black uppercase tracking-wider mb-4 leading-tight">{reel.title}</h4>
-                            <div className="flex items-center gap-4 text-devotion-gold">
-                               <Play className="w-8 h-8 fill-current" />
-                               <span className="text-2xl font-black uppercase tracking-widest">Watch Trailer</span>
-                            </div>
-                         </div>
-                      </button>
-                   ))}
-                </div>
+                {reels.length > 0 ? (
+                  <div className="flex gap-12 overflow-x-auto p-4 pb-20 no-scrollbar snap-x">
+                    {reels.map((reel, i) => (
+                        <button 
+                          key={reel._id || reel.id} 
+                          onFocus={() => setActiveReelId(String(reel._id || reel.id))}
+                          className={`tv-focusable relative w-[450px] aspect-[9/16] rounded-[4rem] overflow-hidden shadow-2xl border-8 transition-all duration-500 flex-shrink-0 group snap-center ${activeReelId === String(reel._id || reel.id) ? 'border-devotion-gold scale-105' : 'border-white/5'}`}
+                        >
+                          <div className="absolute inset-0 bg-black">
+                              <MediaPlayerHLS
+                                url={reel.videoUrl || reel.youtubeUrl || reel.url}
+                                className="w-full h-full object-cover"
+                                autoPlay={activeReelId === String(reel._id || reel.id)}
+                                muted={activeReelId !== String(reel._id || reel.id)}
+                                controls={false}
+                                loop={true}
+                                instagramMode={true}
+                              />
+                          </div>
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/10 to-transparent opacity-80 group-focus:opacity-100 transition-opacity" />
+                          <div className="absolute bottom-12 left-12 right-12 opacity-0 group-focus:opacity-100 transition-all translate-y-8 group-focus:translate-y-0">
+                              <h4 className="text-4xl font-black uppercase tracking-wider mb-4 leading-tight">{t(reel, 'title')}</h4>
+                              <div className="flex items-center gap-4 text-devotion-gold">
+                                <Play className="w-8 h-8 fill-current" />
+                                <span className="text-2xl font-black uppercase tracking-widest">Watch Trailer</span>
+                              </div>
+                          </div>
+                        </button>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="p-32 text-center bg-white/5 rounded-[4rem] border-4 border-dashed border-white/10">
+                    <Layers className="w-24 h-24 text-white/20 mx-auto mb-8" />
+                    <p className="text-4xl font-black text-white/30 uppercase tracking-[0.4em]">Divine Content Coming Soon</p>
+                  </div>
+                )}
              </div>
           </div>
         </div>

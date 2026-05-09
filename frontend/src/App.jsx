@@ -54,12 +54,19 @@ function AppShell() {
 
   const loading = authLoading || !minSplashTimeReached;
 
-  const isAuthRoute = location.pathname === '/login' || location.pathname === '/register' || location.pathname === '/register/verify-otp' || location.pathname === '/forgot-password';
-  const isFullScreenRoute = location.pathname.startsWith('/reels');
+  const [sparkles, setSparkles] = useState([]);
 
-  if (loading) {
-    return <SplashScreen />;
-  }
+  useEffect(() => {
+    const handleGlobalClick = (e) => {
+      const newSparkle = { id: Date.now(), x: e.clientX, y: e.clientY };
+      setSparkles(prev => [...prev, newSparkle]);
+      setTimeout(() => {
+        setSparkles(prev => prev.filter(s => s.id !== newSparkle.id));
+      }, 1000);
+    };
+    window.addEventListener('click', handleGlobalClick);
+    return () => window.removeEventListener('click', handleGlobalClick);
+  }, []);
 
   const pageFallback = (
     <div className="flex min-h-[40vh] items-center justify-center text-white">
@@ -70,12 +77,38 @@ function AppShell() {
     </div>
   );
 
+  const isAuthRoute = location.pathname === '/login' || location.pathname === '/register' || location.pathname === '/register/verify-otp' || location.pathname === '/forgot-password';
+  const isFullScreenRoute = location.pathname.startsWith('/reels');
+
+  if (loading) {
+    return <SplashScreen />;
+  }
+
+  const getAuraColor = () => {
+    const path = location.pathname;
+    if (path.startsWith('/kids')) return 'aura-pink';
+    if (path.startsWith('/reels')) return 'aura-purple';
+    if (path.startsWith('/movies')) return 'aura-blue';
+    if (path.startsWith('/stories')) return 'aura-gold';
+    return 'aura-gold';
+  };
+
   return (
-    <div className="app-shell flex justify-center min-h-[100dvh] bg-[#06101E] overflow-x-hidden text-white transition-all duration-1000 relative">
+    <div className={`app-shell flex justify-center min-h-[100dvh] bg-[#06101E] overflow-x-hidden text-white transition-all duration-1000 relative ${getAuraColor()}`}>
+      {/* Magic Sparkles */}
+      {sparkles.map(s => (
+        <div key={s.id} className="magic-sparkle" style={{ left: s.x, top: s.y }}>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 0L14.5 9.5L24 12L14.5 14.5L12 24L9.5 14.5L0 12L9.5 9.5L12 0Z" fill="#FFD700" />
+          </svg>
+        </div>
+      ))}
+
       {!isAuthRoute && (
         <>
           <div className="fixed inset-0 z-0 bg-[#06101E]"></div>
-          <div className="fixed inset-0 z-0 opacity-20 pointer-events-none bg-gold-glow animate-pulse"></div>
+          <div className="fixed inset-0 z-0 opacity-30 pointer-events-none dynamic-aura-field"></div>
+          <div className="fixed inset-0 z-0 opacity-10 pointer-events-none bg-[url('/sacred-geometry-pattern.svg')] bg-repeat opacity-[0.03]"></div>
         </>
       )}
 
@@ -142,6 +175,8 @@ function AppShell() {
   );
 }
 
+import { LanguageProvider } from './context/LanguageContext';
+
 function App() {
   const { needRefresh: [needRefresh], updateServiceWorker } = useRegisterSW({
     onRegistered(r) {
@@ -169,11 +204,13 @@ function App() {
 
   return (
     <AuthProvider>
-      <NotificationProvider>
-        <Router>
-          <AppShell />
-        </Router>
-      </NotificationProvider>
+      <LanguageProvider>
+        <NotificationProvider>
+          <Router>
+            <AppShell />
+          </Router>
+        </NotificationProvider>
+      </LanguageProvider>
     </AuthProvider>
   );
 }

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Bell, Volume2, Pause, BookOpen, Share2, Copy, CheckCircle, Bookmark, Trash2, ChevronLeft, CalendarDays, Settings, X } from 'lucide-react';
 import { useDailySloka } from '../hooks/useDailySloka';
+import { useLanguage } from '../context/LanguageContext';
 
 export default function DailySloka() {
   const {
@@ -33,6 +34,7 @@ export default function DailySloka() {
     getVerseKey,
     stopPlayback
   } = useDailySloka();
+  const { language: globalLang, setLanguage: setGlobalLang } = useLanguage();
 
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [customApiKey, setCustomApiKey] = useState(() => localStorage.getItem('geminiApiKey') || '');
@@ -54,7 +56,7 @@ export default function DailySloka() {
     );
   }
 
-  const meaning = getMeaningByLanguage(dailySloka, language);
+  const meaning = getMeaningByLanguage(dailySloka, globalLang);
   const canShare = typeof navigator !== 'undefined' && typeof navigator.share === 'function';
   const isCurrentVerseSaved = savedVerses.some((item) => item.verseKey === getVerseKey(dailySloka));
 
@@ -162,34 +164,28 @@ export default function DailySloka() {
             <div className="flex justify-center mb-10 flex-wrap gap-3">
               <button
                 onClick={() => {
-                  setLanguage('english');
-                  if (isPlaying) {
-                    stopPlayback();
-                  }
+                  setGlobalLang('en');
+                  if (isPlaying) stopPlayback();
                 }}
-                className={`px-6 py-2 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${language === 'english' ? 'bg-devotion-gold text-devotion-darkBlue shadow-lg scale-105' : 'bg-white/5 border border-white/10 text-gray-300 hover:text-white'}`}
+                className={`px-6 py-2 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${globalLang === 'en' ? 'bg-devotion-gold text-devotion-darkBlue shadow-lg scale-105' : 'bg-white/5 border border-white/10 text-gray-300 hover:text-white'}`}
               >
                 English
               </button>
               <button
                 onClick={() => {
-                  setLanguage('hindi');
-                  if (isPlaying) {
-                    stopPlayback();
-                  }
+                  setGlobalLang('hi');
+                  if (isPlaying) stopPlayback();
                 }}
-                className={`px-6 py-2 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${language === 'hindi' ? 'bg-devotion-gold text-devotion-darkBlue shadow-lg scale-105' : 'bg-white/5 border border-white/10 text-gray-300 hover:text-white'}`}
+                className={`px-6 py-2 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${globalLang === 'hi' ? 'bg-devotion-gold text-devotion-darkBlue shadow-lg scale-105' : 'bg-white/5 border border-white/10 text-gray-300 hover:text-white'}`}
               >
                 हिंदी
               </button>
               <button
                 onClick={() => {
-                  setLanguage('telugu');
-                  if (isPlaying) {
-                    stopPlayback();
-                  }
+                  setGlobalLang('te');
+                  if (isPlaying) stopPlayback();
                 }}
-                className={`px-6 py-2 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${language === 'telugu' ? 'bg-devotion-gold text-devotion-darkBlue shadow-lg scale-105' : 'bg-white/5 border border-white/10 text-gray-300 hover:text-white'}`}
+                className={`px-6 py-2 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${globalLang === 'te' ? 'bg-devotion-gold text-devotion-darkBlue shadow-lg scale-105' : 'bg-white/5 border border-white/10 text-gray-300 hover:text-white'}`}
               >
                 తెలుగు
               </button>

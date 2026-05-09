@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Play, Flame, Trophy, Award, ArrowRight, Book, Sparkles, Heart, Star, Film, BrainCircuit } from 'lucide-react';
 import HomeHeroVideo from '../components/HomeHeroVideo';
+import { useLanguage } from '../context/LanguageContext';
+import { Flame, Trophy, Award, ArrowRight, Play, Star, Film, BrainCircuit, Book, Heart, Sparkles } from 'lucide-react';
 
 function HomeCard({ to, badge, icon: Icon, title, description, content, isKids }) {
   const [isHovered, setIsHovered] = useState(false);
@@ -70,6 +71,7 @@ function HomeCard({ to, badge, icon: Icon, title, description, content, isKids }
 }
 
 export default function Home() {
+  const { tLabel } = useLanguage();
   const [user] = useState(() => {
     try { return JSON.parse(localStorage.getItem('user') || 'null'); } catch { return null; }
   });
@@ -109,7 +111,7 @@ export default function Home() {
               </span>
             </div>
             <div>
-              <p className="text-[11px] tv:text-sm font-black uppercase tracking-[0.2em] text-devotion-textYellow/70">Spiritual Path</p>
+              <p className="text-[11px] tv:text-sm font-black uppercase tracking-[0.2em] text-devotion-textYellow/70">{tLabel('spiritualPath')}</p>
               <p className="text-2xl tv:text-4xl font-black text-devotion-gold">{user.streak || 0} DAY STREAK 🔥</p>
             </div>
             <div className="hidden sm:block h-10 w-px bg-devotion-gold/20 mx-2"></div>
@@ -128,7 +130,7 @@ export default function Home() {
         <div className="relative z-20 text-center px-4 max-w-5xl tv:max-w-7xl mx-auto space-y-6 sm:space-y-10 animate-fade-in-up">
           <div className="inline-flex items-center gap-3 px-5 py-2 rounded-full border border-devotion-gold/40 bg-devotion-gold/5 backdrop-blur-xl text-devotion-gold text-xs tv:text-base font-black tracking-[0.3em] shadow-[0_0_25px_rgba(255,215,0,0.15)] uppercase">
             <span className="w-2 h-2 rounded-full bg-devotion-gold animate-pulse"></span>
-            Divine Wisdom for Modern Minds
+            {tLabel('welcome')}
           </div>
 
           {/* Floating Branded Logo */}
@@ -149,12 +151,12 @@ export default function Home() {
           {/* CTAs */}
           <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 justify-center pt-4">
             <Link to="/stories" className="group tv-focusable bg-gradient-to-br from-devotion-gold via-[#FFB800] to-[#FF9F1C] text-devotion-darkBlue px-8 sm:px-10 tv:px-16 py-4 sm:py-5 tv:py-7 rounded-2xl font-black text-lg tv:text-2xl transition-all duration-500 shadow-[0_0_30px_rgba(255,215,0,0.3)] hover:shadow-[0_0_50px_rgba(255,215,0,0.5)] hover:-translate-y-1.5 flex items-center justify-center gap-3 active:scale-95">
-              START LEARNING
+              {tLabel('startLearning')}
               <ArrowRight className="w-5 h-5 tv:w-7 tv:h-7 group-hover:translate-x-1 transition-transform" />
             </Link>
             <Link to="/reels" className="group tv-focusable bg-devotion-darkBlue/40 backdrop-blur-2xl border border-devotion-gold/40 text-white hover:bg-devotion-darkBlue/70 hover:border-devotion-gold px-8 sm:px-10 tv:px-16 py-4 sm:py-5 tv:py-7 rounded-2xl font-black text-lg tv:text-2xl transition-all duration-500 flex items-center justify-center gap-3 hover:-translate-y-1.5 active:scale-95 shadow-2xl">
               <Play className="w-5 h-5 tv:w-7 tv:h-7 text-devotion-gold group-hover:scale-125 transition-transform" fill="currentColor" />
-              GITA REELS
+              {tLabel('gitaReels')}
             </Link>
           </div>
         </div>
@@ -185,7 +187,7 @@ export default function Home() {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 tv:grid-cols-3 gap-6 sm:gap-10 tv:gap-14">
-          <HomeCard to="/sloka"  badge="DAILY SLOKA"  icon={Book}  content={`"You have a right to perform your duty, but not to the fruits."`} />
+          <HomeCard to="/sloka"  badge={tLabel('dailySloka')}  icon={Book}  content={tLabel('slokaText')} />
           <HomeCard to="/mentor" badge="GITA MENTOR"  icon={Heart} title="Student Mode"    description="Krishna's solutions for stress, fear, and focus." />
           <HomeCard to="/kids"   badge="KIDS FUN!"    icon={Play}  title="Animated Stories" description="Watch & Learn with Krishna! Cartoon adventures for little heroes." isKids />
         </div>
@@ -204,7 +206,7 @@ export default function Home() {
             <div className="flex-1 space-y-5">
               <div className="flex items-center gap-3">
                 <Film className="w-5 h-5 text-devotion-gold" />
-                <span className="text-devotion-gold font-black uppercase tracking-[0.4em] text-xs tv:text-sm">Divine Cinema</span>
+                <span className="text-devotion-gold font-black uppercase tracking-[0.4em] text-xs tv:text-sm">{tLabel('divineCinema')}</span>
               </div>
               <h2 className="text-4xl sm:text-5xl tv:text-7xl font-serif font-black text-white uppercase tracking-tight leading-[0.9]">
                 Watch Sacred<br />
@@ -225,7 +227,7 @@ export default function Home() {
                 className="group tv-focusable inline-flex items-center gap-3 bg-gradient-to-r from-devotion-gold to-[#FFB800] text-devotion-darkBlue px-8 py-4 tv:px-12 tv:py-5 rounded-2xl font-black text-sm tv:text-lg uppercase tracking-widest hover:scale-105 transition-all shadow-[0_10px_30px_rgba(255,215,0,0.2)] mt-2"
               >
                 <Play className="w-5 h-5 tv:w-6 tv:h-6 fill-current" />
-                Enter Divine Cinema
+                {tLabel('enterCinema')}
                 <ArrowRight className="w-4 h-4 tv:w-5 tv:h-5 group-hover:translate-x-1 transition-transform" />
               </Link>
             </div>

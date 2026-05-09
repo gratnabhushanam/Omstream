@@ -1,14 +1,26 @@
 import React, { useState, useEffect } from 'react';
 import { ErrorBoundary } from '../components/ErrorBoundary';
 import axios from 'axios';
-import { Database, Upload, Users, BookOpen, Video, LogOut, Settings, Film, Plus, X, Check, AlertCircle, Image as ImageIcon, Link as LinkIcon, FileText, Flame, Trash2, Pencil, Menu, Eye } from 'lucide-react';
+import { Database, Upload, Users, BookOpen, Video, LogOut, Settings, Film, Plus, X, Check, AlertCircle, Image as ImageIcon, Link as LinkIcon, FileText, Flame, Trash2, Pencil, Menu, Eye, Sparkles, RefreshCw, Cpu, Bell, BarChart3, Layers } from 'lucide-react';
 import { resumableUpload } from '../utils/resumableUpload';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip as RechartsTooltip } from 'recharts';
 import MediaPlayerHLS from '../components/MediaPlayerHLS';
+import JobTracker from '../components/JobTracker';
 
 const VIDEO_COLLECTION_PRESETS = ['Bhagavad Gita', 'Ramayanam', 'Mahabharat', 'Puranas'];
+const STORY_CATEGORIES = [
+  'Bhagavad Gita', 'Ramayana', 'Mahabharata', 'Shiva Puranas', 'Vishnu Puranas', 
+  'Garuda Purana', 'Hanuman Stories', 'Krishna Stories', 'Indian Folklore', 
+  'Panchatantra Stories', 'Tenali Raman Stories', 'Akbar Birbal Stories', 
+  'Ancient Indian History', 'Freedom Fighter Stories', 'Spiritual Stories', 
+  'Motivational Stories', 'Kids Mythological Stories', 'Animated Educational Chapters', 
+  'Temple Histories', 'Devotional Stories', 'Moral Stories', 'Indian Culture & Traditions', 
+  'Regional Indian Stories', 'Festival Stories', 'Saints & Guru Stories', 
+  'Yoga & Meditation Lessons', 'Ancient Science Stories', 'Ayurveda Knowledge', 
+  'Historical Kingdom Stories', 'Indian Warrior Stories', 'Epic Battles & Legends'
+];
 
 function AdminDashboardContent() {
   const [, setShowAuthError] = useState(false);
@@ -21,7 +33,8 @@ function AdminDashboardContent() {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [showAddModal, setShowAddModal] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [data, setData] = useState({ users: [], stats: null, movies: [], stories: [], videos: [], quizQuestions: [], quizSets: [] });
+  const [data, setData] = useState({ users: [], stats: null, movies: [], stories: [], videos: [], quizQuestions: [], quizSets: [], aiJobs: [] });
+  const [translationJobs, setTranslationJobs] = useState([]);
   const [pendingUserReels, setPendingUserReels] = useState([]);
   const [pendingContentFilter, setPendingContentFilter] = useState('all');
   const [videoCollectionFilter, setVideoCollectionFilter] = useState('all');
@@ -49,7 +62,7 @@ function AdminDashboardContent() {
     thumbnail: '',
     tags: '',
   });
-  const [videoForm, setVideoForm] = useState({ title: '', description: '', videoUrl: '', trailerUrl: '', category: 'reels', collectionTitle: 'Bhagavad Gita', isKids: false, tags: '', quizSetId: '', views: 0 });
+  const [videoForm, setVideoForm] = useState({ title: '', description: '', videoUrl: '', trailerUrl: '', category: 'reels', collectionTitle: 'Bhagavad Gita', isKids: false, isComingSoon: false, tags: '', quizSetId: '', views: 0 });
   // Quiz builder state for video upload
   const [videoQuizList, setVideoQuizList] = useState([]);
   const [videoQuizDraft, setVideoQuizDraft] = useState({
@@ -222,6 +235,13 @@ function AdminDashboardContent() {
       } else if (activeTab === 'quizzes') {
         const { data: quizSets } = await axios.get('/api/quiz/admin/sets', { headers });
         setData(prev => ({ ...prev, quizSets: Array.isArray(quizSets) ? quizSets : [] }));
+      } else if (activeTab === 'ai-jobs') {
+        const { data: jobs } = await axios.get('/api/ai/jobs', { headers });
+        setData(prev => ({ ...prev, aiJobs: Array.isArray(jobs) ? jobs : [] }));
+      } else if (activeTab === 'translations') {
+        const { data: jobs } = await axios.get('/api/ai/jobs', { headers });
+        const tJobs = Array.isArray(jobs) ? jobs.filter(j => j.type === 'translation' || j.type === 'all') : [];
+        setTranslationJobs(tJobs);
       }
     } catch (error) {
       if (error.response?.status === 401) {
@@ -404,6 +424,32 @@ function AdminDashboardContent() {
     }
   };
 
+  const handleAIProcess = async (contentId, contentType, processType = 'all') => {
+    try {
+      setLoading(true);
+      const token = localStorage.getItem('token');
+      const response = await axios.post('/api/ai/process', {
+        contentId,
+        contentType,
+        type: processType,
+        languages: [
+          'English', 'Hindi', 'Telugu', 'Tamil', 'Kannada', 'Malayalam', 'Bengali', 'Marathi', 
+          'Gujarati', 'Punjabi', 'Sanskrit', 'Urdu', 'Spanish', 'French', 'German', 
+          'Japanese', 'Korean', 'Arabic', 'Chinese', 'Russian', 'Portuguese'
+        ]
+      }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setMessage({ type: 'success', text: response.data.message });
+      await fetchAdminData();
+    } catch (error) {
+      setMessage({ type: 'error', text: error.response?.data?.message || 'Failed to start AI processing' });
+    } finally {
+      setLoading(false);
+      setTimeout(() => setMessage({ type: '', text: '' }), 4000);
+    }
+  };
+
   const handleDeleteContent = async (type, id, title) => {
     const confirmed = window.confirm(`Delete ${type.slice(0, -1)}: "${title}"? This cannot be undone.`);
     if (!confirmed) return;
@@ -490,8 +536,9 @@ function AdminDashboardContent() {
       language: 'english',
       thumbnail: '',
       tags: '',
+      chapters: [],
     });
-    setVideoForm({ title: '', description: '', videoUrl: '', trailerUrl: '', category: 'reels', collectionTitle: 'Bhagavad Gita', isKids: false, tags: '', quizSetId: '', views: 0 });
+    setVideoForm({ title: '', description: '', videoUrl: '', trailerUrl: '', category: 'reels', collectionTitle: 'Bhagavad Gita', isKids: false, isComingSoon: false, tags: '', quizSetId: '', views: 0 });
     setQuizSetForm({ title: '', description: '', category: 'General', difficulty: 'medium', timeLimit: 0, thumbnail: '', tags: '', isPublished: false, questions: [] });
     setEditingQuizSetId(null);
     setQuizForm({
@@ -533,6 +580,7 @@ function AdminDashboardContent() {
       language: story.language || 'english',
       thumbnail: story.thumbnail || '',
       tags: Array.isArray(story.tags) ? story.tags.join(', ') : (story.tags || ''),
+      chapters: story.chapters || [],
     });
     setShowAddModal(true);
   };
@@ -573,6 +621,8 @@ function AdminDashboardContent() {
       category: video.category || 'reels',
       collectionTitle: video.collectionTitle || 'Bhagavad Gita',
       isKids: video.isKids || false,
+      isComingSoon: video.isComingSoon || false,
+      trailerUrl: video.trailerUrl || '',
       tags: Array.isArray(video.tags) ? video.tags.join(', ') : (video.tags || ''),
       views: video.views || 0,
     });
@@ -678,12 +728,14 @@ function AdminDashboardContent() {
             { id: 'reels', name: 'Reels Moderation', icon: <Video className="w-5 h-5 text-devotion-gold" /> },
             { id: 'quizzes', name: 'Quiz Manager', icon: <Check className="w-5 h-5 text-green-400" /> },
             { id: 'users', name: 'Users', icon: <Users className="w-5 h-5" /> },
+            { id: 'ai-jobs', name: 'AI Jobs', icon: <Cpu className="w-5 h-5 text-blue-400" /> },
             { id: 'notifications', name: 'Notifications', icon: <AlertCircle className="w-5 h-5 text-purple-400" /> },
+            { id: 'translations', name: 'Translations', icon: <Sparkles className="w-5 h-5 text-devotion-gold" /> },
           ].map(item => (
             <button
               key={item.id}
               onClick={() => setActiveTab(item.id)}
-              className={`w-full flex items-center gap-4 px-5 py-4 rounded-2xl transition-all font-black text-[10px] uppercase tracking-widest ${activeTab === item.id ? 'bg-devotion-gold text-devotion-darkBlue shadow-2xl' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}
+              className={`w-full flex items-center gap-4 px-5 py-4 rounded-2xl transition-all font-black text-[10px] uppercase tracking-widest ${activeTab === item.id ? 'bg-devotion-gold text-devotion-darkBlue shadow-2xl neon-gold-glow' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}
             >
               {item.icon} {item.name}
             </button>
@@ -723,7 +775,9 @@ function AdminDashboardContent() {
                 { id: 'reels', name: 'Reels Moderation', icon: <Video className="w-4 h-4 text-devotion-gold" /> },
                 { id: 'quizzes', name: 'Quiz Manager', icon: <Check className="w-4 h-4 text-green-400" /> },
                 { id: 'users', name: 'Users', icon: <Users className="w-4 h-4" /> },
+                { id: 'ai-jobs', name: 'AI Jobs', icon: <Cpu className="w-4 h-4 text-blue-400" /> },
                 { id: 'notifications', name: 'Notifications', icon: <AlertCircle className="w-4 h-4 text-purple-400" /> },
+                { id: 'translations', name: 'Translations', icon: <Sparkles className="w-4 h-4 text-devotion-gold" /> },
               ].map(item => (
                 <button
                   key={item.id}
@@ -798,7 +852,7 @@ function AdminDashboardContent() {
                    ))}
                 </div>
 
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
                 {data.stats && (
                   <>
                     <div className="bg-white/5 border border-white/10 rounded-[3rem] p-12 backdrop-blur-3xl">
@@ -846,6 +900,10 @@ function AdminDashboardContent() {
                            </BarChart>
                          </ResponsiveContainer>
                        </div>
+                    </div>
+
+                    <div className="bg-white/5 border border-white/10 rounded-[3rem] p-12 backdrop-blur-3xl">
+                       <JobTracker />
                     </div>
                   </>
                 )}
@@ -943,6 +1001,73 @@ function AdminDashboardContent() {
                </div>
             )}
 
+            {activeTab === 'ai-jobs' && (
+               <div className="bg-white/5 border border-white/10 rounded-[3rem] p-12 backdrop-blur-3xl">
+                  <div className="flex justify-between items-center mb-10">
+                     <h3 className="text-3xl font-serif font-black text-white uppercase tracking-tighter">AI Processing <span className="text-devotion-gold">Engine</span></h3>
+                     <button
+                       onClick={() => fetchAdminData()}
+                       className="p-3 rounded-xl bg-white/5 hover:bg-white/10 text-devotion-gold transition-all"
+                     >
+                        <RefreshCw className="w-5 h-5" />
+                     </button>
+                  </div>
+                  <JobTracker />
+               </div>
+            )}
+
+            {activeTab === 'translations' && (
+               <div className="bg-white/5 border border-white/10 rounded-[3rem] p-12 backdrop-blur-3xl">
+                 <div className="flex justify-between items-center mb-6">
+                    <h3 className="text-2xl font-serif font-black text-white uppercase tracking-wider">Pending Translation Jobs</h3>
+                    <button
+                      onClick={() => fetchAdminData()}
+                      className="p-2 rounded-xl bg-devotion-gold/10 hover:bg-devotion-gold/20 text-devotion-gold border border-devotion-gold/30 transition-all flex items-center gap-2"
+                    >
+                       <RefreshCw className="w-4 h-4" /> Refresh
+                    </button>
+                 </div>
+                 {translationJobs.length === 0 ? (
+                   <p className="text-gray-400 text-center py-8">No pending translation jobs.</p>
+                 ) : (
+                   <div className="overflow-x-auto">
+                     <table className="w-full text-sm text-left text-gray-300">
+                       <thead className="text-xs uppercase bg-white/5">
+                         <tr>
+                           <th className="px-4 py-2">Content</th>
+                           <th className="px-4 py-2">Type</th>
+                           <th className="px-4 py-2">Languages</th>
+                           <th className="px-4 py-2">Status</th>
+                           <th className="px-4 py-2">Actions</th>
+                         </tr>
+                       </thead>
+                       <tbody>
+                         {translationJobs.map((job) => (
+                           <tr key={job._id} className="border-b border-white/5 hover:bg-white/5">
+                             <td className="px-4 py-2 font-medium">{job.contentType}</td>
+                             <td className="px-4 py-2 capitalize">{job.type}</td>
+                             <td className="px-4 py-2">{(job.targetLanguages || []).join(', ')}</td>
+                             <td className="px-4 py-2 capitalize">{job.status}</td>
+                             <td className="px-4 py-2">
+                               {job.status === 'pending' && (
+                                 <button
+                                   onClick={() => handleAIProcess(job.contentId, job.contentType, job.type)}
+                                   className="px-3 py-1 bg-devotion-gold text-devotion-darkBlue rounded-md text-xs font-black hover:bg-devotion-gold/80 transition"
+                                 >
+                                   Run
+                                 </button>
+                               )}
+                             </td>
+                           </tr>
+                         ))}
+                       </tbody>
+                     </table>
+                   </div>
+                 )}
+               </div>
+            )}
+
+
             {activeTab === 'movies' && (
                <div className="bg-white/5 border border-white/10 rounded-[3rem] p-12 backdrop-blur-3xl">
                   <div className="flex justify-between items-center mb-10">
@@ -967,22 +1092,56 @@ function AdminDashboardContent() {
                               />
                             </div>
                           )}
-                          <h4 className="text-white font-bold text-lg mb-2">{movie.title}</h4>
+                          <h4 className="text-white font-bold text-lg mb-2 flex items-center justify-between">
+                            {movie.title}
+                            <div className="flex gap-2">
+                              {movie.isKids && <span className="bg-blue-500/20 text-blue-400 text-[8px] px-2 py-0.5 rounded border border-blue-500/30">KIDS</span>}
+                              {movie.isComingSoon && <span className="bg-yellow-500/20 text-yellow-400 text-[8px] px-2 py-0.5 rounded border border-yellow-500/30">SOON</span>}
+                            </div>
+                          </h4>
                           <p className="text-xs text-gray-400 mb-3">{movie.releaseYear || 'N/A'} • {(movie.tags || []).join(', ') || 'No tags'} • <span className="text-devotion-gold inline-flex items-center gap-1"><Eye className="w-3 h-3" /> {movie.views || 0}</span></p>
                           <p className="text-sm text-gray-300 line-clamp-2 mb-4">{movie.description || 'No description'}</p>
-                          <div className="mt-auto flex gap-2">
-                            <button
-                              onClick={() => handleEditMovie(movie)}
-                              className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl border border-devotion-gold/30 text-devotion-gold hover:text-white hover:bg-devotion-gold/10 transition-all text-[10px] font-black uppercase tracking-widest"
-                            >
-                              <Pencil className="w-4 h-4" /> Edit
-                            </button>
-                            <button
-                              onClick={() => handleDeleteContent('movies', movie._id || movie.id, movie.title || 'Untitled')}
-                              className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl border border-red-500/30 text-red-300 hover:text-red-200 hover:bg-red-500/10 transition-all text-[10px] font-black uppercase tracking-widest"
-                            >
-                              <Trash2 className="w-4 h-4" /> Delete
-                            </button>
+                          <div className="mt-auto space-y-2">
+                            <div className="flex flex-wrap gap-2">
+                               <button
+                                 onClick={() => handleAIProcess(movie._id || movie.id, 'Movie', 'all')}
+                                 className="flex-1 inline-flex items-center justify-center gap-2 px-3 py-2 rounded-xl border border-[#00A8FF]/30 text-[#00A8FF] hover:bg-[#00A8FF]/10 transition-all text-[9px] font-black uppercase tracking-widest"
+                               >
+                                  <Sparkles className="w-3 h-3" /> AI Globalization
+                               </button>
+                               <button
+                                 onClick={() => handleAIProcess(movie._id || movie.id, 'Movie', 'reels_snippet')}
+                                 className="flex-1 inline-flex items-center justify-center gap-2 px-3 py-2 rounded-xl border border-purple-500/30 text-purple-400 hover:bg-purple-500/10 transition-all text-[9px] font-black uppercase tracking-widest"
+                               >
+                                  <Layers className="w-3 h-3" /> Gen Reels
+                               </button>
+                               <button
+                                 onClick={() => handleAIProcess(movie._id || movie.id, 'Movie', 'quiz')}
+                                 className="flex-1 inline-flex items-center justify-center gap-2 px-3 py-2 rounded-xl border border-green-500/30 text-green-400 hover:bg-green-500/10 transition-all text-[9px] font-black uppercase tracking-widest"
+                               >
+                                  <Check className="w-3 h-3" /> Gen Quiz
+                               </button>
+                            </div>
+                            <div className="flex flex-wrap gap-2">
+                               <button
+                                 onClick={() => handleAIProcess(movie._id || movie.id, 'movie', 'subtitles')}
+                                 className="flex-1 min-w-[100px] inline-flex items-center justify-center gap-2 px-3 py-2 rounded-xl border border-blue-500/30 text-blue-400 hover:text-white hover:bg-blue-500/10 transition-all text-[9px] font-black uppercase tracking-widest"
+                               >
+                                 <Cpu className="w-3 h-3" /> AI Subtitles
+                               </button>
+                               <button
+                                 onClick={() => handleEditMovie(movie)}
+                                 className="flex-1 min-w-[80px] inline-flex items-center justify-center gap-2 px-3 py-2 rounded-xl border border-devotion-gold/30 text-devotion-gold hover:text-white hover:bg-devotion-gold/10 transition-all text-[9px] font-black uppercase tracking-widest"
+                               >
+                                 <Pencil className="w-3 h-3" /> Edit
+                               </button>
+                               <button
+                                 onClick={() => handleDeleteContent('movies', movie._id || movie.id, movie.title || 'Untitled')}
+                                 className="flex-1 min-w-[80px] inline-flex items-center justify-center gap-2 px-3 py-2 rounded-xl border border-red-500/30 text-red-300 hover:text-red-200 hover:bg-red-500/10 transition-all text-[9px] font-black uppercase tracking-widest"
+                               >
+                                 <Trash2 className="w-3 h-3" /> Delete
+                               </button>
+                            </div>
                           </div>
                         </div>
                       ))}
@@ -994,95 +1153,68 @@ function AdminDashboardContent() {
             {activeTab === 'stories' && (
                <div className="bg-white/5 border border-white/10 rounded-[3rem] p-12 backdrop-blur-3xl">
                   <div className="flex justify-between items-center mb-10">
-                     <h3 className="text-3xl font-serif font-black text-white uppercase tracking-tighter">Story <span className="text-devotion-gold">Library</span></h3>
-                     <span className="bg-devotion-gold/10 text-devotion-gold px-6 py-2 rounded-full font-black text-[10px] uppercase tracking-widest border border-devotion-gold/30">Total: {filteredStories.length}/{data.stories.length}</span>
+                     <h3 className="text-3xl font-serif font-black text-white uppercase tracking-tighter">Indian Story <span className="text-devotion-gold">Vault</span></h3>
+                     <span className="bg-devotion-gold/10 text-devotion-gold px-6 py-2 rounded-full font-black text-[10px] uppercase tracking-widest border border-devotion-gold/30">Total: {data.stories.length}</span>
                   </div>
 
-                  <div className="mb-6 flex flex-wrap gap-2">
-                    {[
-                      { key: 'all', label: 'All' },
-                      { key: 'missing-any', label: 'Any Missing' },
-                      { key: 'missing-te', label: 'Missing TE' },
-                      { key: 'missing-hi', label: 'Missing HI' },
-                      { key: 'missing-en', label: 'Missing EN' },
-                    ].map((filterOption) => (
-                      <button
-                        key={filterOption.key}
-                        type="button"
-                        onClick={() => setStoryLanguageFilter(filterOption.key)}
-                        className={`rounded-full border px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.2em] transition-all ${storyLanguageFilter === filterOption.key ? 'border-devotion-gold/50 bg-devotion-gold/20 text-devotion-gold' : 'border-white/15 text-gray-300 hover:border-devotion-gold/30 hover:text-white'}`}
-                      >
-                        {filterOption.label}
-                      </button>
-                    ))}
-                  </div>
-
-                  {filteredStories.length === 0 ? (
+                  {data.stories.length === 0 ? (
                     <p className="text-gray-500 text-center py-12">No stories uploaded yet.</p>
                   ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-                      {filteredStories.map((story) => (
-                        <div key={story._id || story.id} className="p-6 rounded-2xl border border-white/10 bg-white/5">
-                          <h4 className="text-white font-bold text-lg mb-2">{story.title}</h4>
-                          <p className="text-xs text-gray-400 mb-3">
-                            {story.seriesTitle || 'Bhagavad Gita'} • Chapter {story.chapter || 1} • {(story.language || 'english')}
-                            <br/><span className="text-devotion-gold/60 mt-1 inline-block">Updated: {story.updatedAt ? new Date(story.updatedAt).toLocaleDateString() : 'N/A'}</span>
+                      {data.stories.map((story) => (
+                        <div key={story._id || story.id} className="p-6 rounded-2xl border border-white/10 bg-white/5 group relative overflow-hidden">
+                          {story.thumbnail && (
+                            <div className="mb-4 aspect-video rounded-xl overflow-hidden border border-white/10">
+                              <img src={story.thumbnail} alt="" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
+                            </div>
+                          )}
+                          <div className="flex justify-between items-start mb-2">
+                             <h4 className="text-white font-bold text-lg">{story.title}</h4>
+                             <span className={`px-2 py-1 rounded-md text-[8px] font-black uppercase tracking-widest ${story.status === 'published' ? 'bg-green-500/20 text-green-400 border border-green-500/30' : 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30'}`}>
+                                {story.status || 'Draft'}
+                             </span>
+                          </div>
+                          <p className="text-xs text-devotion-gold mb-3 font-black uppercase tracking-widest">
+                            {story.category || 'General'} • {story.chapters?.length || 0} Chapters
                           </p>
-                          <div className="mb-3 rounded-xl border border-white/10 bg-white/5 p-3">
-                            <div className="mb-2 flex flex-wrap gap-2">
-                              <span className={`rounded-full border px-2 py-1 text-[9px] font-black uppercase tracking-[0.18em] ${story.titleTelugu ? 'border-devotion-gold/40 text-devotion-gold' : 'border-white/10 text-white/35'}`}>TE</span>
-                              <span className={`rounded-full border px-2 py-1 text-[9px] font-black uppercase tracking-[0.18em] ${story.titleHindi ? 'border-devotion-gold/40 text-devotion-gold' : 'border-white/10 text-white/35'}`}>HI</span>
-                              <span className={`rounded-full border px-2 py-1 text-[9px] font-black uppercase tracking-[0.18em] ${story.titleEnglish ? 'border-devotion-gold/40 text-devotion-gold' : 'border-white/10 text-white/35'}`}>EN</span>
+                          <p className="text-sm text-gray-300 line-clamp-2 mb-6">{story.description || 'No description provided.'}</p>
+                          
+                          <div className="mt-auto space-y-2">
+                            <div className="flex flex-wrap gap-2">
+                               <button
+                                 onClick={() => handleAIProcess(story._id || story.id, 'Story', 'chaptering')}
+                                 className="flex-1 inline-flex items-center justify-center gap-2 px-3 py-2 rounded-xl border border-orange-500/30 text-orange-400 hover:bg-orange-500/10 transition-all text-[8px] font-black uppercase tracking-widest"
+                               >
+                                  <BookOpen className="w-3 h-3" /> Gen Chapters
+                               </button>
+                               <button
+                                 onClick={() => handleAIProcess(story._id || story.id, 'Story', 'translation')}
+                                 className="flex-1 inline-flex items-center justify-center gap-2 px-3 py-2 rounded-xl border border-[#00A8FF]/30 text-[#00A8FF] hover:bg-[#00A8FF]/10 transition-all text-[8px] font-black uppercase tracking-widest"
+                               >
+                                  <Sparkles className="w-3 h-3" /> Globalize
+                               </button>
+                               <button
+                                 onClick={() => handleAIProcess(story._id || story.id, 'Story', 'quiz')}
+                                 className="flex-1 inline-flex items-center justify-center gap-2 px-3 py-2 rounded-xl border border-green-500/30 text-green-400 hover:bg-green-500/10 transition-all text-[8px] font-black uppercase tracking-widest"
+                               >
+                                  <Check className="w-3 h-3" /> Gen Quiz
+                               </button>
                             </div>
-                            <div className="space-y-1 text-[11px] text-gray-300">
-                              <p className="line-clamp-1"><span className="text-devotion-gold">TE:</span> {story.titleTelugu || '-'}</p>
-                              <p className="line-clamp-1"><span className="text-devotion-gold">HI:</span> {story.titleHindi || '-'}</p>
-                              <p className="line-clamp-1"><span className="text-devotion-gold">EN:</span> {story.titleEnglish || '-'}</p>
+                            <div className="flex flex-wrap gap-2">
+                              <button
+                                onClick={() => handleEditStory(story)}
+                                className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl border border-devotion-gold/30 text-devotion-gold hover:text-white hover:bg-devotion-gold/10 transition-all text-[10px] font-black uppercase tracking-widest"
+                              >
+                                <Pencil className="w-4 h-4" /> Edit
+                              </button>
+                              <button
+                                onClick={() => handleDeleteContent('stories', story._id || story.id, story.title || 'Untitled')}
+                                className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl border border-red-500/30 text-red-300 hover:text-red-200 hover:bg-red-500/10 transition-all text-[10px] font-black uppercase tracking-widest"
+                              >
+                                <Trash2 className="w-4 h-4" /> Delete
+                              </button>
                             </div>
                           </div>
-                          <p className="text-sm text-gray-300 line-clamp-3">{story.summary || story.description || 'No summary'}</p>
-                          <div className="mt-5 flex flex-wrap gap-2">
-                            {!hasLocalizedTitle(story.titleTelugu) && (
-                              <button
-                                onClick={() => handleQuickFillStoryTitle(story, 'te')}
-                                disabled={quickFillStoryId === (story._id || story.id)}
-                                className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl border transition-all text-[10px] font-black uppercase tracking-widest ${quickFillStoryId === (story._id || story.id) ? 'border-white/15 text-white/45 cursor-not-allowed' : 'border-[#9FD9F0]/30 text-[#9FD9F0] hover:text-white hover:bg-[#9FD9F0]/10'}`}
-                              >
-                                {quickFillStoryId === (story._id || story.id) ? 'Saving...' : 'Fill TE'}
-                              </button>
-                            )}
-                            {!hasLocalizedTitle(story.titleHindi) && (
-                              <button
-                                onClick={() => handleQuickFillStoryTitle(story, 'hi')}
-                                disabled={quickFillStoryId === (story._id || story.id)}
-                                className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl border transition-all text-[10px] font-black uppercase tracking-widest ${quickFillStoryId === (story._id || story.id) ? 'border-white/15 text-white/45 cursor-not-allowed' : 'border-[#9FD9F0]/30 text-[#9FD9F0] hover:text-white hover:bg-[#9FD9F0]/10'}`}
-                              >
-                                {quickFillStoryId === (story._id || story.id) ? 'Saving...' : 'Fill HI'}
-                              </button>
-                            )}
-                            {!hasLocalizedTitle(story.titleEnglish) && (
-                              <button
-                                onClick={() => handleQuickFillStoryTitle(story, 'en')}
-                                disabled={quickFillStoryId === (story._id || story.id)}
-                                className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl border transition-all text-[10px] font-black uppercase tracking-widest ${quickFillStoryId === (story._id || story.id) ? 'border-white/15 text-white/45 cursor-not-allowed' : 'border-[#9FD9F0]/30 text-[#9FD9F0] hover:text-white hover:bg-[#9FD9F0]/10'}`}
-                              >
-                                {quickFillStoryId === (story._id || story.id) ? 'Saving...' : 'Fill EN'}
-                              </button>
-                            )}
-                            <button
-                              onClick={() => handleEditStory(story)}
-                              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-devotion-gold/30 text-devotion-gold hover:text-white hover:bg-devotion-gold/10 transition-all text-[10px] font-black uppercase tracking-widest"
-                            >
-                              <Pencil className="w-4 h-4" /> Edit
-                            </button>
-                            <button
-                              onClick={() => handleDeleteContent('stories', story._id || story.id, story.title || 'Untitled')}
-                              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-red-500/30 text-red-300 hover:text-red-200 hover:bg-red-500/10 transition-all text-[10px] font-black uppercase tracking-widest"
-                            >
-                              <Trash2 className="w-4 h-4" /> Delete
-                            </button>
-                          </div>
-                        </div>
                       ))}
                     </div>
                   )}
@@ -1202,10 +1334,19 @@ function AdminDashboardContent() {
                               />
                             </div>
                           )}
-                          <h4 className="text-white font-bold text-lg mb-2">{video.title}</h4>
+                          <h4 className="text-white font-bold text-lg mb-2 flex items-center justify-between">
+                            {video.title}
+                            {video.isKids && <span className="bg-blue-500/20 text-blue-400 text-[8px] px-2 py-0.5 rounded border border-blue-500/30">KIDS</span>}
+                          </h4>
                           <p className="text-xs text-gray-400 mb-3">{video.collectionTitle || 'Bhagavad Gita'} • {video.category || 'General'} • {video.isKids ? 'Kids' : 'All Ages'} • <span className="text-devotion-gold inline-flex items-center gap-1"><Eye className="w-3 h-3" /> {video.views || 0}</span></p>
                           <p className="text-sm text-gray-300 line-clamp-2 mb-4">{video.description || 'No description'}</p>
-                          <div className="mt-auto flex gap-2">
+                          <div className="mt-auto flex flex-wrap gap-2">
+                            <button
+                              onClick={() => handleAIProcess(video._id || video.id, 'Video')}
+                              className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl border border-[#00A8FF]/30 text-[#00A8FF] hover:bg-[#00A8FF]/10 transition-all text-[10px] font-black uppercase tracking-widest"
+                            >
+                               <Sparkles className="w-4 h-4" /> AI Voice
+                            </button>
                             <button
                               onClick={() => handleEditVideo(video)}
                               className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl border border-devotion-gold/30 text-devotion-gold hover:text-white hover:bg-devotion-gold/10 transition-all text-[10px] font-black uppercase tracking-widest"
@@ -1432,7 +1573,8 @@ function AdminDashboardContent() {
                </div>
             )}
             
-            {activeTab === 'notifications' && (
+             {activeTab === 'notifications' && (
+
                <div className="bg-white/5 border border-white/10 rounded-[3rem] p-12 backdrop-blur-3xl">
                   <div className="flex justify-between items-center mb-10">
                      <h3 className="text-3xl font-serif font-black text-white uppercase tracking-tighter">Global <span className="text-devotion-gold">Broadcast</span></h3>
@@ -1676,70 +1818,141 @@ function AdminDashboardContent() {
                  {/* STORY FORM */}
                  {activeTab === 'stories' && (
                    <div className="grid grid-cols-1 md:grid-cols-2 gap-10 overflow-x-auto">
-                      <div className="space-y-4">
-                         <label className="text-[10px] font-black uppercase tracking-widest text-devotion-gold ml-2">Story Title</label>
-                         <input required className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-5 text-white focus:border-devotion-gold outline-none" value={storyForm.title} onChange={e => setStoryForm({...storyForm, title: e.target.value})} />
+                      <div className="space-y-6">
+                         <div className="space-y-4">
+                           <label className="text-[10px] font-black uppercase tracking-widest text-devotion-gold ml-2">Story Title</label>
+                           <input required className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-5 text-white focus:border-devotion-gold outline-none" placeholder="The Legend of Hanuman" value={storyForm.title} onChange={e => setStoryForm({...storyForm, title: e.target.value})} />
+                         </div>
+                         <div className="space-y-4">
+                            <label className="text-[10px] font-black uppercase tracking-widest text-devotion-gold ml-2">Category / Series</label>
+                            <select className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-5 text-white focus:border-devotion-gold outline-none" value={storyForm.category} onChange={e => setStoryForm({...storyForm, category: e.target.value})}>
+                              {STORY_CATEGORIES.map(cat => <option key={cat} value={cat} className="bg-[#0B1F3A]">{cat}</option>)}
+                            </select>
+                         </div>
+                         <div className="space-y-4">
+                            <label className="text-[10px] font-black uppercase tracking-widest text-devotion-gold ml-2">Thumbnail URL</label>
+                            <input className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-5 text-white focus:border-devotion-gold outline-none" value={storyForm.thumbnail} onChange={e => setStoryForm({...storyForm, thumbnail: e.target.value})} />
+                         </div>
+                         <div className="space-y-4">
+                            <label className="text-[10px] font-black uppercase tracking-widest text-devotion-gold ml-2">Brief Description</label>
+                            <textarea rows="4" className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-5 text-white focus:border-devotion-gold outline-none" value={storyForm.description} onChange={e => setStoryForm({...storyForm, description: e.target.value})} />
+                         </div>
+                         <div className="flex items-center gap-4 p-4 rounded-2xl border border-blue-500/20 bg-blue-500/5">
+                            <div className="w-12 h-12 rounded-full bg-blue-500/20 flex items-center justify-center text-blue-400">
+                               <Sparkles className="w-6 h-6" />
+                            </div>
+                            <div>
+                               <h5 className="text-white font-bold text-xs uppercase tracking-widest">AI Chaptering Available</h5>
+                               <p className="text-[10px] text-gray-400">Upload the full content below, then use "AI Chapters" to auto-segment.</p>
+                            </div>
+                         </div>
                       </div>
-                     <div className="space-y-4">
-                       <label className="text-[10px] font-black uppercase tracking-widest text-devotion-gold ml-2">Title Telugu</label>
-                       <input className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-5 text-white focus:border-devotion-gold outline-none" value={storyForm.titleTelugu} onChange={e => setStoryForm({...storyForm, titleTelugu: e.target.value})} />
-                     </div>
-                     <div className="space-y-4">
-                       <label className="text-[10px] font-black uppercase tracking-widest text-devotion-gold ml-2">Title Hindi</label>
-                       <input className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-5 text-white focus:border-devotion-gold outline-none" value={storyForm.titleHindi} onChange={e => setStoryForm({...storyForm, titleHindi: e.target.value})} />
-                     </div>
-                     <div className="space-y-4">
-                       <label className="text-[10px] font-black uppercase tracking-widest text-devotion-gold ml-2">Title English</label>
-                       <input className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-5 text-white focus:border-devotion-gold outline-none" value={storyForm.titleEnglish} onChange={e => setStoryForm({...storyForm, titleEnglish: e.target.value})} />
-                     </div>
-                       <div className="space-y-4">
-                         <label className="text-[10px] font-black uppercase tracking-widest text-devotion-gold ml-2">Collection Title</label>
-                         <input required className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-5 text-white focus:border-devotion-gold outline-none" placeholder="Bhagavad Gita or Ramayana" value={storyForm.seriesTitle} onChange={e => setStoryForm({...storyForm, seriesTitle: e.target.value})} />
-                       </div>
-                      <div className="space-y-4">
-                         <label className="text-[10px] font-black uppercase tracking-widest text-devotion-gold ml-2">Chapter Number</label>
-                         <input type="number" className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-5 text-white focus:border-devotion-gold outline-none" value={storyForm.chapter} onChange={e => setStoryForm({...storyForm, chapter: e.target.value})} />
+                      <div className="space-y-6">
+                         <div className="space-y-4">
+                            <label className="text-[10px] font-black uppercase tracking-widest text-devotion-gold ml-2">Full Story / Script Content</label>
+                            <textarea rows="16" className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-5 text-white focus:border-devotion-gold outline-none text-sm leading-relaxed" placeholder="Paste the entire story or scripture here..." value={storyForm.content} onChange={e => setStoryForm({...storyForm, content: e.target.value})} />
+                         </div>
+                         <div className="grid grid-cols-2 gap-4">
+                           <div className="space-y-4">
+                             <label className="text-[10px] font-black uppercase tracking-widest text-devotion-gold ml-2">Target Audience</label>
+                             <select className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 text-white focus:border-devotion-gold outline-none" value={storyForm.isKids ? 'kids' : 'all'} onChange={e => setStoryForm({...storyForm, isKids: e.target.value === 'kids'})}>
+                               <option value="all" className="bg-[#0B1F3A]">General (All Ages)</option>
+                               <option value="kids" className="bg-[#0B1F3A]">Kids Mode</option>
+                             </select>
+                           </div>
+                           <div className="space-y-4">
+                             <label className="text-[10px] font-black uppercase tracking-widest text-devotion-gold ml-2">Status</label>
+                             <select className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 text-white focus:border-devotion-gold outline-none" value={storyForm.status} onChange={e => setStoryForm({...storyForm, status: e.target.value})}>
+                               <option value="draft" className="bg-[#0B1F3A]">Draft</option>
+                               <option value="published" className="bg-[#0B1F3A]">Published</option>
+                             </select>
+                           </div>
+                         </div>
+
+                         {/* Chapters Editor */}
+                         <div className="md:col-span-2 mt-8 space-y-6">
+                            <div className="flex justify-between items-center">
+                               <h4 className="text-sm font-black uppercase tracking-widest text-white flex items-center gap-2">
+                                  <BookOpen className="w-4 h-4 text-devotion-gold" /> Manual Chapter Editor
+                               </h4>
+                               <button type="button" onClick={() => {
+                                  const newChapter = { title: `Chapter ${storyForm.chapters.length + 1}`, content: '', summary: '', takeaways: [''], sequence: storyForm.chapters.length + 1 };
+                                  setStoryForm({...storyForm, chapters: [...(storyForm.chapters || []), newChapter]});
+                               }} className="text-[10px] font-black uppercase tracking-widest px-4 py-2 bg-devotion-gold/10 text-devotion-gold border border-devotion-gold/20 rounded-xl hover:bg-devotion-gold/20 transition-all">
+                                  + Add Chapter
+                               </button>
+                            </div>
+
+                            {(!storyForm.chapters || storyForm.chapters.length === 0) ? (
+                              <div className="p-8 rounded-[2rem] border-2 border-dashed border-white/5 bg-white/5 text-center">
+                                 <p className="text-xs text-gray-500 italic">No chapters created. Use "AI Chapters" on a saved story or add manually.</p>
+                              </div>
+                            ) : (
+                              <div className="space-y-4">
+                                 {storyForm.chapters.map((ch, idx) => (
+                                   <div key={idx} className="p-6 rounded-[2rem] bg-white/5 border border-white/10 space-y-6">
+                                      <div className="flex justify-between items-center">
+                                         <span className="text-[10px] font-black text-devotion-gold uppercase tracking-widest bg-devotion-gold/10 px-3 py-1 rounded-lg border border-devotion-gold/20">Ch {idx + 1}</span>
+                                         <button type="button" onClick={() => {
+                                            const updated = [...storyForm.chapters];
+                                            updated.splice(idx, 1);
+                                            setStoryForm({...storyForm, chapters: updated});
+                                         }} className="text-red-400 hover:text-red-300 p-2"><Trash2 className="w-4 h-4" /></button>
+                                      </div>
+                                      
+                                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                         <div className="space-y-4">
+                                            <label className="text-[9px] font-black uppercase tracking-widest text-gray-500 ml-2">Chapter Title</label>
+                                            <input className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:border-devotion-gold outline-none" value={ch.title} onChange={e => {
+                                               const updated = [...storyForm.chapters];
+                                               updated[idx].title = e.target.value;
+                                               setStoryForm({...storyForm, chapters: updated});
+                                            }} />
+                                         </div>
+                                         <div className="space-y-4">
+                                            <label className="text-[9px] font-black uppercase tracking-widest text-gray-500 ml-2">Spiritual Summary</label>
+                                            <textarea rows="2" className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:border-devotion-gold outline-none" value={ch.summary} onChange={e => {
+                                               const updated = [...storyForm.chapters];
+                                               updated[idx].summary = e.target.value;
+                                               setStoryForm({...storyForm, chapters: updated});
+                                            }} />
+                                         </div>
+                                         <div className="md:col-span-2 space-y-4">
+                                            <label className="text-[9px] font-black uppercase tracking-widest text-gray-500 ml-2">Chapter Content</label>
+                                            <textarea rows="6" className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:border-devotion-gold outline-none leading-relaxed" value={ch.content} onChange={e => {
+                                               const updated = [...storyForm.chapters];
+                                               updated[idx].content = e.target.value;
+                                               setStoryForm({...storyForm, chapters: updated});
+                                            }} />
+                                         </div>
+                                         <div className="md:col-span-2 space-y-4">
+                                            <label className="text-[9px] font-black uppercase tracking-widest text-gray-500 ml-2">Spiritual Takeaways</label>
+                                            <div className="space-y-2">
+                                               {(ch.takeaways || ['']).map((tk, tIdx) => (
+                                                 <div key={tIdx} className="flex gap-2">
+                                                    <input className="flex-1 bg-black/40 border border-white/10 rounded-xl px-4 py-2 text-[11px] text-white focus:border-devotion-gold outline-none" value={tk} onChange={e => {
+                                                       const updated = [...storyForm.chapters];
+                                                       updated[idx].takeaways[tIdx] = e.target.value;
+                                                       setStoryForm({...storyForm, chapters: updated});
+                                                    }} />
+                                                    {tIdx === ch.takeaways.length - 1 && (
+                                                      <button type="button" onClick={() => {
+                                                         const updated = [...storyForm.chapters];
+                                                         updated[idx].takeaways.push('');
+                                                         setStoryForm({...storyForm, chapters: updated});
+                                                      }} className="p-2 text-devotion-gold bg-devotion-gold/10 rounded-xl border border-devotion-gold/20"><Plus className="w-4 h-4" /></button>
+                                                    )}
+                                                 </div>
+                                               ))}
+                                            </div>
+                                         </div>
+                                      </div>
+                                   </div>
+                                 ))}
+                              </div>
+                            )}
+                         </div>
                       </div>
-                      <div className="md:col-span-2 space-y-4">
-                         <label className="text-[10px] font-black uppercase tracking-widest text-devotion-gold ml-2">Primary Language</label>
-                         <select className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-5 text-white focus:border-devotion-gold outline-none" value={storyForm.language} onChange={e => setStoryForm({...storyForm, language: e.target.value})}>
-                          <option value="telugu" className="bg-[#0B1F3A]">Telugu</option>
-                          <option value="hindi" className="bg-[#0B1F3A]">Hindi</option>
-                          <option value="english" className="bg-[#0B1F3A]">English</option>
-                         </select>
-                       </div>
-                       <div className="md:col-span-2 space-y-4">
-                         <label className="text-[10px] font-black uppercase tracking-widest text-devotion-gold ml-2">Summary</label>
-                         <input className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-5 text-white focus:border-devotion-gold outline-none" value={storyForm.summary} onChange={e => setStoryForm({...storyForm, summary: e.target.value})} />
-                      </div>
-                      <div className="md:col-span-2 space-y-4">
-                         <label className="text-[10px] font-black uppercase tracking-widest text-devotion-gold ml-2">Full Content</label>
-                         <textarea rows="6" className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-5 text-white focus:border-devotion-gold outline-none" value={storyForm.content} onChange={e => setStoryForm({...storyForm, content: e.target.value})} />
-                      </div>
-                       <div className="space-y-4">
-                         <label className="text-[10px] font-black uppercase tracking-widest text-devotion-gold ml-2">Summary Telugu</label>
-                         <textarea rows="3" className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-5 text-white focus:border-devotion-gold outline-none" value={storyForm.summaryTelugu} onChange={e => setStoryForm({...storyForm, summaryTelugu: e.target.value})} />
-                       </div>
-                       <div className="space-y-4">
-                         <label className="text-[10px] font-black uppercase tracking-widest text-devotion-gold ml-2">Summary Hindi</label>
-                         <textarea rows="3" className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-5 text-white focus:border-devotion-gold outline-none" value={storyForm.summaryHindi} onChange={e => setStoryForm({...storyForm, summaryHindi: e.target.value})} />
-                       </div>
-                       <div className="md:col-span-2 space-y-4">
-                         <label className="text-[10px] font-black uppercase tracking-widest text-devotion-gold ml-2">Summary English</label>
-                         <textarea rows="3" className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-5 text-white focus:border-devotion-gold outline-none" value={storyForm.summaryEnglish} onChange={e => setStoryForm({...storyForm, summaryEnglish: e.target.value})} />
-                       </div>
-                       <div className="space-y-4">
-                         <label className="text-[10px] font-black uppercase tracking-widest text-devotion-gold ml-2">Content Telugu</label>
-                         <textarea rows="4" className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-5 text-white focus:border-devotion-gold outline-none" value={storyForm.contentTelugu} onChange={e => setStoryForm({...storyForm, contentTelugu: e.target.value})} />
-                       </div>
-                       <div className="space-y-4">
-                         <label className="text-[10px] font-black uppercase tracking-widest text-devotion-gold ml-2">Content Hindi</label>
-                         <textarea rows="4" className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-5 text-white focus:border-devotion-gold outline-none" value={storyForm.contentHindi} onChange={e => setStoryForm({...storyForm, contentHindi: e.target.value})} />
-                       </div>
-                       <div className="md:col-span-2 space-y-4">
-                         <label className="text-[10px] font-black uppercase tracking-widest text-devotion-gold ml-2">Content English</label>
-                         <textarea rows="4" className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-5 text-white focus:border-devotion-gold outline-none" value={storyForm.contentEnglish} onChange={e => setStoryForm({...storyForm, contentEnglish: e.target.value})} />
-                       </div>
                    </div>
                  )}
 
@@ -1938,7 +2151,13 @@ function AdminDashboardContent() {
                            </div>
                            <p className="text-[10px] text-gray-500 ml-2">Optional: Teaser for upcoming Kids episodes shown in Kids hero section.</p>
                         </div>
-                       <div className="flex items-center gap-4 pt-10">
+                        <div className="flex flex-wrap items-center gap-8 bg-white/5 p-6 rounded-[2rem] border border-white/10 mt-10">
+                          <div className="flex items-center gap-4">
+                            <input type="checkbox" id="videoIsComingSoon" className="w-6 h-6 accent-devotion-gold" checked={videoForm.isComingSoon} onChange={e => setVideoForm({...videoForm, isComingSoon: e.target.checked})} />
+                            <label htmlFor="videoIsComingSoon" className="text-sm font-black uppercase tracking-widest text-white cursor-pointer">Mark as "Coming Soon" (Upcoming Episode/Reel)</label>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-4 pt-10">
                           <div className="flex-1 space-y-4">
                              <label className="text-[10px] font-black uppercase tracking-widest text-devotion-gold ml-2">Initial Views (Promotion)</label>
                              <input type="number" className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-5 text-white focus:border-devotion-gold outline-none" placeholder="e.g. 5000" value={videoForm.views} onChange={e => setVideoForm({...videoForm, views: parseInt(e.target.value) || 0})} />

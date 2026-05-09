@@ -104,7 +104,7 @@ function getOfflineWisdom(message) {
 
 exports.chatMentor = async (req, res) => {
   try {
-    const { message, customAiKey } = req.body;
+    const { message, customAiKey, language = 'en' } = req.body;
     
     if (!message || typeof message !== 'string') {
       return res.status(400).json({ reply: 'Message is required and must be text.' });
@@ -119,7 +119,16 @@ exports.chatMentor = async (req, res) => {
       return res.status(400).json({ reply: 'The burden of words is too heavy. Please keep your message under 500 characters.' });
     }
 
-    // Try DeepSeek AI or Custom AI Key first (if key has balance)
+    // Resolve language name for AI prompt
+    const languageMap = {
+      'en': 'English', 'hi': 'Hindi', 'te': 'Telugu', 'ta': 'Tamil', 'kn': 'Kannada', 
+      'ml': 'Malayalam', 'bn': 'Bengali', 'mr': 'Marathi', 'gu': 'Gujarati', 'pa': 'Punjabi',
+      'sa': 'Sanskrit', 'ur': 'Urdu', 'es': 'Spanish', 'fr': 'French', 'de': 'German',
+      'ja': 'Japanese', 'ko': 'Korean', 'ar': 'Arabic', 'zh': 'Chinese'
+    };
+    const targetLanguageName = languageMap[language] || 'English';
+
+    // Try DeepSeek AI or Custom AI Key first
     const apiKey = customAiKey || process.env.DEEPSEEK_API_KEY;
 
     if (apiKey) {
@@ -135,7 +144,11 @@ exports.chatMentor = async (req, res) => {
           messages: [
             { 
               role: 'system', 
-              content: 'You are Gita Mentor, a spiritual guide based on Bhagavad Gita. Give practical life advice with simple explanations. Be warm, compassionate, and divine. Keep responses concise (2-3 paragraphs). If relevant, quote a Sanskrit verse with translation. Use markdown formatting.'
+              content: `You are Gita Mentor, a spiritual guide based on Bhagavad Gita. 
+              Respond strictly in ${targetLanguageName}. 
+              Give practical life advice with simple explanations. Be warm, compassionate, and divine. 
+              Keep responses concise (2-3 paragraphs). If relevant, quote a Sanskrit verse with translation in ${targetLanguageName}. 
+              Use markdown formatting.`
             },
             { role: 'user', content: trimmedMessage }
           ],

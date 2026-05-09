@@ -31,7 +31,7 @@ export const generateTTS = async (text, voiceType, customAiKey) => {
   return response.data;
 };
 
-export const sendAiChat = async (message, customAiKey) => {
-  const response = await apiClient.post('/api/chat', { message, customAiKey });
+export const sendAiChat = async (message, customAiKey, language = 'en') => {
+  const response = await apiClient.post('/api/chat', { message, customAiKey, language });
   return response.data;
 };

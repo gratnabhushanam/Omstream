@@ -15,7 +15,8 @@ const SlokaSchema = new mongoose.Schema({
   audioUrlTelugu: { type: String },
   audioUrlHindi: { type: String },
   tags: { type: [String], default: [] },
-  isDaily: { type: Boolean, default: false }
+  isDaily: { type: Boolean, default: false },
+  translations: { type: mongoose.Schema.Types.Mixed, default: {} }
 }, {
   timestamps: true,
   strict: false // Allow extra fields

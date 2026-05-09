@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useLocation } from 'react-router-dom';
+import { useLanguage } from '../context/LanguageContext';
 import MediaPlayerHLS from '../components/MediaPlayerHLS';
 import VideoCard from '../components/VideoCard';
 
 export default function Videos() {
+  const { t } = useLanguage();
   const location = useLocation();
   const [videos, setVideos] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -90,9 +92,9 @@ export default function Videos() {
                 className="text-left"
               >
                 <VideoCard 
-                  title={`${video.title}${video.collectionTitle ? ` • ${video.collectionTitle}` : ''}`}
+                  title={`${t(video, 'title')}${video.collectionTitle ? ` • ${video.collectionTitle}` : ''}`}
                   url={video.url}
-                  description={video.description}
+                  description={t(video, 'description')}
                 />
               </button>
             ))}
@@ -107,7 +109,7 @@ export default function Videos() {
             <div className="mb-6 flex items-start justify-between gap-4">
               <div>
                 <p className="text-[10px] uppercase tracking-[0.3em] text-devotion-gold/70">video</p>
-                <h2 className="mt-2 text-3xl font-serif font-bold text-white">{activeVideo.title}</h2>
+                <h2 className="mt-2 text-3xl font-serif font-bold text-white">{t(activeVideo, 'title')}</h2>
                 <p className="mt-2 text-xs uppercase tracking-[0.2em] text-devotion-gold/80">{activeVideo.collectionTitle || 'Bhagavad Gita'}</p>
               </div>
               <button
@@ -124,14 +126,14 @@ export default function Videos() {
                 <MediaPlayerHLS
                   url={activeVideo.videoUrl || activeVideo.url}
                   hlsUrl={activeVideo.hlsUrl}
-                  title={activeVideo.title}
+                  title={t(activeVideo, 'title')}
                   className="w-full aspect-video"
                   youtubeParams="autoplay=1&rel=0&modestbranding=1"
                   controls
                   autoPlay
                 />
               </div>
-              <p className="text-sm leading-7 text-white/80">{activeVideo.description || 'No description available.'}</p>
+              <p className="text-sm leading-7 text-white/80">{t(activeVideo, 'description') || 'No description available.'}</p>
             </div>
           </div>
         </div>

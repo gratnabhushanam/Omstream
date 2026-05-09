@@ -10,7 +10,7 @@ cloudinary.config({
 
 exports.uploadVideoToCloudinary = async (req, res) => {
   try {
-    const { title, description, module, category, chapter, language, trailerUrl, collectionTitle } = req.body;
+    const { title, description, module, category, chapter, language, trailerUrl, collectionTitle, isComingSoon } = req.body;
     if (!req.file) return res.status(400).json({ message: 'No file' });
 
     const result = await cloudinary.uploader.upload(req.file.path, {
@@ -31,6 +31,7 @@ exports.uploadVideoToCloudinary = async (req, res) => {
       hlsUrl,
       thumbnail: result.secure_url.replace(/\.[^/.]+$/, '.jpg'),
       trailerUrl: trailerUrl || '',
+      isComingSoon: isComingSoon === 'true' || isComingSoon === true,
       collectionTitle: collectionTitle || 'Bhagavad Gita',
       category: category || 'reels',
       module: module || 'divine',

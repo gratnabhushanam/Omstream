@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
-import { Search as SearchIcon, X, Book, Video, BookOpen, ExternalLink, Film } from 'lucide-react';
+import { Search as SearchIcon, X, Book, Video, BookOpen, ExternalLink, Film, Mic, MicOff } from 'lucide-react';
+import { useLanguage } from '../context/LanguageContext';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
 const RECENT_SEARCHES_KEY = 'gita_recent_searches';
@@ -9,10 +10,14 @@ const MAX_RECENT_SEARCHES = 8;
 
 export default function Search() {
   const navigate = useNavigate();
+  const { tLabel, language } = useLanguage();
   const [query, setQuery] = useState('');
   const [results, setResults] = useState({ slokas: [], stories: [], videos: [], movies: [], reels: [] });
   const [loading, setLoading] = useState(false);
   const [recentSearches, setRecentSearches] = useState([]);
+  const [isListening, setIsListening] = useState(false);
+  const [aiInsight, setAiInsight] = useState(null);
+  const [isAiLoading, setIsAiLoading] = useState(false);
 
   useEffect(() => {
     try {
@@ -23,9 +28,31 @@ export default function Search() {
     }
   }, []);
 
+  const getAIWisdom = async (searchTerm) => {
+    if (!searchTerm || searchTerm.length < 5) {
+      setAiInsight(null);
+      return;
+    }
+    
+    setIsAiLoading(true);
+    try {
+      const response = await axios.post('/api/chat', { 
+        message: `Summarize what the Bhagavad Gita or other scriptures say about: ${searchTerm}. Keep it concise (max 3 sentences) and provide a key takeaway.`,
+        language: language || 'en'
+      });
+      setAiInsight(response.data.reply);
+    } catch (err) {
+      console.error('AI Insight error:', err);
+      setAiInsight(null);
+    } finally {
+      setIsAiLoading(false);
+    }
+  };
+
   useEffect(() => {
     const delayDebounceFn = setTimeout(() => {
       performSearch();
+      if (query.trim().length > 5) getAIWisdom(query.trim());
     }, 500);
 
     return () => clearTimeout(delayDebounceFn);
@@ -68,6 +95,29 @@ export default function Search() {
   const clearRecentSearches = () => {
     setRecentSearches([]);
     localStorage.removeItem(RECENT_SEARCHES_KEY);
+  };
+
+  const handleVoiceSearch = () => {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      alert('Voice search is not supported in this browser.');
+      return;
+    }
+
+    const recognition = new SpeechRecognition();
+    recognition.lang = language === 'hi' ? 'hi-IN' : language === 'te' ? 'te-IN' : 'en-US';
+    recognition.interimResults = false;
+
+    recognition.onstart = () => setIsListening(true);
+    recognition.onend = () => setIsListening(false);
+    recognition.onerror = () => setIsListening(false);
+    
+    recognition.onresult = (event) => {
+      const transcript = event.results[0][0].transcript;
+      setQuery(transcript);
+    };
+
+    recognition.start();
   };
 
   const ResultCard = ({ item, type, onOpen }) => {
@@ -177,20 +227,63 @@ export default function Search() {
              </div>
              <input 
                type="text" 
-               className="w-full bg-white/5 backdrop-blur-md border-2 border-devotion-gold/30 rounded-3xl py-5 sm:py-6 tv:py-8 pl-16 tv:pl-20 pr-6 text-xl sm:text-2xl tv:text-3xl font-light text-white placeholder:text-gray-500 focus:border-devotion-gold focus:outline-none transition-all shadow-2xl"
-               placeholder="Search stress, anger, motivation..."
+               className={`w-full bg-white/5 backdrop-blur-md border-2 ${isListening ? 'border-devotion-gold animate-pulse' : 'border-devotion-gold/30'} rounded-3xl py-5 sm:py-6 tv:py-8 pl-16 tv:pl-20 pr-24 sm:pr-32 text-xl sm:text-2xl tv:text-3xl font-light text-white placeholder:text-gray-500 focus:border-devotion-gold focus:outline-none transition-all shadow-2xl`}
+               placeholder={isListening ? 'Listening...' : tLabel('aiSearch')}
                value={query}
                onChange={(e) => setQuery(e.target.value)}
              />
-             {query && (
-               <button 
-                 onClick={() => setQuery('')}
-                 className="absolute inset-y-0 right-6 flex items-center text-gray-500 hover:text-white"
+             <div className="absolute inset-y-0 right-6 flex items-center gap-2 sm:gap-4">
+               <button
+                 onClick={handleVoiceSearch}
+                 className={`p-2 sm:p-3 rounded-full transition-all ${isListening ? 'bg-red-500 text-white animate-bounce' : 'bg-white/5 text-devotion-gold hover:bg-white/10'}`}
+                 title="Voice Search"
                >
-                 <X className="w-6 h-6" />
+                 {isListening ? <MicOff className="w-6 h-6" /> : <Mic className="w-6 h-6" />}
                </button>
-             )}
+               {query && (
+                 <button 
+                   onClick={() => setQuery('')}
+                   className="text-gray-500 hover:text-white"
+                 >
+                   <X className="w-6 h-6" />
+                 </button>
+               )}
+             </div>
           </div>
+          
+          {/* AI Wisdom Insight */}
+          {(isAiLoading || aiInsight) && (
+            <div className="mb-12 animate-in fade-in slide-in-from-top-8 duration-700">
+               <div className="bg-gradient-to-br from-blue-600/20 via-purple-600/20 to-transparent p-[2px] rounded-[2.5rem] shadow-[0_0_50px_rgba(37,99,235,0.1)]">
+                  <div className="bg-[#0B1F3A]/80 backdrop-blur-3xl rounded-[2.5rem] p-8 lg:p-10 border border-white/10 relative overflow-hidden group">
+                     {/* Holographic light effect */}
+                     <div className="absolute -top-24 -left-24 w-48 h-48 bg-blue-500/20 rounded-full blur-[80px] group-hover:bg-blue-500/30 transition-all duration-700" />
+                     
+                     <div className="flex items-start gap-6 relative z-10">
+                        <div className="w-16 h-16 rounded-2xl bg-blue-500/20 flex items-center justify-center border border-blue-500/30 shrink-0">
+                           <Sparkles className={`w-8 h-8 text-blue-400 ${isAiLoading ? 'animate-spin' : 'animate-pulse'}`} />
+                        </div>
+                        <div className="flex-1">
+                           <h4 className="text-blue-400 font-black text-xs uppercase tracking-[0.4em] mb-4 flex items-center gap-2">
+                             Divine AI Insight 
+                             {isAiLoading && <span className="w-1.5 h-1.5 bg-blue-400 rounded-full animate-bounce" />}
+                           </h4>
+                           {isAiLoading ? (
+                             <div className="space-y-3">
+                               <div className="h-4 bg-white/5 rounded-full w-3/4 animate-pulse" />
+                               <div className="h-4 bg-white/5 rounded-full w-1/2 animate-pulse" />
+                             </div>
+                           ) : (
+                             <p className="text-xl sm:text-2xl font-serif text-white/90 leading-relaxed italic">
+                                "{aiInsight}"
+                             </p>
+                           )}
+                        </div>
+                     </div>
+                  </div>
+               </div>
+            </div>
+          )}
 
           {/* Results Area */}
            {loading ? (
@@ -262,18 +355,52 @@ export default function Search() {
                )}
             </div>
           ) : (
-            <div className="h-64 flex flex-col items-center justify-center border-2 border-dashed border-white/10 rounded-3xl text-center px-6">
-              <div className="text-4xl mb-4 opacity-20">🔍</div>
-              <p className="text-gray-500 font-medium">No uploaded content is available yet.</p>
-              <p className="text-gray-600 text-sm mt-2">When slokas, stories, videos, or movies are uploaded, they will appear here automatically.</p>
-              {recentSearches.length > 0 && (
-                <button
-                  onClick={clearRecentSearches}
-                  className="mt-6 text-[10px] uppercase tracking-widest font-black text-gray-400 hover:text-white transition-colors"
-                >
-                  Clear recent searches
-                </button>
-              )}
+            <div className="space-y-12 animate-in fade-in duration-700">
+               <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+                  <div className="space-y-6">
+                     <h3 className="text-4xl lg:text-5xl font-serif font-black text-white uppercase tracking-tight leading-none">Seek & <span className="text-devotion-gold">Awaken</span></h3>
+                     <p className="text-gray-400 text-lg leading-relaxed font-medium">"Explore the depths of ancient wisdom. From the battlefield of Kurukshetra to the paths of Karma Yoga, discover everything here."</p>
+                     
+                     <div className="flex flex-wrap gap-4 pt-4">
+                        {['Bhagavad Gita', 'Karma Yoga', 'Meditation', 'Krishna', 'Peace', 'Dharma'].map(tag => (
+                          <button 
+                            key={tag} 
+                            onClick={() => setQuery(tag)}
+                            className="px-6 py-3 rounded-2xl bg-white/5 border border-white/10 text-[11px] font-black uppercase tracking-widest text-devotion-gold hover:bg-devotion-gold hover:text-black transition-all shadow-xl"
+                          >
+                            #{tag}
+                          </button>
+                        ))}
+                     </div>
+                  </div>
+                  <div className="relative aspect-video rounded-[3rem] overflow-hidden border-8 border-white/5 shadow-2xl group">
+                     <img src="/scene-krishna.svg" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000 opacity-60" alt="Wisdom" />
+                     <div className="absolute inset-0 bg-gradient-to-t from-[#06101E] via-transparent to-transparent" />
+                     <div className="absolute bottom-8 left-8 right-8">
+                        <div className="flex items-center gap-3 mb-2">
+                           <div className="w-1.5 h-1.5 bg-devotion-gold rounded-full animate-pulse" />
+                           <span className="text-[10px] font-black text-devotion-gold uppercase tracking-[0.3em]">AI Topic of the Day</span>
+                        </div>
+                        <h4 className="text-2xl font-black uppercase tracking-tighter">The Path of Devotion</h4>
+                     </div>
+                  </div>
+               </div>
+
+               <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                  {[
+                    { title: 'Divine Movies', count: results.movies.length || 0, color: 'text-yellow-400' },
+                    { title: 'Sacred Slokas', count: results.slokas.length || 0, color: 'text-devotion-gold' },
+                    { title: 'Spiritual Stories', count: results.stories.length || 0, color: 'text-blue-400' }
+                  ].map(stat => (
+                    <div key={stat.title} className="bg-white/5 p-8 rounded-[2.5rem] border border-white/5 backdrop-blur-3xl hover:border-white/10 transition-all group">
+                       <p className="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-2">{stat.title}</p>
+                       <div className="flex items-end justify-between">
+                          <span className={`text-4xl font-serif font-black ${stat.color}`}>{stat.count}+</span>
+                          <span className="text-[8px] text-gray-600 font-bold uppercase tracking-[0.3em]">Vault Count</span>
+                       </div>
+                    </div>
+                  ))}
+               </div>
             </div>
           )}
        </div>

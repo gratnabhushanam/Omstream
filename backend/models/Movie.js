@@ -14,7 +14,9 @@ const MovieSchema = new mongoose.Schema({
   hlsUrl: { type: String },
   views: { type: Number, default: 0 },
   isComingSoon: { type: Boolean, default: false },
-  isKids: { type: Boolean, default: false }
+  isKids: { type: Boolean, default: false },
+  translations: { type: mongoose.Schema.Types.Mixed, default: {} },
+  subtitles: { type: mongoose.Schema.Types.Mixed, default: {} }
 }, {
   timestamps: true,
   strict: false

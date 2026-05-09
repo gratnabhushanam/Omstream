@@ -218,6 +218,10 @@ const initializeApp = async () => {
         try {
           await initializeAdminCredentials();
           
+          // Initialize AI Background Worker
+          const { startWorker } = require('./services/aiWorker');
+          startWorker();
+          
           // Initialize Cron Jobs (only run in primary/single process if possible, but safe here)
           const { initCronJobs } = require('./utils/cronJobs');
           initCronJobs();
