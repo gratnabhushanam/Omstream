@@ -1,243 +1,209 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useLocation } from 'react-router-dom';
 import axios from 'axios';
-import { Film, Play, X, Star, Sparkles, Heart, Maximize, ChevronRight, ChevronLeft, Info } from 'lucide-react';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { Play, Star, Sparkles, Heart, Search, Mic, Lock, Volume2, VolumeX, ArrowLeft, Film, Compass, Flame } from 'lucide-react';
 import MediaPlayerHLS from '../components/MediaPlayerHLS';
 
 export default function Movies() {
   const location = useLocation();
+  const navigate = useNavigate();
   const [movies, setMovies] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedMovie, setSelectedMovie] = useState(null);
-  const [featuredMovie, setFeaturedMovie] = useState(null);
-
-  useEffect(() => { fetchMovies(); }, []);
+  const [heroIndex, setHeroIndex] = useState(0);
+  const [isMuted, setIsMuted] = useState(true);
+  const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
-    const openMovieId = location.state?.openMovieId;
-    if (!openMovieId || movies.length === 0 || selectedMovie) return;
-    const matchedMovie = movies.find((m) => String(m._id || m.id) === String(openMovieId));
-    if (matchedMovie) setSelectedMovie(matchedMovie);
-  }, [location.state, movies, selectedMovie]);
+    setLoading(true);
+    axios.get('/api/movies')
+      .then((res) => setMovies(Array.isArray(res.data) ? res.data : []))
+      .catch(() => setMovies([]))
+      .finally(() => setLoading(false));
 
-  const fetchMovies = async () => {
-    try {
-      const response = await axios.get('/api/movies');
-      const fetchedMovies = response.data || [];
-      setMovies(fetchedMovies);
-      if (fetchedMovies.length > 0) {
-        // Pick the first one as featured, or one with a specific flag if we had one
-        setFeaturedMovie(fetchedMovies[0]);
-      }
-    } catch {
-      setMovies([]);
-    } finally {
-      setLoading(false);
-    }
-  };
+    const handleScroll = () => setScrolled(window.scrollY > 50);
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [location]);
 
-  if (loading) return (
-    <div className="min-h-screen flex items-center justify-center bg-[#06101E]">
-      <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-devotion-gold"></div>
-    </div>
-  );
+  const heroMovies = movies.slice(0, 4);
 
-  // Group movies by tags/genre for swimlanes
-  const rows = {};
-  movies.forEach(movie => {
-    const categories = movie.tags && movie.tags.length > 0 ? movie.tags : (movie.genre ? [movie.genre] : ['Featured']);
-    categories.forEach(cat => {
-      const catName = cat.charAt(0).toUpperCase() + cat.slice(1);
-      if (!rows[catName]) rows[catName] = [];
-      // Prevent duplicates in a row
-      if (!rows[catName].find(m => m._id === movie._id)) {
-        rows[catName].push(movie);
-      }
-    });
-  });
+  useEffect(() => {
+    if (heroMovies.length === 0) return;
+    const interval = setInterval(() => {
+      setHeroIndex((prev) => (prev + 1) % heroMovies.length);
+    }, 6000);
+    return () => clearInterval(interval);
+  }, [heroMovies.length]);
 
-  // Ensure 'Featured' row exists if nothing else
-  if (Object.keys(rows).length === 0 && movies.length > 0) {
-    rows['All Movies'] = [...movies];
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#4FACFE] to-[#00F2FE]">
+        <div className="animate-spin rounded-full h-20 w-20 border-t-8 border-white border-dashed"></div>
+      </div>
+    );
   }
 
-  const extractYoutubeId = (url) => {
-    if (!url) return null;
-    const match = url.match(/[?&]v=([^&]+)/) || url.match(/youtu\.be\/([^?]+)/);
-    return match ? match[1] : null;
-  };
+  const categories = [
+    { title: 'Trending Now', color: 'from-[#FF6B6B] to-[#FF8E8B]', icon: <Flame className="w-6 h-6 text-white" /> },
+    { title: 'Divine Epics', color: 'from-[#4FACFE] to-[#00F2FE]', icon: <Sparkles className="w-6 h-6 text-white" /> },
+    { title: 'Action & Adventure', color: 'from-[#FA709A] to-[#FEE140]', icon: <Compass className="w-6 h-6 text-white" /> },
+    { title: 'Top Rated', color: 'from-[#667EEA] to-[#764BA2]', icon: <Star className="w-6 h-6 text-white" /> },
+  ];
 
+  const featuredMovie = heroMovies[heroIndex];
+  const extractYoutubeId = (url) => { if (!url) return null; const match = url.match(/[?&]v=([^&]+)/) || url.match(/youtu\.be\/([^?]+)/); return match ? match[1] : null; };
   const featuredYtId = featuredMovie ? extractYoutubeId(featuredMovie.videoUrl || featuredMovie.youtubeUrl || featuredMovie.url || '') : null;
   const featuredThumbUrl = featuredMovie ? (featuredMovie.thumbnail || featuredMovie.thumbnailUrl || (featuredYtId ? `https://img.youtube.com/vi/${featuredYtId}/maxresdefault.jpg` : '/scene-krishna.svg')) : '';
-  const heroMovie = featuredMovie;
-  const heroYtId = heroMovie ? extractYoutubeId(heroMovie.videoUrl || heroMovie.youtubeUrl || heroMovie.url || '') : null;
-  const heroThumbUrl = heroMovie ? (heroMovie.thumbnail || heroMovie.thumbnailUrl || (heroYtId ? `https://img.youtube.com/vi/${heroYtId}/maxresdefault.jpg` : '/scene-krishna.svg')) : '';
 
   return (
-    <div className="min-h-[100dvh] bg-[#050B14] relative overflow-y-auto overflow-x-hidden text-white pl-safe pr-safe">
+    <div className="min-h-[100dvh] bg-[#F2F7FF] text-[#2D3748] overflow-x-hidden font-['Nunito',sans-serif]">
       <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap');
         .hide-scrollbar::-webkit-scrollbar { display: none; }
         .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-        
-        @keyframes subtle-zoom {
-          0% { transform: scale(1); }
-          100% { transform: scale(1.05); }
-        }
-        .animate-subtle-zoom {
-          animation: subtle-zoom 20s infinite alternate ease-in-out;
-        }
+        .movies-nav { background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(20px); box-shadow: 0 10px 30px rgba(0,0,0,0.05); }
+        .bubbly-button { transition: all 0.2s cubic-bezier(0.68, -0.55, 0.265, 1.55); }
+        .bubbly-button:hover { transform: scale(1.1) rotate(-3deg); }
+        .bubbly-button:active { transform: scale(0.9); }
       `}</style>
 
-      {/* Netflix-style Hero Banner */}
-      {heroMovie && (
-        <div className="relative w-full h-[70vh] md:h-[85vh] tv:h-[90vh] flex items-end pb-24 md:pb-32 px-4 sm:px-6 lg:px-12 tv:px-20 pt-20">
-          <div className="absolute inset-0 z-0 bg-black overflow-hidden">
-            {heroMovie.trailerUrl ? (
+      {/* Vibrant Movies Navbar */}
+      <nav className={`fixed top-0 w-full z-50 transition-all duration-300 ${scrolled ? 'movies-nav py-3' : 'bg-transparent py-6'} px-6 md:px-12 flex items-center justify-between`}>
+        <div className="flex items-center gap-6">
+          <button onClick={() => navigate('/home')} className="w-12 h-12 bg-white rounded-full shadow-lg flex items-center justify-center bubbly-button text-[#4FACFE]">
+            <ArrowLeft className="w-6 h-6" />
+          </button>
+          <h1 className="text-4xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-[#4FACFE] via-[#00F2FE] to-[#667EEA] drop-shadow-sm flex items-center gap-2">
+            <Film className="w-8 h-8 text-[#4FACFE]" /> Divine Cinema
+          </h1>
+        </div>
+
+        <div className="flex items-center gap-4">
+          <div className="hidden md:flex items-center bg-white rounded-full px-5 py-3 shadow-[0_5px_15px_rgba(0,0,0,0.08)] border-4 border-[#F2F7FF] focus-within:border-[#FA709A] transition-all">
+            <Search className="w-5 h-5 text-[#A0AEC0]" />
+            <input type="text" placeholder="Find movies..." className="bg-transparent border-none outline-none font-bold px-3 w-48 text-[#2D3748] placeholder-[#A0AEC0]" />
+            <button className="w-8 h-8 bg-[#FA709A] rounded-full flex items-center justify-center bubbly-button">
+              <Mic className="w-4 h-4 text-white" />
+            </button>
+          </div>
+        </div>
+      </nav>
+
+      {/* Vibrant Cinematic Hero */}
+      {featuredMovie && (
+        <div className="relative w-full h-[75vh] md:h-[85vh] flex items-end pb-24 md:pb-32 px-6 md:px-16 pt-32">
+          <div className="absolute inset-4 md:inset-8 z-0 rounded-[3rem] overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.15)] border-8 border-white bg-[#0F1014]">
+            {featuredMovie.trailerUrl ? (
               <div className="w-full h-full relative">
                 <MediaPlayerHLS
-                  url={heroMovie.trailerUrl}
-                  title={heroMovie.title}
-                  className="w-full h-full object-cover opacity-70 transform-gpu"
+                  url={featuredMovie.trailerUrl}
+                  className="w-full h-full object-cover scale-105"
                   autoPlay={true}
-                  muted={true}
+                  muted={isMuted}
                   loop={true}
                   controls={false}
-                  instagramMode={true} // Minimal UI
+                  instagramMode={true}
                 />
-                <div className="absolute inset-0 bg-black/40" />
+                <button 
+                  onClick={() => setIsMuted(!isMuted)}
+                  className="absolute bottom-8 right-8 z-20 w-14 h-14 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center hover:bg-white transition-all text-white hover:text-black border-2 border-white"
+                >
+                  {isMuted ? <VolumeX className="w-6 h-6" /> : <Volume2 className="w-6 h-6" />}
+                </button>
               </div>
             ) : (
-              <img 
-                src={heroThumbUrl} 
-                alt={heroMovie.title}
-                className="w-full h-full object-cover opacity-60 animate-subtle-zoom"
-              />
+              <img src={featuredThumbUrl} alt={featuredMovie.title} className="w-full h-full object-cover opacity-90" />
             )}
-            
-            {/* Elegant Gradient overlays to blend into background */}
-            <div className="absolute inset-0 bg-gradient-to-t from-[#050B14] via-[#050B14]/60 to-transparent"></div>
-            <div className="absolute inset-0 bg-gradient-to-r from-[#050B14] via-[#050B14]/40 to-transparent w-[70%]"></div>
+            <div className="absolute inset-0 bg-gradient-to-t from-[#2D3748] via-transparent to-transparent opacity-80" />
+            <div className="absolute inset-0 bg-gradient-to-r from-[#2D3748] via-[#2D3748]/60 to-transparent w-[70%] opacity-90" />
           </div>
 
-          <div className="relative z-10 max-w-3xl tv:max-w-5xl space-y-4 md:space-y-6 animate-fade-in-up">
-            <div className="flex flex-wrap items-center gap-4">
-              <div className="flex items-center gap-2">
-                <Sparkles className="w-4 h-4 text-devotion-gold" />
-                <span className="text-devotion-gold font-black tracking-[0.4em] uppercase text-xs tv:text-sm">Gita Original</span>
-              </div>
-              <div className="flex items-center gap-2 text-gray-400 font-bold uppercase tracking-widest text-[10px] tv:text-xs">
-                <span>{heroMovie.genre || 'Divine'}</span>
-                {heroMovie.duration > 0 && (
-                   <>
-                     <span className="w-1 h-1 bg-gray-600 rounded-full"></span>
-                     <span>{heroMovie.duration}m</span>
-                   </>
-                )}
-              </div>
-              {heroMovie.isComingSoon && (
-                 <span className="bg-red-600 text-white px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest shadow-xl">Upcoming</span>
-              )}
+          <div className="relative z-10 w-full max-w-4xl space-y-6 md:ml-12 mb-8">
+            <div className="inline-flex items-center gap-3 px-6 py-2 rounded-full bg-white text-[#4FACFE] font-black text-sm uppercase tracking-widest shadow-[0_10px_20px_rgba(79,172,254,0.3)] animate-bounce border-2 border-[#4FACFE]/20">
+              <Star className="w-5 h-5 fill-[#FEE140] text-[#FEE140]" /> 
+              Blockbuster Hit
             </div>
             
-            <h1 className="text-5xl md:text-7xl tv:text-[8rem] font-serif font-black text-white leading-[0.9] drop-shadow-2xl uppercase tracking-tighter">
-              {heroMovie.title}
+            <h1 className="text-5xl md:text-7xl lg:text-[6rem] font-black leading-[0.9] text-white drop-shadow-[0_5px_5px_rgba(0,0,0,0.5)]">
+              {featuredMovie.title}
             </h1>
             
-            <p className="text-sm md:text-lg tv:text-2xl text-gray-300 line-clamp-3 md:line-clamp-4 font-serif italic max-w-2xl drop-shadow-lg leading-relaxed">
-              {heroMovie.desc || heroMovie.description || 'A journey through divine narratives and spiritual wisdom.'}
+            <p className="text-lg md:text-2xl text-white line-clamp-2 max-w-2xl font-bold drop-shadow-md">
+              {featuredMovie.desc || featuredMovie.description || 'Experience the ultimate cinematic journey through divine worlds!'}
             </p>
 
-            <div className="flex items-center gap-4 pt-4">
+            <div className="flex items-center gap-5 pt-4">
               <button 
-                onClick={() => setSelectedMovie(heroMovie)}
-                tabIndex={0}
-                className="tv-focusable focus:outline-none focus:ring-4 focus:ring-devotion-gold flex items-center justify-center gap-3 bg-white text-black px-6 py-3 md:px-8 md:py-4 tv:px-12 tv:py-5 rounded-xl font-black text-sm md:text-base tv:text-xl uppercase tracking-widest hover:bg-gray-200 transition-colors shadow-2xl active:scale-95"
+                onClick={() => setSelectedMovie(featuredMovie)}
+                className="flex items-center gap-4 bg-gradient-to-r from-[#4FACFE] to-[#00F2FE] text-white px-10 py-5 rounded-full font-black text-xl tv:text-2xl bubbly-button shadow-[0_15px_30px_rgba(79,172,254,0.4)] border-4 border-white"
               >
-                <Play className="w-5 h-5 tv:w-7 tv:h-7 fill-current" /> {heroMovie.isComingSoon ? 'Watch Trailer' : 'Play Now'}
+                <Play className="w-8 h-8 fill-current" /> PLAY NOW!
               </button>
               <button 
-                onClick={() => setSelectedMovie(heroMovie)}
-                tabIndex={0}
-                className="tv-focusable focus:outline-none focus:ring-4 focus:ring-devotion-gold flex items-center justify-center gap-3 bg-white/20 backdrop-blur-md border border-white/30 text-white px-6 py-3 md:px-8 md:py-4 tv:px-12 tv:py-5 rounded-xl font-black text-sm md:text-base tv:text-xl uppercase tracking-widest hover:bg-white/30 transition-colors shadow-2xl active:scale-95"
+                className="flex items-center gap-3 bg-white text-[#FA709A] px-8 py-5 rounded-full font-black text-xl tv:text-2xl bubbly-button shadow-xl border-4 border-[#FA709A]/20"
               >
-                <Info className="w-5 h-5 tv:w-7 tv:h-7" /> More Info
+                <Heart className="w-8 h-8 fill-current" /> Save
               </button>
             </div>
+          </div>
+
+          <div className="absolute bottom-16 right-20 flex gap-3 z-20">
+            {heroMovies.map((_, i) => (
+              <div key={i} className={`h-3 rounded-full transition-all duration-500 ${i === heroIndex ? 'w-10 bg-[#4FACFE] shadow-[0_0_15px_rgba(79,172,254,0.8)]' : 'w-3 bg-white/50'}`} />
+            ))}
           </div>
         </div>
       )}
 
-      <div className="relative z-10 pb-32 -mt-10 md:-mt-20 tv:-mt-32">
-        {/* Horizontal Rows */}
-        {Object.entries(rows).map(([category, categoryMovies], index) => (
-          <MovieRow 
-            key={category} 
-            title={category} 
-            movies={categoryMovies} 
+      {/* Colorful Category Rows */}
+      <div className="relative z-10 pb-32">
+        {categories.map((cat, index) => (
+          <MoviesRow 
+            key={cat.title} 
+            category={cat} 
+            movies={movies} 
             onSelect={setSelectedMovie} 
             index={index}
           />
         ))}
 
         {movies.length === 0 && (
-          <div className="text-center py-40 bg-white/5 rounded-[3rem] border-2 border-dashed border-white/10 mx-4 md:mx-12">
-            <Film className="w-16 h-16 text-gray-700 mx-auto mb-6 opacity-30" />
-            <p className="text-xl font-serif italic text-gray-500 uppercase tracking-widest">Awaiting Divine Content</p>
+          <div className="text-center py-20 bg-white/50 rounded-[3rem] mx-6 border-4 border-dashed border-[#4FACFE]">
+            <Film className="w-20 h-20 text-[#4FACFE] mx-auto mb-6 animate-pulse" />
+            <p className="text-3xl font-black text-[#4FACFE]">Loading blockbuster movies...</p>
           </div>
         )}
       </div>
 
-      {/* Movie Modal */}
+      {/* Disney-style Video Modal for Movies */}
       {selectedMovie && (
-        <MovieModal movie={selectedMovie} onClose={() => setSelectedMovie(null)} />
+        <MovieModal movie={selectedMovie} onClose={() => setSelectedMovie(null)} navigate={navigate} />
       )}
     </div>
   );
 }
 
-function MovieRow({ title, movies, onSelect, index }) {
+function MoviesRow({ category, movies, onSelect }) {
   const scrollRef = useRef(null);
-
-  const scroll = (direction) => {
-    if (scrollRef.current) {
-      const { clientWidth } = scrollRef.current;
-      const scrollAmount = direction === 'left' ? -clientWidth + 100 : clientWidth - 100;
-      scrollRef.current.scrollBy({ left: scrollAmount, behavior: 'smooth' });
-    }
-  };
+  const rowMovies = [...movies].sort(() => 0.5 - Math.random()); // Shuffle for demo
 
   return (
-    <div className="mb-10 md:mb-16 tv:mb-20">
-      <div className="px-4 md:px-12 tv:px-20 mb-4 flex items-center justify-between group">
-        <h2 className="text-xl md:text-2xl tv:text-4xl font-bold text-white capitalize flex items-center gap-2 transition-colors group-hover:text-devotion-gold">
-          {title} <ChevronRight className="w-5 h-5 opacity-0 group-hover:opacity-100 transition-opacity translate-x-[-10px] group-hover:translate-x-0" />
-        </h2>
+    <div className="mb-16">
+      <div className="px-6 md:px-16 mb-6 flex items-center justify-between">
+        <div className={`inline-flex items-center gap-3 px-6 py-3 rounded-full bg-gradient-to-r ${category.color} text-white shadow-lg`}>
+          {category.icon || <Film className="w-6 h-6" />}
+          <h2 className="text-2xl md:text-3xl font-black uppercase tracking-wider">
+            {category.title}
+          </h2>
+        </div>
       </div>
       
       <div className="relative group/row">
-        {/* Scroll Controls (Desktop only) */}
-        <button 
-          onClick={() => scroll('left')}
-          className="hidden md:flex absolute left-0 top-0 bottom-0 z-20 w-16 bg-gradient-to-r from-[#050B14] to-transparent items-center justify-center opacity-0 group-hover/row:opacity-100 transition-opacity hover:from-[#050B14]/90"
-        >
-          <ChevronLeft className="w-10 h-10 text-white hover:scale-125 transition-transform" />
-        </button>
-        
-        <button 
-          onClick={() => scroll('right')}
-          className="hidden md:flex absolute right-0 top-0 bottom-0 z-20 w-16 bg-gradient-to-l from-[#050B14] to-transparent items-center justify-center opacity-0 group-hover/row:opacity-100 transition-opacity hover:from-[#050B14]/90"
-        >
-          <ChevronRight className="w-10 h-10 text-white hover:scale-125 transition-transform" />
-        </button>
-
-        {/* Horizontal Scroll Container */}
-        <div 
-          ref={scrollRef}
-          className="flex overflow-x-auto overflow-y-visible hide-scrollbar px-4 md:px-12 tv:px-20 gap-4 tv:gap-6 py-6 snap-x snap-mandatory"
-        >
-          {movies.map((movie) => (
+        <div ref={scrollRef} className="flex overflow-x-auto hide-scrollbar px-6 md:px-16 gap-6 py-6 snap-x snap-mandatory">
+          {rowMovies.map((movie) => (
             <div key={movie._id || movie.id} className="snap-start shrink-0">
-              <RowMovieCard video={movie} onSelect={onSelect} />
+              <MovieCard movie={movie} onSelect={onSelect} colorClass={category.color} />
             </div>
           ))}
         </div>
@@ -246,174 +212,102 @@ function MovieRow({ title, movies, onSelect, index }) {
   );
 }
 
-function RowMovieCard({ video, onSelect }) {
-  const [isHovered, setIsHovered] = useState(false);
-  const hoverTimeoutRef = useRef(null);
-
-  const handleMouseEnter = () => { setIsHovered(true); };
-  const handleMouseLeave = () => { setIsHovered(false); };
-
+function MovieCard({ movie, onSelect, colorClass }) {
   const extractYoutubeId = (url) => { if (!url) return null; const match = url.match(/[?&]v=([^&]+)/) || url.match(/youtu\.be\/([^?]+)/); return match ? match[1] : null; };
-
-  const ytId = extractYoutubeId(video.videoUrl || video.youtubeUrl || video.url || '');
-  const thumbUrl = video.thumbnail || video.thumbnailUrl || (ytId ? `https://img.youtube.com/vi/${ytId}/maxresdefault.jpg` : '/scene-krishna.svg');
+  const ytId = extractYoutubeId(movie.videoUrl || movie.youtubeUrl || movie.url || '');
+  const thumbUrl = movie.thumbnail || movie.thumbnailUrl || (ytId ? `https://img.youtube.com/vi/${ytId}/maxresdefault.jpg` : '/scene-krishna.svg');
 
   return (
     <div
-      tabIndex={0}
-      className={`relative cursor-pointer group rounded-xl md:rounded-2xl tv:rounded-3xl overflow-hidden shadow-xl border border-white/5 bg-[#0A1220]
-                 w-[280px] h-[160px] md:w-[320px] md:h-[180px] tv:w-[480px] tv:h-[270px]
-                 transition-all duration-700 ease-out tv-focusable focus:outline-none focus:ring-4 focus:ring-white z-10 hover:z-30 hover:scale-[1.09] hover:shadow-[0_28px_70px_rgba(0,0,0,0.9)] origin-center transform-gpu perspective-[1400px] hover:[transform:translateY(-2px)_rotateX(6deg)_rotateY(-8deg)_scale(1.09)]`}
-      onMouseEnter={handleMouseEnter}
-      onMouseLeave={handleMouseLeave}
-      onClick={() => onSelect(video)}
+      className={`relative w-[280px] h-[320px] md:w-[320px] md:h-[360px] rounded-[2.5rem] overflow-hidden cursor-pointer bg-white shadow-[0_15px_35px_rgba(0,0,0,0.08)] border-4 border-transparent hover:border-white transition-all duration-300 bubbly-button group`}
+      onClick={() => onSelect(movie)}
     >
-      <div className="absolute inset-0 bg-black">
-        <div className="absolute inset-0 scale-110 translate-y-4 opacity-45 blur-xl bg-black">
-          <img src={thumbUrl} alt="" aria-hidden="true" className="w-full h-full object-cover" />
+      <div className="absolute top-0 inset-x-0 h-[60%]">
+        <img src={thumbUrl} alt={movie.title} className="w-full h-full object-cover rounded-b-[2rem]" />
+        <div className={`absolute top-4 left-4 px-3 py-1 bg-gradient-to-r ${colorClass} text-white font-black text-[10px] rounded-full uppercase tracking-widest shadow-md border-2 border-white`}>
+          {movie.duration ? `${movie.duration} MINS` : 'FEATURE'}
         </div>
-        <img src={thumbUrl} alt={video.title} loading="lazy" className="relative z-10 w-full h-full object-cover opacity-85 transition-transform duration-700 group-hover:scale-105" />
-        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/35 to-transparent z-10" />
-        <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/10 to-transparent" />
-        <div className="absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-[#050B14] to-transparent z-10" />
-      </div>
-
-      <div className="absolute top-4 left-4 z-30 flex items-center gap-2">
-        <span className="px-3 py-1 rounded-full bg-black/55 backdrop-blur-md border border-white/10 text-[9px] font-black uppercase tracking-[0.25em] text-white">
-          {video.isComingSoon || video.trailerUrl ? 'Trailer' : 'Feature'}
-        </span>
-        {video.genre && (
-          <span className="px-3 py-1 rounded-full bg-devotion-gold/15 backdrop-blur-md border border-devotion-gold/20 text-[9px] font-black uppercase tracking-[0.25em] text-devotion-gold">
-            {video.genre}
-          </span>
-        )}
-      </div>
-
-      <div className={`absolute inset-0 p-4 md:p-6 z-20 flex flex-col justify-end transition-all duration-700 ${isHovered ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2'}`}>
-        <div className="absolute inset-x-4 bottom-4 h-[42%] rounded-[1.5rem] bg-black/35 backdrop-blur-xl border border-white/10 shadow-[0_20px_50px_rgba(0,0,0,0.45)]" />
-        <div className="relative z-10 flex items-center gap-3 mb-3">
-          <button className="w-9 h-9 md:w-11 md:h-11 rounded-full bg-white text-black flex items-center justify-center shadow-[0_10px_30px_rgba(0,0,0,0.35)] transition-all duration-500 group-hover:scale-110 group-hover:bg-devotion-gold" onClick={(e) => { e.stopPropagation(); onSelect(video); }}>
-            <Play className="w-4 h-4 md:w-5 md:h-5 ml-1 fill-current" />
-          </button>
-          <div className="flex-1">
-             <h3 className="text-sm md:text-base font-black text-white line-clamp-1 tracking-tight">{video.title}</h3>
-             <p className="text-[10px] md:text-xs text-gray-300 mt-1 line-clamp-1">{video.isComingSoon ? 'Upcoming teaser' : 'Stream-ready feature film'}</p>
+        
+        {/* Play Button Overlay */}
+        <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center rounded-b-[2rem]">
+          <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center shadow-2xl animate-bounce">
+            <Play className="w-8 h-8 text-[#4FACFE] ml-1 fill-current" />
           </div>
-          <button onClick={(e) => { e.stopPropagation(); onSelect(video); }} className="ml-3 px-3 py-2 rounded-full bg-white/10 border border-white/20 text-[10px] font-black uppercase tracking-widest text-white backdrop-blur-md transition-all duration-500 hover:bg-white/20 hover:scale-105">
-            More Info
-          </button>
         </div>
-        <div className="relative z-10 flex flex-wrap items-center gap-2 text-[10px] md:text-xs text-gray-300 font-black uppercase tracking-wider">
-          <span className={video.isComingSoon ? 'text-devotion-gold' : 'text-green-400'}>{video.isComingSoon ? 'Trailer' : '98% Match'}</span>
-          <span className="bg-white/10 px-2 py-1 rounded-full border border-white/10 text-white">{video.category || 'Movie'}</span>
-          <span className="bg-white/10 px-2 py-1 rounded-full border border-white/10 text-white">{video.releaseYear || 'NEW'}</span>
-          {video.duration > 0 && <span className="bg-white/10 px-2 py-1 rounded-full border border-white/10 text-white">{video.duration}m</span>}
-        </div>
+      </div>
+
+      <div className="absolute bottom-0 inset-x-0 h-[40%] p-6 flex flex-col justify-center items-center text-center bg-white">
+        <h3 className="font-black text-xl text-[#2D3748] line-clamp-2 leading-tight mb-2 group-hover:text-[#4FACFE] transition-colors">{movie.title}</h3>
+        <p className="text-sm font-bold text-[#A0AEC0] uppercase tracking-widest bg-[#F2F7FF] px-4 py-1 rounded-full">
+          {movie.genre || 'Action & Drama'}
+        </p>
       </div>
     </div>
   );
 }
 
-function MovieModal({ movie, onClose }) {
-  const videoRef = useRef(null);
-
+function MovieModal({ movie, onClose, navigate }) {
   return (
-    <div className="fixed inset-0 z-[100] bg-[#02060B] flex flex-col overflow-y-auto pl-safe pr-safe no-scrollbar animate-in fade-in zoom-in duration-300">
-      {/* Top Header Controls */}
-      <div className="absolute top-0 w-full z-[130] flex items-center justify-between px-6 py-6 pointer-events-none">
-         <div className="pointer-events-auto">
-            <span className="bg-devotion-gold text-devotion-darkBlue px-5 py-2 rounded-2xl font-black text-[10px] tracking-widest uppercase shadow-2xl border border-white/20">Divine Cinema</span>
-         </div>
-         <button onClick={onClose} className="tv-focusable pointer-events-auto bg-black/40 backdrop-blur-xl text-white w-14 h-14 tv:w-20 tv:h-20 rounded-[2rem] flex items-center justify-center border border-white/20 hover:bg-red-500/40 transition-all active:scale-90 shadow-2xl">
-            <X className="w-7 h-7 tv:w-10 tv:h-10" />
-         </button>
-      </div>
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-8 animate-in fade-in duration-300">
+      <div className="absolute inset-0 bg-[#0F1014]/90 backdrop-blur-md" onClick={onClose} />
+      
+      <div className="relative w-full max-w-5xl bg-white rounded-[3rem] overflow-hidden shadow-[0_30px_100px_rgba(0,0,0,0.5)] z-10 flex flex-col max-h-[95vh] border-8 border-white">
+        
+        <button onClick={onClose} className="absolute top-6 right-6 z-50 w-12 h-12 bg-[#FF6B6B] rounded-full flex items-center justify-center bubbly-button text-white shadow-xl border-4 border-white">
+          <X className="w-6 h-6" />
+        </button>
 
-      {/* Video Player Section */}
-      <div ref={videoRef} className="relative w-full bg-black flex-shrink-0 z-10 shadow-[0_20px_100px_rgba(0,0,0,1)]">
-        <div className="w-full aspect-video">
+        <div className="w-full aspect-video bg-black rounded-b-[2rem] overflow-hidden shadow-xl relative z-20">
           <MediaPlayerHLS
-            url={(movie.isComingSoon && movie.trailerUrl) ? movie.trailerUrl : (movie.videoUrl || movie.youtubeUrl || movie.url)}
-            hlsUrl={movie.hlsUrl}
+            url={movie.trailerUrl || movie.videoUrl || movie.youtubeUrl || movie.url}
             title={movie.title}
             className="w-full h-full"
             autoPlay={true}
             controls={true}
-            playLimitSeconds={120}
           />
         </div>
-        <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-transparent to-transparent pointer-events-none z-0" />
-      </div>
 
-      {/* Detailed Info Section (Spiritual Aesthetic) */}
-      <div className="w-full min-h-screen bg-[#FFFDF5] px-6 py-12 md:p-24 relative overflow-hidden text-devotion-darkBlue">
-        <div className="absolute inset-0 z-0 opacity-[0.05] pointer-events-none bg-[url('/scene-krishna.svg')] bg-repeat bg-[length:400px_400px]" />
-        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-devotion-gold/10 rounded-full blur-[120px] -mr-40 -mt-40" />
-        
-        <div className="max-w-5xl mx-auto relative z-10 space-y-16">
-          <div className="border-b-2 border-devotion-gold/10 pb-12">
-            <div className="flex flex-wrap items-center gap-4 mb-8">
-               <span className="text-green-600 font-black text-sm uppercase tracking-widest">98% Match</span>
-               <span className="text-gray-500 font-bold">{movie.releaseYear || '2025'}</span>
-               <span className="bg-devotion-gold/10 px-3 py-1 rounded-lg text-devotion-gold font-black text-xs border border-devotion-gold/20">{movie.genre || 'Divine'}</span>
-               {movie.duration > 0 && <span className="text-[#5C2B11] font-bold text-sm">{movie.duration}m</span>}
-               <span className="bg-devotion-gold/10 px-3 py-1 rounded-lg text-devotion-gold font-black text-xs border border-devotion-gold/20">ULTRA HD</span>
+        <div className="p-8 md:p-10 overflow-y-auto hide-scrollbar bg-gradient-to-br from-[#F2F7FF] to-[#E2E8F0]">
+          <div className="flex flex-col md:flex-row gap-8 items-center md:items-start">
+            <div className="flex-1 text-center md:text-left space-y-4">
+              <div className="inline-flex items-center gap-2 bg-[#4FACFE] text-white px-4 py-1 rounded-full text-sm font-black uppercase tracking-widest shadow-md">
+                <Star className="w-4 h-4 fill-current" /> Cinematic Masterpiece
+              </div>
+              <h2 className="text-4xl md:text-5xl font-black text-[#2D3748] leading-tight">{movie.title}</h2>
+              <p className="text-lg text-[#718096] font-bold leading-relaxed">
+                {movie.desc || movie.description || 'Embark on a spectacular cinematic journey. This premium feature presentation combines breathtaking visuals with an immersive storyline.'}
+              </p>
             </div>
             
-            <h2 className="text-5xl md:text-8xl tv:text-[8rem] font-serif font-black text-[#5C2B11] mb-8 drop-shadow-sm tracking-tight leading-[0.9] uppercase">
-              {movie.title}
-            </h2>
-            
-            <p className="text-[#6D4224] text-2xl md:text-3xl font-serif italic leading-relaxed opacity-90 border-l-8 border-devotion-gold pl-8">
-              {movie.desc || movie.description || 'A journey through divine narratives and spiritual wisdom.'}
-            </p>
+            <div className="w-full md:w-auto flex flex-col gap-4">
+              <button 
+                onClick={() => { /* Play full movie logic */ }} 
+                className="bg-gradient-to-r from-[#4FACFE] to-[#00F2FE] text-white px-8 py-5 rounded-[2rem] font-black text-xl uppercase tracking-widest shadow-[0_10px_20px_rgba(79,172,254,0.4)] bubbly-button flex items-center justify-center gap-3 border-4 border-white"
+              >
+                <Play className="w-6 h-6 fill-current" /> Watch Full Movie
+              </button>
+              <button className="bg-white text-[#FA709A] px-8 py-5 rounded-[2rem] font-black text-xl uppercase tracking-widest shadow-lg bubbly-button flex items-center justify-center gap-3 border-4 border-[#FA709A]/20">
+                <Heart className="w-6 h-6 fill-current" /> Add to Watchlist
+              </button>
+            </div>
           </div>
-
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-12 pt-8">
-             <div className="lg:col-span-2 space-y-12">
-                {/* Spiritual Insights / Moral */}
-                <div className="bg-white rounded-[3.5rem] p-12 shadow-[0_30px_70px_rgba(0,0,0,0.08)] border-2 border-devotion-gold/5">
-                   <div className="flex items-center gap-5 mb-8">
-                      <div className="w-14 h-14 bg-devotion-gold/10 rounded-3xl flex items-center justify-center">
-                         <Sparkles className="w-8 h-8 text-devotion-gold" />
-                      </div>
-                      <span className="text-[11px] font-black text-[#8B4513] uppercase tracking-[0.4em]">Spiritual Insight</span>
-                   </div>
-                   <p className="text-3xl md:text-4xl font-serif font-black italic text-[#5C2B11] leading-tight">
-                      {movie.ownerHistory || "This sacred narrative reveals the eternal connection between the soul and the divine."}
-                   </p>
-                </div>
-
-                {/* Cast & Credits */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
-                   <div className="space-y-2">
-                      <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Directed By</p>
-                      <p className="text-xl font-bold text-[#5C2B11]">Divine Visionaries</p>
-                   </div>
-                   <div className="space-y-2">
-                      <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Featured Genre</p>
-                      <p className="text-xl font-bold text-[#5C2B11]">{movie.tags?.join(', ') || movie.genre || 'Spiritual, Epic'}</p>
-                   </div>
-                </div>
-             </div>
-
-             <div className="space-y-8">
-                {/* Watch Next Card */}
-                <div className="bg-gradient-to-br from-devotion-gold to-[#FFB800] rounded-[3rem] p-8 text-devotion-darkBlue shadow-2xl">
-                   <h4 className="text-xl font-black uppercase tracking-widest mb-4">Divine Bounty</h4>
-                   <p className="text-sm font-serif italic mb-8 opacity-80">Share the wisdom and earn spiritual points for every chapter watched.</p>
-                   <button className="w-full py-4 bg-devotion-darkBlue text-white rounded-2xl font-black uppercase tracking-widest text-[10px] hover:scale-105 transition-all">
-                      Share Wisdom
-                   </button>
-                </div>
-
-                <div className="p-8 border-2 border-dashed border-devotion-gold/20 rounded-[3rem]">
-                   <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-4">Content Rating</p>
-                   <p className="text-lg font-bold text-[#5C2B11]">U - Universal Wisdom</p>
-                   <p className="text-xs text-gray-500 mt-2">Suitable for all seeking souls.</p>
-                </div>
-             </div>
-          </div>
+          
+          {movie.genre && (
+            <div className="mt-10 bg-white rounded-[2rem] p-8 shadow-md border-2 border-[#4FACFE]/30 text-center flex flex-col md:flex-row justify-between items-center">
+              <div>
+                 <h3 className="text-xl font-black text-[#A0AEC0] uppercase tracking-widest mb-1">Genre</h3>
+                 <p className="text-2xl font-bold text-[#2D3748]">{movie.genre}</p>
+              </div>
+              <div>
+                 <h3 className="text-xl font-black text-[#A0AEC0] uppercase tracking-widest mb-1">Release Year</h3>
+                 <p className="text-2xl font-bold text-[#2D3748]">{movie.releaseYear || '2025'}</p>
+              </div>
+              <div>
+                 <h3 className="text-xl font-black text-[#A0AEC0] uppercase tracking-widest mb-1">Duration</h3>
+                 <p className="text-2xl font-bold text-[#2D3748]">{movie.duration || '120'} mins</p>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>
