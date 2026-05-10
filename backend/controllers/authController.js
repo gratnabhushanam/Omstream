@@ -72,17 +72,26 @@ exports.registerUser = async (req, res) => {
   try {
     const { name, email, password, phoneNumber } = req.body;
     const safeEmail = normalizeEmail(email);
+    console.log(`[AUTH] Registration attempt for: ${safeEmail}`);
+    
     if (!name || !safeEmail || !password) return res.status(400).json({ message: 'Name, email and password required' });
 
-    if (await findPersistentUserByEmail(safeEmail)) return res.status(400).json({ message: 'User already exists' });
+    if (await findPersistentUserByEmail(safeEmail)) {
+      console.warn(`[AUTH] Registration failed: User exists ${safeEmail}`);
+      return res.status(400).json({ message: 'User already exists' });
+    }
 
     const hashedPassword = await bcrypt.hash(password, 10);
     const otp = createOtp();
     pendingRegistrations.set(safeEmail, { name, email: safeEmail, phoneNumber, password: hashedPassword, otp, expiresAt: getOtpExpiryTime(), attempts: 0 });
 
+    console.log(`[AUTH] Sending OTP to ${safeEmail}`);
     const delivery = await sendOtpEmail({ email: safeEmail, name, otp });
     return res.status(200).json({ message: 'OTP sent', email: safeEmail, previewCode: delivery.previewCode });
-  } catch (error) { res.status(500).json({ message: error.message }); }
+  } catch (error) { 
+    console.error(`[AUTH] Registration error: ${error.message}`);
+    res.status(500).json({ message: error.message }); 
+  }
 };
 
 exports.resendRegistrationOtp = async (req, res) => {
@@ -118,19 +127,32 @@ exports.verifyRegistrationOtp = async (req, res) => {
 exports.loginUser = async (req, res) => {
   try {
     const { email, password } = req.body;
+    console.log(`[AUTH] Login attempt for: ${email}`);
     const user = await findPersistentUserByEmail(normalizeEmail(email));
-    if (user && (await bcrypt.compare(password, user.password))) {
-      // Fail-safe: Ensure admin role is correct for bootstrap admin
-      if (ADMIN_EMAIL && normalizeEmail(user.email) === normalizeEmail(ADMIN_EMAIL)) {
-        user.role = 'admin';
+    
+    if (!user) {
+      console.warn(`[AUTH] User not found: ${email}`);
+    } else {
+      const isMatch = await bcrypt.compare(password, user.password);
+      if (isMatch) {
+        // Fail-safe: Ensure admin role is correct for bootstrap admin
+        if (ADMIN_EMAIL && normalizeEmail(user.email) === normalizeEmail(ADMIN_EMAIL)) {
+          user.role = 'admin';
+        }
+        user.lastActive = new Date();
+        user.streak = (user.streak || 0) + 1;
+        await user.save();
+        console.log(`[AUTH] Login successful: ${email}`);
+        return res.json({ ...sanitizeUserForResponse(user), token: generateToken(user.id) });
+      } else {
+        console.warn(`[AUTH] Password mismatch for: ${email}`);
       }
-      user.lastActive = new Date();
-      user.streak = (user.streak || 0) + 1;
-      await user.save();
-      return res.json({ ...sanitizeUserForResponse(user), token: generateToken(user.id) });
     }
     res.status(401).json({ message: 'Invalid credentials' });
-  } catch (error) { res.status(500).json({ message: error.message }); }
+  } catch (error) { 
+    console.error(`[AUTH] Login error: ${error.message}`);
+    res.status(500).json({ message: error.message }); 
+  }
 };
 
 exports.getUserProfile = async (req, res) => {
