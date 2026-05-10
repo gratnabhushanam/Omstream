@@ -56,7 +56,6 @@ const allowedOrigins = [
   'http://localhost:5000',
   'http://localhost:8888',
   'https://gitawisdom.onrender.com',
-  'https://gita-wisdom-1.onrender.com',
   // Vercel production & preview deployments
   'https://gitwisdom.vercel.app',
   'https://gita-wisdom.vercel.app',

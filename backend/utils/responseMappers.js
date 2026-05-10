@@ -17,7 +17,7 @@ const mapMovie = (movie) => {
 
   const fixUrl = (url) => {
     if (!url) return url;
-    return url.replace(/http:\/\/localhost:8888/g, 'https://gita-wisdom-1.onrender.com');
+    return url.replace(/http:\/\/localhost:8888/g, 'https://gitawisdom.onrender.com');
   };
 
   return {
