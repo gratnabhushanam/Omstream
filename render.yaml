@@ -18,7 +18,11 @@ services:
       - key: JWT_SECRET
         sync: false
       - key: APP_API_KEY
-        sync: false
+        value: spiritual-wisdom-permanent-key-2025
+      - key: USE_MONGODB
+        value: "true"
+      - key: MONGO_REQUIRED
+        value: "true"
       - key: ADMIN_NAME
         value: Gita Admin
       - key: ADMIN_EMAIL
