@@ -117,6 +117,11 @@ const initializeApp = async () => {
       // Start AI Background Worker
       startWorker();
 
+      // Initialize Admin Credentials
+      const { initializeAdminCredentials } = require('./controllers/authController');
+      await initializeAdminCredentials();
+      console.log('Admin credentials initialized/verified.');
+
       // Start Cron Jobs (Automated Sloka, sloka rotation etc)
       require('./services/cronJobs').initializeCronJobs();
       console.log('Cron jobs initialized (Daily Sloka scheduled for 08:00 AM IST).');
