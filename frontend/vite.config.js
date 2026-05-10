@@ -13,6 +13,7 @@ export default defineConfig({
       registerType: 'autoUpdate',
       injectManifest: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg}'],
+        maximumFileSizeToCacheInBytes: 5242880, // Increase to 5MB to handle larger bundles
         rollupOptions: {
           output: {
             format: 'es'
@@ -45,11 +46,24 @@ export default defineConfig({
     })
   ],
   build: {
-    codeSplitting: false,
-    chunkSizeWarningLimit: 700,
+    chunkSizeWarningLimit: 1000,
     rollupOptions: {
       output: {
-        codeSplitting: false
+        manualChunks: (id) => {
+          if (id.includes('node_modules/react') || id.includes('node_modules/react-dom')) {
+            return 'react-vendor';
+          }
+          if (id.includes('node_modules/react-router-dom')) {
+            return 'router-vendor';
+          }
+          if (id.includes('node_modules/axios')) {
+            return 'http-vendor';
+          }
+          if (id.includes('node_modules/lucide-react')) {
+            return 'icon-vendor';
+          }
+          return undefined;
+        },
       },
     },
   },
