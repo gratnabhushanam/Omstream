@@ -56,11 +56,17 @@ const allowedOrigins = [
   'http://localhost:5000',
   'http://localhost:8888',
   'https://gitawisdom.onrender.com',
-  'https://gita-wisdom-1.onrender.com'
+  'https://gita-wisdom-1.onrender.com',
+  // Vercel production & preview deployments
+  'https://gita-wisdom.vercel.app',
+  'https://gitawisdom.vercel.app',
+  'https://gita-wisdom-devotion.vercel.app',
 ];
 
 const isOriginAllowed = (origin) => {
   if (!origin) return true;
+  // Allow all Vercel preview deployments (*.vercel.app)
+  if (origin && origin.endsWith('.vercel.app')) return true;
   return allowedOrigins.some(o => origin.startsWith(o));
 };
 
@@ -69,6 +75,7 @@ app.use('/api', cors({
     if (isOriginAllowed(origin)) {
       return callback(null, true);
     }
+    console.warn(`[CORS] Blocked origin: ${origin}`);
     return callback(new Error('CORS blocked for this origin'));
   },
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
