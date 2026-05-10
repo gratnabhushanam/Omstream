@@ -266,9 +266,30 @@ exports.getEmailHealth = async (req, res) => {
 // Admin bootstraps
 exports.initializeAdminCredentials = async () => {
   if (!ADMIN_EMAIL || !ADMIN_PASSWORD) return;
-  const exists = await User.findOne({ email: normalizeEmail(ADMIN_EMAIL) });
-  if (exists) return;
-  await User.create({ name: ADMIN_NAME, email: normalizeEmail(ADMIN_EMAIL), password: await bcrypt.hash(ADMIN_PASSWORD, 10), role: 'admin' });
+  const safeEmail = normalizeEmail(ADMIN_EMAIL);
+  
+  try {
+    const admin = await User.findOne({ email: safeEmail });
+    const hashedPassword = await bcrypt.hash(ADMIN_PASSWORD, 10);
+
+    if (admin) {
+      // Sync password from env to DB to ensure latest credentials work
+      admin.password = hashedPassword;
+      admin.role = 'admin';
+      await admin.save();
+      console.log('[AUTH] Admin credentials synchronized from environment.');
+    } else {
+      await User.create({ 
+        name: ADMIN_NAME || 'Gita Admin', 
+        email: safeEmail, 
+        password: hashedPassword, 
+        role: 'admin' 
+      });
+      console.log('[AUTH] Admin user bootstrapped for the first time.');
+    }
+  } catch (error) {
+    console.error('[AUTH] Failed to initialize admin credentials:', error.message);
+  }
 };
 
 exports.setMockMode = (val) => { isMockModeActive = val; };
