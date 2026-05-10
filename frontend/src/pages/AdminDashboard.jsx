@@ -744,7 +744,7 @@ function AdminDashboardContent() {
   if (authLoading) return <div className="min-h-screen flex items-center justify-center bg-[#06101E]"><div className="animate-spin rounded-full h-12 w-12 border-t-2 border-devotion-gold"></div></div>;
 
   return (
-    <div className="min-h-screen bg-[#06101E] text-white flex flex-col">
+    <div className="min-h-screen md:h-screen bg-[#06101E] text-white flex flex-col md:flex-row md:overflow-hidden">
       {message.type === 'error' && message.text.toLowerCase().includes('login') && (
         <div className="w-full flex flex-col items-center justify-center py-8 bg-black/90 z-50">
           <div className="text-2xl font-bold text-yellow-400 mb-4">{message.text}</div>
@@ -757,7 +757,7 @@ function AdminDashboardContent() {
         </div>
       )}
       {/* Admin Sidebar (Desktop) */}
-      <div className="w-72 bg-devotion-darkBlue/80 backdrop-blur-2xl border-r border-white/5 hidden md:flex flex-col shadow-2xl">
+      <div className="w-72 flex-shrink-0 bg-devotion-darkBlue/80 backdrop-blur-2xl border-r border-white/5 hidden md:flex flex-col shadow-2xl h-full">
         <div className="p-8 border-b border-white/5">
           <div className="flex items-center gap-3 mb-2">
              <div className="w-8 h-8 bg-devotion-gold/20 rounded-lg flex items-center justify-center">
@@ -849,7 +849,7 @@ function AdminDashboardContent() {
       </div>
 
       {/* Admin Content Area */}
-      <div className="flex-1 flex flex-col pt-20 sm:pt-24 tv:pt-36 px-4 md:px-10 tv:px-20 pb-10 overflow-y-auto">
+      <div className="flex-1 flex flex-col pt-20 md:pt-10 sm:pt-24 tv:pt-20 px-4 md:px-10 tv:px-20 pb-10 overflow-y-auto h-full">
          
          {message.text && (
            <div className={`fixed top-28 right-10 z-[100] flex items-center gap-3 px-6 py-4 rounded-2xl border backdrop-blur-xl animate-shake shadow-2xl ${message.type === 'success' ? 'bg-green-500/10 border-green-500/30 text-green-400' : 'bg-red-500/10 border-red-500/30 text-red-400'}`}>

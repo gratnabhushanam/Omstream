@@ -21,5 +21,18 @@ router.post('/:id/process', protect, admin, storyController.processStory);
 // Watchlist / Personal Library
 router.get('/watchlist/me', protect, storyController.getWatchlistStories);
 router.post('/:id/toggle-watchlist', protect, storyController.toggleStoryWatchlist);
+console.log('Registering POST /:id/translate');
+router.post('/:id/translate', storyController.translateStory);
+
+
+// Diagnostic catch-all for /api/stories
+router.use((req, res) => {
+  console.log(`[STORY ROUTE 404] ${req.method} ${req.originalUrl}`);
+  res.status(404).json({ 
+    message: `Story route not found: ${req.method} ${req.originalUrl}`,
+    path: req.path,
+    params: req.params
+  });
+});
 
 module.exports = router;

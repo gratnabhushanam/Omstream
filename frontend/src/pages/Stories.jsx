@@ -22,6 +22,7 @@ export default function Stories() {
   const [activeCollection, setActiveCollection] = useState(null);
   const [bgIndex, setBgIndex] = useState(0);
   const [selectedLanguage, setSelectedLanguage] = useState(localStorage.getItem('preferred_story_lang') || globalLanguage || 'en');
+  const [isTranslating, setIsTranslating] = useState(false);
   const [translationWarning, setTranslationWarning] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [voices, setVoices] = useState([]);
@@ -101,12 +102,26 @@ export default function Stories() {
     return () => window.speechSynthesis.removeEventListener('voiceschanged', loadVoices);
   }, []);
 
+  // Proactively trigger translation when opening a story or changing language
+  useEffect(() => {
+    if (activeStory && selectedLanguage !== 'en' && !isTranslating) {
+      const hasNewTranslation = activeStory.translations && activeStory.translations[selectedLanguage];
+      const langMap = { te: 'Telugu', hi: 'Hindi', ta: 'Tamil', kn: 'Kannada', ml: 'Malayalam', bn: 'Bengali', mr: 'Marathi', sa: 'Sanskrit' };
+      const langName = langMap[selectedLanguage];
+      const hasLegacyTranslation = langName && (activeStory[`title${langName}`] || activeStory[`content${langName}`]);
+      
+      if (!hasNewTranslation && !hasLegacyTranslation) {
+        handleLanguageChange(selectedLanguage);
+      }
+    }
+  }, [activeStory?._id, selectedLanguage]);
+
   const getChapterScene = (chapter) => {
     const normalizedChapter = Number(chapter) || 1;
     return CHAPTER_BACKGROUND_SCENES[(normalizedChapter - 1) % CHAPTER_BACKGROUND_SCENES.length];
   };
 
-  const getLocalizedContent = (item, type = 'story') => {
+  const getLocalizedContent = (item, type = 'story', index = activeChapterIndex) => {
     if (!item) return null;
     const lang = selectedLanguage;
     
@@ -116,15 +131,15 @@ export default function Stories() {
     // If it's a story object being passed
     if (item.translations && item.translations[lang]) {
       const trans = item.translations[lang];
-      if (type === 'chapter' && trans.chapters?.[activeChapterIndex]) {
-        return trans.chapters[activeChapterIndex];
+      if (type === 'chapter' && trans.chapters?.[index]) {
+        return trans.chapters[index];
       }
       return trans; // returns {title, description, etc.}
     }
     
     // If we're inside a story and asking for a chapter translation from the story's translations
-    if (type === 'chapter' && activeStory?.translations?.[lang]?.chapters?.[activeChapterIndex]) {
-       return activeStory.translations[lang].chapters[activeChapterIndex];
+    if (type === 'chapter' && activeStory?.translations?.[lang]?.chapters?.[index]) {
+       return activeStory.translations[lang].chapters[index];
     }
 
     // 2. Fallback to legacy field-based translations
@@ -146,22 +161,81 @@ export default function Stories() {
       }
     }
 
-    return item; // Fallback to original item
+    // 3. Strict Override: If not English and no translation found, return a placeholder
+    // This prevents "Forced English" while translation is in progress or failing
+    if (lang !== 'en') {
+      return {
+        title: isTranslating ? 'Translating title...' : item.title,
+        description: isTranslating ? 'Translating description...' : (item.description || 'Embark on a spiritual journey...'),
+        content: isTranslating ? 'Translating divine wisdom into your language...' : item.content,
+        takeaways: isTranslating ? [] : (item.takeaways || [])
+      };
+    }
+
+    return item; // Fallback to original item (English)
   };
 
-  const handleLanguageChange = (lang) => {
+  const handleLanguageChange = async (lang) => {
     setSelectedLanguage(lang);
     setGlobalLanguage(lang); // Sync with global language state
     localStorage.setItem('preferred_story_lang', lang);
     
+    if (lang === 'en') {
+      setTranslationWarning(false);
+      return;
+    }
+
     // Improved check for translation existence
     const langMap = { te: 'Telugu', hi: 'Hindi', ta: 'Tamil', kn: 'Kannada', ml: 'Malayalam', bn: 'Bengali', mr: 'Marathi', sa: 'Sanskrit' };
     const langName = langMap[lang];
-    const hasNewTranslation = activeStory?.translations && (activeStory.translations[lang] || activeStory.translations.get?.(lang));
+    const hasNewTranslation = activeStory?.translations && activeStory.translations[lang];
     const hasLegacyTranslation = langName && activeStory && (activeStory[`title${langName}`] || activeStory[`content${langName}`]);
     
-    const hasTranslation = lang === 'en' || hasNewTranslation || hasLegacyTranslation;
-    setTranslationWarning(!hasTranslation);
+    const hasTranslation = hasNewTranslation || hasLegacyTranslation;
+
+    if (!hasTranslation && activeStory) {
+      let retryCount = 0;
+      const maxRetries = 3;
+      let success = false;
+
+      while (retryCount < maxRetries && !success) {
+        try {
+          setIsTranslating(true);
+          setTranslationWarning(false);
+          const { data } = await axios.post(`/api/stories/${activeStory._id || activeStory.id}/translate`, { targetLang: lang });
+          
+          // Update active story with new translation
+          const updatedStory = {
+            ...activeStory,
+            translations: {
+              ...(activeStory.translations || {}),
+              [lang]: data
+            }
+          };
+          setActiveStory(updatedStory);
+          
+          // Update stories list to cache it in memory
+          setStories(prev => prev.map(s => (s._id === updatedStory._id || s.id === updatedStory.id) ? updatedStory : s));
+          success = true;
+          setTranslationWarning(false);
+        } catch (err) {
+          retryCount++;
+          console.error(`Translation attempt ${retryCount} failed:`, err);
+          if (retryCount >= maxRetries) {
+            setTranslationWarning(true);
+          } else {
+            // Wait before retry
+            await new Promise(resolve => setTimeout(resolve, 1000 * retryCount));
+          }
+        } finally {
+          if (success || retryCount >= maxRetries) {
+            setIsTranslating(false);
+          }
+        }
+      }
+    } else {
+      setTranslationWarning(false);
+    }
   };
 
   const handleOpenStory = (story) => {
@@ -170,7 +244,21 @@ export default function Stories() {
     const savedLang = localStorage.getItem('preferred_story_lang');
     const initialLang = savedLang || globalLanguage || 'en';
     setSelectedLanguage(initialLang);
-    setTranslationWarning(initialLang !== 'en' && !story.translations?.[initialLang]);
+    
+    // Trigger translation check if opening in non-English
+    if (initialLang !== 'en') {
+      const langMap = { te: 'Telugu', hi: 'Hindi', ta: 'Tamil', kn: 'Kannada', ml: 'Malayalam', bn: 'Bengali', mr: 'Marathi', sa: 'Sanskrit' };
+      const hasNewTranslation = story.translations && story.translations[initialLang];
+      const langName = langMap[initialLang];
+      const hasLegacyTranslation = langName && (story[`title${langName}`] || story[`content${langName}`]);
+      
+      if (!hasNewTranslation && !hasLegacyTranslation) {
+        // We can't call handleLanguageChange directly because setActiveStory is async
+        // Instead, we let the useEffect or direct call handle it if needed
+        // For simplicity, we'll just trigger a small delay or use the state
+      }
+    }
+    setTranslationWarning(false);
   };
 
   const handleCloseStory = () => {
@@ -267,7 +355,7 @@ export default function Stories() {
         : userMsg.content;
       const response = await axios.post('/api/chat', {
         message: storyContext,
-        language: 'en'
+        language: selectedLanguage
       });
       
       setChatMessages(prev => [...prev, { role: 'ai', content: response.data.reply }]);
@@ -394,8 +482,8 @@ export default function Stories() {
                             </span>
                             {activeStory.isKids && <span className="px-3 py-1 bg-blue-500 text-white rounded-full text-[10px] font-black uppercase tracking-widest">KIDS MODE</span>}
                          </div>
-                          <h1 className="text-4xl sm:text-5xl font-serif font-black text-white transition-all duration-500">
-                             {getLocalizedContent(activeStory.chapters?.[activeChapterIndex], 'chapter')?.title || getLocalizedContent(activeStory)?.title}
+                          <h1 className={`text-4xl sm:text-5xl font-serif font-black text-white transition-all duration-500 ${isTranslating ? 'animate-pulse opacity-50' : ''}`}>
+                             {isTranslating ? 'Translating Divine Wisdom...' : (getLocalizedContent(activeStory.chapters?.[activeChapterIndex], 'chapter')?.title || getLocalizedContent(activeStory)?.title)}
                           </h1>
                       </div>
                    </div>
@@ -415,13 +503,13 @@ export default function Stories() {
                           </div>
 
                           {translationWarning && (
-                             <div className="w-full mt-4 p-4 bg-orange-500/10 border border-orange-500/20 rounded-2xl flex items-center gap-3 animate-in fade-in slide-in-from-top-2">
-                                <Sparkles className="w-4 h-4 text-orange-400" />
-                                <p className="text-[10px] font-bold text-orange-300 uppercase tracking-widest">Translation not available, showing English version.</p>
+                             <div className="w-full mt-4 p-4 bg-red-500/10 border border-red-500/20 rounded-2xl flex items-center gap-3 animate-in fade-in slide-in-from-top-2">
+                                <Sparkles className="w-4 h-4 text-red-400" />
+                                <p className="text-[10px] font-bold text-red-300 uppercase tracking-widest">Translation failed. Please try again or switch language.</p>
                              </div>
                           )}
 
-                          <div className="flex items-center gap-3 mt-6 lg:mt-0">
+                           <div className="flex items-center gap-3 mt-6 lg:mt-0">
                             <button
                               onClick={toggleWatchlist}
                               className={`inline-flex items-center gap-3 px-6 py-4 rounded-2xl font-black text-sm uppercase tracking-widest transition-all ${isInWatchlist ? 'bg-devotion-gold/20 text-devotion-gold border border-devotion-gold' : 'bg-white/5 text-gray-400 border border-white/10 hover:bg-white/10'}`}
@@ -441,9 +529,19 @@ export default function Stories() {
                       </div>
 
                        <div className="prose prose-invert max-w-none min-h-[300px]">
-                          <p className="text-xl sm:text-2xl leading-relaxed text-white/90 font-serif whitespace-pre-wrap transition-all duration-700 ease-in-out">
-                             {getLocalizedContent(activeStory.chapters?.[activeChapterIndex], 'chapter')?.content || getLocalizedContent(activeStory)?.content || 'Seeking wisdom...'}
-                          </p>
+                          {isTranslating ? (
+                            <div className="space-y-4 animate-pulse">
+                              <div className="h-4 bg-white/10 rounded-full w-full" />
+                              <div className="h-4 bg-white/10 rounded-full w-full" />
+                              <div className="h-4 bg-white/10 rounded-full w-3/4" />
+                              <div className="h-4 bg-white/10 rounded-full w-full" />
+                              <div className="h-4 bg-white/10 rounded-full w-5/6" />
+                            </div>
+                          ) : (
+                            <p className="text-xl sm:text-2xl leading-relaxed text-white/90 font-serif whitespace-pre-wrap transition-all duration-700 ease-in-out">
+                               {getLocalizedContent(activeStory.chapters?.[activeChapterIndex], 'chapter')?.content || getLocalizedContent(activeStory)?.content || 'Seeking wisdom...'}
+                            </p>
+                          )}
                        </div>
 
                       {getLocalizedContent(activeStory.chapters?.[activeChapterIndex])?.takeaways?.length > 0 && (

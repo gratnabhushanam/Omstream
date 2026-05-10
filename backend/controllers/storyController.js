@@ -219,3 +219,58 @@ exports.getWatchlistStories = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
+/**
+ * POST /api/stories/:id/translate
+ * Dynamically translates a story into a specific language and caches it.
+ * Implements a robust retry mechanism (3 attempts) before failing.
+ */
+exports.translateStory = async (req, res) => {
+  console.log('[DEBUG] translateStory called for ID:', req.params.id, 'Lang:', req.body.targetLang);
+  const { targetLang } = req.body;
+  if (!targetLang) return res.status(400).json({ message: 'Target language is required' });
+
+  let attempts = 0;
+  const maxAttempts = 3;
+
+  while (attempts < maxAttempts) {
+    attempts++;
+    try {
+      const story = await Story.findById(req.params.id);
+      if (!story) return res.status(404).json({ message: 'Story not found' });
+
+      // If already translated, return it
+      if (story.translations && story.translations[targetLang]) {
+        return res.json(story.translations[targetLang]);
+      }
+
+      const { translateMetadata } = require('../utils/aiService');
+      console.log(`[Translation] Attempt ${attempts} for ${targetLang} story: ${story.title}`);
+      
+      const translations = await translateMetadata(story, 'Story', [targetLang]);
+
+      if (translations && translations[targetLang]) {
+        // Cache the translation
+        if (!story.translations) story.translations = {};
+        story.translations[targetLang] = translations[targetLang];
+        story.markModified('translations');
+        await story.save();
+
+        console.log(`[Translation] Success for ${targetLang} on attempt ${attempts}`);
+        return res.json(translations[targetLang]);
+      }
+
+      throw new Error('Empty translation response');
+    } catch (error) {
+      console.error(`[Translation] Error on attempt ${attempts}:`, error.message);
+      if (attempts >= maxAttempts) {
+        return res.status(500).json({ 
+          message: 'Translation service exhausted all retries.', 
+          error: error.message 
+        });
+      }
+      // Wait a bit before retrying
+      await new Promise(resolve => setTimeout(resolve, 1000 * attempts));
+    }
+  }
+};

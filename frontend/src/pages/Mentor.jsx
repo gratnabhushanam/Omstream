@@ -43,11 +43,25 @@ export default function Mentor() {
   const [customElevenLabsKey, setCustomElevenLabsKey] = useState(() => localStorage.getItem('elevenlabsApiKey') || '');
 
   const problems = [
-    { id: 'stress', name: 'Stress', icon: <Wind className="w-8 h-8" />, color: 'from-blue-500 to-cyan-400' },
-    { id: 'fear', name: 'Fear', icon: <AlertTriangle className="w-8 h-8" />, color: 'from-orange-500 to-red-400' },
-    { id: 'anger', name: 'Anger', icon: <Target className="w-8 h-8" />, color: 'from-red-600 to-rose-400' },
-    { id: 'confusion', name: 'Confusion', icon: <MessageSquarePlus className="w-8 h-8" />, color: 'from-purple-500 to-indigo-400' },
-    { id: 'motivation', name: 'Motivation', icon: <Zap className="w-8 h-8" />, color: 'from-[#FFD700] to-[#FF9F1C]' },
+    { id: 'stress', name: tLabel('stress'), icon: <Wind className="w-8 h-8" />, color: 'from-blue-500 to-cyan-400' },
+    { id: 'fear', name: tLabel('fear'), icon: <AlertTriangle className="w-8 h-8" />, color: 'from-orange-500 to-red-400' },
+    { id: 'anger', name: tLabel('anger'), icon: <Target className="w-8 h-8" />, color: 'from-red-600 to-rose-400' },
+    { id: 'confusion', name: tLabel('confusion'), icon: <MessageSquarePlus className="w-8 h-8" />, color: 'from-purple-500 to-indigo-400' },
+    { id: 'motivation', name: tLabel('motivation'), icon: <Zap className="w-8 h-8" />, color: 'from-[#FFD700] to-[#FF9F1C]' },
+    { id: 'anxiety', name: tLabel('anxiety'), icon: <Wind className="w-8 h-8" />, color: 'from-teal-500 to-emerald-400' },
+    { id: 'sadness', name: tLabel('sadness'), icon: <Wind className="w-8 h-8" />, color: 'from-indigo-500 to-purple-400' },
+    { id: 'loneliness', name: tLabel('loneliness'), icon: <Target className="w-8 h-8" />, color: 'from-sky-500 to-blue-400' },
+    { id: 'self-doubt', name: tLabel('selfDoubt'), icon: <AlertTriangle className="w-8 h-8" />, color: 'from-rose-500 to-pink-400' },
+    { id: 'discipline', name: tLabel('discipline'), icon: <Zap className="w-8 h-8" />, color: 'from-emerald-600 to-teal-400' },
+    { id: 'depression', name: tLabel('depression'), icon: <Wind className="w-8 h-8" />, color: 'from-slate-600 to-gray-500' },
+    { id: 'focus', name: tLabel('focus'), icon: <Target className="w-8 h-8" />, color: 'from-amber-500 to-yellow-400' },
+    { id: 'overthinking', name: tLabel('overthinking'), icon: <MessageSquarePlus className="w-8 h-8" />, color: 'from-violet-500 to-purple-400' },
+    { id: 'failure', name: tLabel('failure'), icon: <AlertTriangle className="w-8 h-8" />, color: 'from-gray-600 to-slate-400' },
+    { id: 'success', name: tLabel('success'), icon: <Zap className="w-8 h-8" />, color: 'from-yellow-500 to-[#FFD700]' },
+    { id: 'relationships', name: tLabel('relationships'), icon: <MessageSquarePlus className="w-8 h-8" />, color: 'from-pink-500 to-rose-400' },
+    { id: 'purpose', name: tLabel('purpose'), icon: <Target className="w-8 h-8" />, color: 'from-emerald-500 to-green-400' },
+    { id: 'peace', name: tLabel('peace'), icon: <Wind className="w-8 h-8" />, color: 'from-cyan-500 to-blue-300' },
+    { id: 'confidence', name: tLabel('confidence'), icon: <Zap className="w-8 h-8" />, color: 'from-orange-500 to-yellow-400' },
   ];
 
   return (
@@ -56,12 +70,14 @@ export default function Mentor() {
       <div className="max-w-5xl tv:max-w-7xl mx-auto relative z-10">
         <div className="text-center mb-10 sm:mb-14 animate-fade-in-up">
           <div className="inline-flex items-center gap-3 px-5 py-2 rounded-full border border-devotion-gold/30 bg-devotion-gold/10 text-devotion-gold text-[10px] tv:text-sm font-black tracking-[0.4em] uppercase mb-6">
-            Divine Guidance
+            {tLabel('divineGuidance')}
           </div>
           <h1 className="text-4xl sm:text-5xl md:text-7xl tv:text-[10rem] font-serif font-black text-devotion-gold drop-shadow-2xl mb-4 tracking-tight uppercase leading-none">
-            Gita Mentor
+            {tLabel('gitaMentor')}
           </h1>
-          <p className="text-base sm:text-lg md:text-xl tv:text-3xl text-gray-300 font-light font-serif italic max-w-2xl tv:max-w-4xl mx-auto mb-6">Seeking guidance in Lord Krishna's eternal words.</p>
+          <p className="text-base sm:text-lg md:text-xl tv:text-3xl text-gray-300 font-light font-serif italic max-w-2xl tv:max-w-4xl mx-auto mb-6">
+            {tLabel('seekingGuidance')}
+          </p>
         </div>
 
         {/* Tab Switcher */}
@@ -76,7 +92,7 @@ export default function Mentor() {
                   : 'text-gray-400 hover:text-devotion-gold'
               }`}
             >
-              Curated Verses
+              {tLabel('curatedVerses')}
             </button>
             <button
               onClick={() => setActiveTab('ai')}
@@ -84,10 +100,10 @@ export default function Mentor() {
               className={`tv-focusable focus:outline-none focus:ring-4 focus:ring-devotion-gold flex-1 py-3 px-6 rounded-full text-xs tv:text-sm font-black uppercase tracking-widest transition-all ${
                 activeTab === 'ai' 
                   ? 'bg-gradient-to-r from-blue-500 to-cyan-400 text-white shadow-[0_0_20px_rgba(59,130,246,0.4)]' 
-                  : 'text-gray-400 hover:text-cyan-400'
+                  : 'text-gray-400 hover:text-devotion-gold'
               }`}
             >
-              Talk to Krishna
+              {tLabel('aiMentor')}
             </button>
           </div>
         </div>
@@ -211,76 +227,81 @@ export default function Mentor() {
             <div className="absolute top-0 right-0 opacity-5 text-[15rem] -rotate-12 translate-x-20 translate-y-20 select-none pointer-events-none group-hover:rotate-0 transition-transform duration-1000">🕉️</div>
             
             <div className="relative z-10">
-              <div className="flex items-center gap-4 mb-10">
-                <div className="h-px flex-grow bg-gradient-to-r from-transparent to-devotion-gold/40"></div>
-                <h3 className="text-devotion-gold font-black tracking-[0.4em] uppercase text-xs">Divine Guidance</h3>
-                <div className="h-px flex-grow bg-gradient-to-l from-transparent to-devotion-gold/40"></div>
+              {/* 1. Main Sloka Card */}
+              <div className="mb-12 text-center">
+                <div className="inline-flex items-center gap-4 mb-8">
+                  <div className="h-px w-12 bg-gradient-to-r from-transparent to-devotion-gold/40"></div>
+                  <h3 className="text-devotion-gold font-black tracking-[0.4em] uppercase text-[10px]">Sacred Verse</h3>
+                  <div className="h-px w-12 bg-gradient-to-l from-transparent to-devotion-gold/40"></div>
+                </div>
+                
+                <p className="text-3xl md:text-5xl font-serif text-white leading-relaxed mb-6 italic drop-shadow-lg">
+                  {solution.sanskrit && solution.sanskrit.split('\n').map((line, i) => <span key={i} className="block mb-2">{line}</span>)}
+                </p>
+                {solution.transliteration && (
+                  <p className="text-lg md:text-xl font-light text-gray-400 italic font-serif max-w-3xl mx-auto">
+                    {solution.transliteration}
+                  </p>
+                )}
               </div>
 
-              <div className="mb-10 grid gap-4 md:grid-cols-3">
-                <div className="rounded-2xl border border-white/10 bg-white/5 p-5">
-                  <p className="text-[10px] font-black uppercase tracking-[0.25em] text-devotion-gold mb-2">Focus</p>
-                  <p className="text-white text-lg font-serif">{solution.mentorTitle || 'Seek guidance with patience'}</p>
-                </div>
-                <div className="rounded-2xl border border-white/10 bg-white/5 p-5">
-                  <p className="text-[10px] font-black uppercase tracking-[0.25em] text-devotion-gold mb-2">Guidance</p>
-                  <p className="text-gray-200 text-sm leading-relaxed">{solution.mentorTip || 'Return to the verse and keep practicing.'}</p>
-                </div>
-                <div className="rounded-2xl border border-white/10 bg-white/5 p-5">
-                  <p className="text-[10px] font-black uppercase tracking-[0.25em] text-devotion-gold mb-2">Practice</p>
-                  <p className="text-gray-200 text-sm leading-relaxed">{solution.mentorPractice || 'Read the verse morning and night.'}</p>
-                </div>
-              </div>
-              
-              <p className="text-3xl md:text-5xl font-serif text-white leading-relaxed mb-12 italic text-center drop-shadow-lg">
-                {solution.sanskrit && solution.sanskrit.split('\n').map((line, i) => <span key={i} className="block mb-2">{line}</span>)}
-              </p>
-
-              <div className="grid md:grid-cols-3 gap-8 mt-12">
+              {/* 2. Meaning Card & Guidance */}
+              <div className="grid md:grid-cols-2 gap-8 mb-12">
                 <div className="bg-devotion-darkBlue/40 backdrop-blur-md p-8 rounded-3xl border border-white/5 hover:border-blue-500/40 transition-colors group/box shadow-2xl">
-                  <div className="w-10 h-10 bg-blue-500/10 rounded-xl flex items-center justify-center mb-6 border border-blue-500/20 group-hover/box:scale-110 transition-transform">
-                    <BookOpen className="w-5 h-5 text-blue-400" />
+                  <div className="flex items-center justify-between mb-6">
+                    <div className="w-10 h-10 bg-blue-500/10 rounded-xl flex items-center justify-center border border-blue-500/20 group-hover/box:scale-110 transition-transform">
+                      <BookOpen className="w-5 h-5 text-blue-400" />
+                    </div>
+                    <span className="text-[9px] font-black uppercase tracking-widest text-gray-500 border border-white/10 px-3 py-1 rounded-full bg-white/5">
+                      Language: {globalLang.toUpperCase()}
+                    </span>
                   </div>
-                  <h4 className="text-blue-400 text-[10px] font-black uppercase tracking-[0.2em] mb-4">Meaning</h4>
-                  <div className="mb-4 flex bg-devotion-darkBlue/60 rounded-full p-1 border border-white/10 backdrop-blur-md w-fit">
-                    <button
-                      onClick={() => setGlobalLang('en')}
-                      className={`tv-focusable px-4 py-1.5 tv:px-6 tv:py-3 rounded-full text-[10px] tv:text-sm font-black uppercase tracking-widest transition-all ${globalLang === 'en' ? 'bg-devotion-gold text-devotion-darkBlue shadow-lg' : 'text-gray-400 hover:text-white'}`}
-                    >
-                      English
-                    </button>
-                    <button
-                      onClick={() => setGlobalLang('hi')}
-                      className={`tv-focusable px-4 py-1.5 tv:px-6 tv:py-3 rounded-full text-[10px] tv:text-sm font-black uppercase tracking-widest transition-all ${globalLang === 'hi' ? 'bg-devotion-gold text-devotion-darkBlue shadow-lg' : 'text-gray-400 hover:text-white'}`}
-                    >
-                      Hindi
-                    </button>
-                    <button
-                      onClick={() => setGlobalLang('te')}
-                      className={`tv-focusable px-4 py-1.5 tv:px-6 tv:py-3 rounded-full text-[10px] tv:text-sm font-black uppercase tracking-widest transition-all ${globalLang === 'te' ? 'bg-devotion-gold text-devotion-darkBlue shadow-lg' : 'text-gray-400 hover:text-white'}`}
-                    >
-                      తెలుగు
-                    </button>
-                  </div>
-                  <p className={`text-white text-lg font-medium leading-relaxed ${globalLang === 'te' ? 'font-telugu text-xl' : ''}`}>
+                  <h4 className="text-blue-400 text-[10px] font-black uppercase tracking-[0.2em] mb-4">Divine Meaning</h4>
+                  <p className={`text-white text-lg font-medium leading-relaxed ${globalLang === 'te' ? 'font-telugu text-xl' : globalLang === 'hi' ? 'font-hindi' : ''}`}>
                     {getMeaningByLanguage(solution, globalLang)}
                   </p>
                 </div>
 
-                <div className="bg-devotion-darkBlue/40 backdrop-blur-md p-8 rounded-3xl border border-white/5 hover:border-green-500/40 transition-colors group/box shadow-2xl">
-                  <div className="w-10 h-10 bg-green-500/10 rounded-xl flex items-center justify-center mb-6 border border-green-500/20 group-hover/box:scale-110 transition-transform">
-                    <Zap className="w-5 h-5 text-green-400" />
-                  </div>
-                  <h4 className="text-green-400 text-[10px] font-black uppercase tracking-[0.2em] mb-4">Modern Insight</h4>
-                  <p className="text-white text-lg font-light leading-relaxed">{solution.simpleExplanation}</p>
-                </div>
-
                 <div className="bg-devotion-darkBlue/40 backdrop-blur-md p-8 rounded-3xl border border-white/5 hover:border-devotion-gold/40 transition-colors group/box shadow-2xl">
                   <div className="w-10 h-10 bg-devotion-gold/10 rounded-xl flex items-center justify-center mb-6 border border-devotion-gold/20 group-hover/box:scale-110 transition-transform">
-                    <Target className="w-5 h-5 text-devotion-gold" />
+                    <MessageSquarePlus className="w-5 h-5 text-devotion-gold" />
                   </div>
-                  <h4 className="text-devotion-gold text-[10px] font-black uppercase tracking-[0.2em] mb-4">Application</h4>
-                  <p className="text-white text-lg font-light leading-relaxed">{solution.realLifeExample}</p>
+                  <h4 className="text-devotion-gold text-[10px] font-black uppercase tracking-[0.2em] mb-4">Krishna's Guidance</h4>
+                  <p className="text-white text-lg font-bold leading-relaxed mb-2">
+                    {solution.translations?.[globalLang]?.guidance || solution.mentorTitle}
+                  </p>
+                  <p className="text-gray-300 text-base leading-relaxed italic">
+                    "{solution.translations?.[globalLang]?.tip || solution.mentorTip}"
+                  </p>
+                </div>
+              </div>
+
+              {/* 3. Practical Daily Solution & Modern Insight */}
+              <div className="grid md:grid-cols-2 gap-8 mb-12">
+                <div className="bg-devotion-darkBlue/40 backdrop-blur-md p-8 rounded-3xl border border-white/5 hover:border-green-500/40 transition-colors group/box shadow-2xl">
+                  <div className="w-10 h-10 bg-green-500/10 rounded-xl flex items-center justify-center mb-6 border border-green-500/20 group-hover/box:scale-110 transition-transform">
+                    <Target className="w-5 h-5 text-green-400" />
+                  </div>
+                  <h4 className="text-green-400 text-[10px] font-black uppercase tracking-[0.2em] mb-4">Daily Application</h4>
+                  <p className="text-white text-lg font-medium leading-relaxed mb-4">
+                    {solution.translations?.[globalLang]?.example || solution.realLifeExample}
+                  </p>
+                  <div className="bg-green-500/5 border border-green-500/10 p-4 rounded-2xl">
+                    <p className="text-[9px] font-black uppercase tracking-widest text-green-500/70 mb-2">Practical Practice</p>
+                    <p className="text-sm text-gray-300">
+                      {solution.translations?.[globalLang]?.practice || solution.mentorPractice}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="bg-devotion-darkBlue/40 backdrop-blur-md p-8 rounded-3xl border border-white/5 hover:border-cyan-500/40 transition-colors group/box shadow-2xl">
+                  <div className="w-10 h-10 bg-cyan-500/10 rounded-xl flex items-center justify-center mb-6 border border-cyan-500/20 group-hover/box:scale-110 transition-transform">
+                    <Zap className="w-5 h-5 text-cyan-400" />
+                  </div>
+                  <h4 className="text-cyan-400 text-[10px] font-black uppercase tracking-[0.2em] mb-4">{tLabel('aiGuidance')}</h4>
+                  <p className="text-white text-lg font-light leading-relaxed">
+                    {solution.translations?.[globalLang]?.insight || solution.simpleExplanation}
+                  </p>
                 </div>
               </div>
 
@@ -295,10 +316,10 @@ export default function Mentor() {
                     <button
                       onClick={toggleAudio}
                       disabled={!canPlayAudio}
-                      className={`tv-focusable ${canPlayAudio ? 'bg-white/5 hover:bg-white/10 border-white/10 text-white' : 'bg-gray-800 text-gray-500 cursor-not-allowed opacity-50'} flex items-center gap-3 px-8 py-4 tv:px-10 tv:py-5 rounded-2xl transition-all font-black text-xs tv:text-sm uppercase tracking-widest`}
+                      className={`tv-focusable ${canPlayAudio ? 'bg-white/5 hover:bg-white/10 border-white/10 text-white' : 'bg-gray-800 text-gray-500 cursor-not-allowed opacity-50'} flex items-center gap-3 px-8 py-4 tv:px-10 tv:py-5 rounded-2xl transition-all font-black text-xs tv:text-sm uppercase tracking-widest shadow-xl`}
                     >
-                      {isPlaying ? <Pause className="w-5 h-5 tv:w-7 tv:h-7" /> : <Volume2 className="w-5 h-5 tv:w-7 tv:h-7" />}
-                      {isPlaying ? 'Stop Chant' : canPlayAudio ? 'Listen Chant' : 'Auto Narrate'}
+                      {isPlaying ? <Pause className="w-5 h-5 tv:w-7 tv:h-7" /> : <Volume2 className="w-5 h-5 tv:w-7 tv:h-7 text-devotion-gold" />}
+                      {isPlaying ? tLabel('stop') : tLabel('listenWithAi')}
                     </button>
                     
                     {/* Voice Character Selector */}
@@ -307,24 +328,24 @@ export default function Mentor() {
                       onChange={(e) => setVoiceCharacter(e.target.value)}
                       className="tv-focusable px-4 py-4 tv:px-6 tv:py-5 rounded-2xl bg-devotion-darkBlue/60 border border-devotion-gold/30 text-white font-black text-xs tv:text-sm uppercase tracking-widest hover:border-devotion-gold/60 transition-all focus:outline-none focus:border-devotion-gold"
                     >
-                      <option value="krishna">🔵 Krishna Voice</option>
-                      <option value="ram">🌟 Ram Voice</option>
-                      <option value="hanuman">🐵 Hanuman Voice</option>
-                      <option value="arjuna">⚔️ Arjuna Voice</option>
+                      <option value="krishna">🔵 {tLabel('krishnaVoice')}</option>
+                      <option value="ram">🌟 {tLabel('ramVoice')}</option>
+                      <option value="hanuman">🐵 {tLabel('hanumanVoice')}</option>
+                      <option value="arjuna">⚔️ {tLabel('arjunaVoice')}</option>
                     </select>
                   </div>
                   <button
                     onClick={handleToggleSaveVerse}
                     className={`tv-focusable flex items-center gap-3 border px-8 py-4 tv:px-10 tv:py-5 rounded-2xl transition-all font-black text-xs tv:text-sm uppercase tracking-widest ${isCurrentVerseSaved ? 'bg-devotion-gold/20 border-devotion-gold/50 text-devotion-gold' : 'bg-white/5 hover:bg-white/10 border-white/10 text-white'}`}
                   >
-                    <Bookmark className="w-5 h-5 tv:w-7 tv:h-7 text-devotion-gold" /> {isCurrentVerseSaved ? 'Saved Verse' : 'Save Verse'}
+                    <Bookmark className="w-5 h-5 tv:w-7 tv:h-7 text-devotion-gold" /> {isCurrentVerseSaved ? tLabel('saved') : tLabel('save')}
                   </button>
                   <button 
                     onClick={() => setShowVideo(true)}
                     disabled={!solution.recommendedVideo}
                     className={`tv-focusable flex items-center gap-3 px-8 py-4 tv:px-10 tv:py-5 rounded-2xl transition-all font-black text-xs tv:text-sm uppercase tracking-widest shadow-2xl ${solution.recommendedVideo ? 'bg-gradient-to-r from-devotion-gold to-[#FF9F1C] text-devotion-darkBlue hover:scale-105 shadow-[0_10px_30px_rgba(255,215,0,0.2)]' : 'bg-gray-800 text-gray-500 cursor-not-allowed opacity-50'}`}
                   >
-                    <PlayCircle className="w-6 h-6 tv:w-8 tv:h-8" fill="currentColor" /> Recommended Video
+                    <PlayCircle className="w-6 h-6 tv:w-8 tv:h-8" fill="currentColor" /> {tLabel('recommendedVideo')}
                   </button>
                 </div>
               </div>
@@ -368,7 +389,7 @@ export default function Mentor() {
             {/* Related Verses */}
             {relatedContent.slokas && relatedContent.slokas.length > 0 && (
               <div className="mt-16 pt-12 border-t border-white/10">
-                <h3 className="text-3xl font-serif font-black text-devotion-gold mb-6 tracking-tight uppercase">Related Verses</h3>
+                <h3 className="text-3xl font-serif font-black text-devotion-gold mb-6 tracking-tight uppercase">{tLabel('relatedVerses')}</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                   {relatedContent.slokas.map((sloka) => (
                     <div
@@ -408,7 +429,7 @@ export default function Mentor() {
             {relatedContent.stories && relatedContent.stories.length > 0 && (
               <div className="mt-12">
                 <h3 className="text-3xl font-serif font-black text-devotion-gold mb-6 tracking-tight uppercase flex items-center gap-3">
-                  <FileText className="w-8 h-8" />Related Stories
+                  <FileText className="w-8 h-8" />{tLabel('relatedStories')}
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   {relatedContent.stories.map((story) => (

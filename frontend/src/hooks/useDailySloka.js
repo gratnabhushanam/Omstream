@@ -246,13 +246,17 @@ export const useDailySloka = () => {
 
   const getMeaningByLanguage = (sloka, lang) => {
     if (!sloka) return '';
+    
+    // Priority 1: Unified translations object (AI Generated)
+    if (sloka.translations?.[lang]?.meaning) return sloka.translations[lang].meaning;
+    
     const localized = sloka.localizedMeaning || {};
-    // Priority 1: New dynamic Map/Object format (supports all languages: en, hi, te, ta, kn, ml, etc.)
+    // Priority 2: New dynamic Map/Object format (supports all languages: en, hi, te, ta, kn, ml, etc.)
     const code = String(lang || 'en').toLowerCase().substring(0, 2);
     if (localized[code]) return localized[code];
     if (localized[lang]) return localized[lang];
 
-    // Priority 2: Legacy field-based meanings
+    // Priority 3: Legacy field-based meanings
     if (lang === 'telugu' || code === 'te') return sloka.teluguMeaning || sloka.englishMeaning || '';
     if (lang === 'hindi' || code === 'hi') return sloka.hindiMeaning || sloka.englishMeaning || '';
     if (lang === 'tamil' || code === 'ta') return sloka.tamilMeaning || sloka.englishMeaning || '';
@@ -260,6 +264,32 @@ export const useDailySloka = () => {
     if (lang === 'malayalam' || code === 'ml') return sloka.malayalamMeaning || sloka.englishMeaning || '';
     
     return sloka.englishMeaning || '';
+  };
+
+  const getExplanationByLanguage = (sloka, lang) => {
+    if (!sloka) return '';
+    
+    // Priority 1: Unified translations object (AI Generated) - mapped to 'insight' or 'explanation'
+    if (sloka.translations?.[lang]?.insight) return sloka.translations[lang].insight;
+    if (sloka.translations?.[lang]?.explanation) return sloka.translations[lang].explanation;
+    
+    if (lang === 'en') return sloka.simpleExplanation || '';
+    const localized = sloka.localizedExplanation || {};
+    const code = String(lang || 'en').toLowerCase().substring(0, 2);
+    return localized[code] || sloka.simpleExplanation || '';
+  };
+
+  const getExampleByLanguage = (sloka, lang) => {
+    if (!sloka) return '';
+    
+    // Priority 1: Unified translations object (AI Generated) - mapped to 'example' or 'wisdom'
+    if (sloka.translations?.[lang]?.example) return sloka.translations[lang].example;
+    if (sloka.translations?.[lang]?.wisdom) return sloka.translations[lang].wisdom;
+    
+    if (lang === 'en') return sloka.realLifeExample || '';
+    const localized = sloka.localizedExample || {};
+    const code = String(lang || 'en').toLowerCase().substring(0, 2);
+    return localized[code] || sloka.realLifeExample || '';
   };
 
   const getAudioByLanguage = (sloka, lang) => {
@@ -558,6 +588,8 @@ export const useDailySloka = () => {
     handleLoadSavedVerse,
     handleRemoveSavedVerse,
     getMeaningByLanguage,
+    getExplanationByLanguage,
+    getExampleByLanguage,
     getVerseKey,
     stopPlayback
   };

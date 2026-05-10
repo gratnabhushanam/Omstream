@@ -199,14 +199,27 @@ export const useMentor = () => {
 
   const getMeaningByLanguage = (currentSolution, selectedLanguage) => {
     if (!currentSolution) return '';
+    
+    // Check in the new translations object first (from AI pipeline)
+    if (currentSolution.translations && currentSolution.translations[selectedLanguage]) {
+      const trans = currentSolution.translations[selectedLanguage];
+      return typeof trans === 'string' ? trans : (trans.meaning || trans.englishMeaning || '');
+    }
+
+    // Check in localizedMeaning
     const localized = currentSolution.localizedMeaning || {};
-    if (selectedLanguage === 'telugu') {
-      return localized.telugu || currentSolution.teluguMeaning || currentSolution.englishMeaning || '';
+    if (localized[selectedLanguage]) return localized[selectedLanguage];
+
+    // Fallbacks for specific common languages
+    if (selectedLanguage === 'telugu' || selectedLanguage === 'te') {
+      return currentSolution.teluguMeaning || currentSolution.englishMeaning || '';
     }
-    if (selectedLanguage === 'hindi') {
-      return localized.hindi || currentSolution.hindiMeaning || currentSolution.englishMeaning || '';
+    if (selectedLanguage === 'hindi' || selectedLanguage === 'hi') {
+      return currentSolution.hindiMeaning || currentSolution.englishMeaning || '';
     }
-    return localized.english || currentSolution.englishMeaning || currentSolution.teluguMeaning || '';
+
+    // Ultimate fallback
+    return currentSolution.englishMeaning || currentSolution.hindiMeaning || currentSolution.teluguMeaning || '';
   };
 
   const getAudioByLanguage = (currentSolution, selectedLanguage) => {

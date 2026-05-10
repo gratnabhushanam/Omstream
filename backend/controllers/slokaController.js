@@ -94,10 +94,22 @@ const getProblemMockFallback = (problem) => {
 };
 
 const resolveDailySeed = (inputDate) => {
+  if (typeof inputDate === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(inputDate)) {
+    const parts = inputDate.split('-');
+    const dayIndex = Math.floor((new Date(parts[0], parts[1]-1, parts[2]).getTime() - DAILY_ROTATION_START.getTime()) / MS_PER_DAY);
+    return { isoDay: inputDate, dayIndex };
+  }
+  
   const parsedDate = inputDate ? new Date(inputDate) : new Date();
   const safeDate = Number.isNaN(parsedDate.getTime()) ? new Date() : parsedDate;
-  const floorDate = new Date(safeDate.getFullYear(), safeDate.getMonth(), safeDate.getDate());
-  const isoDay = floorDate.toISOString().slice(0, 10);
+  
+  // Use local time for generating the iso string to avoid timezone shifting
+  const yyyy = safeDate.getFullYear();
+  const mm = String(safeDate.getMonth() + 1).padStart(2, '0');
+  const dd = String(safeDate.getDate()).padStart(2, '0');
+  const isoDay = `${yyyy}-${mm}-${dd}`;
+  
+  const floorDate = new Date(yyyy, safeDate.getMonth(), safeDate.getDate());
   const dayIndex = Math.floor((floorDate.getTime() - DAILY_ROTATION_START.getTime()) / MS_PER_DAY);
   return { isoDay, dayIndex };
 };
@@ -123,6 +135,20 @@ const mentorContentBank = {
   confusion: { title: 'Bring clarity first', tip: 'Simplify, reflect.', practice: 'Choose one question.' },
   anger: { title: 'Convert anger to strength', tip: 'Pause before reacting.', practice: 'Count to ten.' },
   motivation: { title: 'Move with purpose', tip: 'Effort grows with meaningful goals.', practice: 'Start with 10 mins.' },
+  anxiety: { title: 'Calm the inner storm', tip: 'Surrender the outcome to the Divine.', practice: 'Practice mindful breathing for 5 minutes.' },
+  sadness: { title: 'Find eternal comfort', tip: 'The soul is eternal and beyond grief.', practice: 'Reflect on what is permanent in your life.' },
+  loneliness: { title: 'You are never alone', tip: 'The Divine resides in your heart.', practice: 'Spend time in silent meditation with the self.' },
+  'self-doubt': { title: 'Reclaim your strength', tip: 'You have infinite potential within.', practice: 'List three things you have overcome before.' },
+  discipline: { title: 'Master your senses', tip: 'Small habits build great character.', practice: 'Complete one small task with full focus.' },
+  depression: { title: 'Lift your spirit', tip: 'Even the darkest night ends with dawn.', practice: 'Step outside and connect with nature.' },
+  focus: { title: 'Sharpen your mind', tip: 'One point at a time leads to success.', practice: 'Avoid multitasking for the next hour.' },
+  overthinking: { title: 'Simplify your thoughts', tip: 'Don\'t fight the mind, observe it.', practice: 'Write down your worries and let them go.' },
+  failure: { title: 'Learn and grow', tip: 'Failure is just a step towards wisdom.', practice: 'Identify one lesson from your recent setback.' },
+  success: { title: 'Stay grounded', tip: 'Success is a gift to be shared.', practice: 'Offer your gratitude for your achievements.' },
+  relationships: { title: 'Love with wisdom', tip: 'See the same soul in everyone.', practice: 'Practice empathy in your next conversation.' },
+  purpose: { title: 'Discover your path', tip: 'Your duty is your highest purpose.', practice: 'Ask yourself: "How can I serve today?"' },
+  peace: { title: 'Rest in serenity', tip: 'Inner peace is your natural state.', practice: 'Let go of the need to control everything.' },
+  confidence: { title: 'Walk with faith', tip: 'God is with you at every step.', practice: 'Stand tall and take a deep, confident breath.' },
 };
 
 const getMentorMeta = (problem) => mentorContentBank[problem] || { title: 'Seek guidance', tip: 'Keep practicing.', practice: 'Read verse twice daily.' };
@@ -153,18 +179,27 @@ exports.getSlokaById = async (req, res) => {
 
 exports.getDailySloka = async (req, res) => {
   try {
-    const { isoDay, dayIndex } = resolveDailySeed(req.query.date);
-    let pool = await Sloka.find({ isDaily: true }).sort({ id: 1 });
-    if (!pool.length) pool = await Sloka.find({}).sort({ id: 1 });
-
-    if (!pool.length) {
-      const selectedMock = mockSlokas[dayIndex % mockSlokas.length];
-      return res.json({ ...mapSloka(selectedMock), dailyKey: isoDay, source: 'mock' });
+    const { isoDay } = resolveDailySeed(req.query.date);
+    
+    let sloka = await Sloka.findOne({ dailyKey: isoDay });
+    
+    if (!sloka) {
+      const todayIso = new Date().toISOString().split('T')[0];
+      if (isoDay <= todayIso) {
+         const { assignDailySloka } = require('../services/cronJobs');
+         sloka = await assignDailySloka(isoDay);
+      }
     }
 
-    const selected = pool[dayIndex % pool.length];
-    return res.json({ ...mapSloka(selected), dailyKey: isoDay });
+    if (!sloka) {
+       const { dayIndex } = resolveDailySeed(req.query.date);
+       const selectedMock = mockSlokas[dayIndex % mockSlokas.length];
+       return res.json({ ...mapSloka(selectedMock), dailyKey: isoDay, source: 'mock' });
+    }
+
+    return res.json({ ...mapSloka(sloka), dailyKey: isoDay });
   } catch (error) {
+    console.error('getDailySloka Error:', error);
     const { isoDay, dayIndex } = resolveDailySeed(req.query.date);
     const selected = mockSlokas[dayIndex % mockSlokas.length];
     return res.json({ ...mapSloka(selected), dailyKey: isoDay, source: 'mock' });
@@ -176,7 +211,6 @@ exports.addSloka = async (req, res) => {
     const { Job } = require('../models');
     const newSloka = await Sloka.create(req.body);
     
-    // Queue AI enrichment and translation
     await Job.create({
       type: 'all',
       contentId: newSloka._id,
@@ -196,7 +230,14 @@ exports.getMentorSloka = async (req, res) => {
     if (!problem) return res.status(400).json({ message: 'Problem keyword is required' });
 
     const mentorMeta = getMentorMeta(problem);
-    const slokas = await Sloka.find({ tags: { $regex: problem, $options: 'i' } });
+    // Expand tag matching to be more inclusive
+    const slokas = await Sloka.find({ 
+      $or: [
+        { tags: { $regex: problem, $options: 'i' } },
+        { englishMeaning: { $regex: problem, $options: 'i' } },
+        { simpleExplanation: { $regex: problem, $options: 'i' } }
+      ]
+    });
     
     if (slokas.length === 0) {
       const fallback = getProblemMockFallback(problem);
@@ -217,9 +258,15 @@ exports.getMentorContent = async (req, res) => {
     const problem = String(req.query.problem || '').trim().toLowerCase();
     const mentorMeta = getMentorMeta(problem);
 
-    const relatedSlokas = await Sloka.find({ tags: { $regex: problem, $options: 'i' } }).limit(6);
-    const relatedStories = await Story.find({ tags: { $regex: problem, $options: 'i' } }).limit(4);
-    const relatedVideos = await Video.find({ tags: { $regex: problem, $options: 'i' } }).limit(4);
+    const relatedSlokas = await Sloka.find({ 
+      $or: [
+        { tags: { $regex: problem, $options: 'i' } },
+        { englishMeaning: { $regex: problem, $options: 'i' } }
+      ]
+    }).limit(10); // Increased limit to 10
+    
+    const relatedStories = await Story.find({ tags: { $regex: problem, $options: 'i' } }).limit(6);
+    const relatedVideos = await Video.find({ tags: { $regex: problem, $options: 'i' } }).limit(6);
 
     res.json({ problem, mentorTitle: mentorMeta.title, mentorTip: mentorMeta.tip, mentorPractice: mentorMeta.practice, slokas: relatedSlokas.map(mapSloka), stories: relatedStories, videos: relatedVideos });
   } catch (error) {
@@ -227,7 +274,16 @@ exports.getMentorContent = async (req, res) => {
   }
 };
 
-exports.getDailyHistory = async (req, res) => res.json({ items: mockDailyHistory });
-exports.addDailyHistory = async (req, res) => { mockDailyHistory.push(req.body); return res.status(201).json({ message: 'Saved' }); };
+exports.getDailyHistory = async (req, res) => {
+  try {
+    const history = await Sloka.find({ dailyKey: { $ne: null } }).sort({ dailyKey: -1 });
+    return res.json({ items: history.map(mapSloka) });
+  } catch (error) {
+    console.error('getDailyHistory Error:', error);
+    return res.json({ items: mockSlokas.map(mapSloka) });
+  }
+};
+
+exports.addDailyHistory = async (req, res) => { return res.status(201).json({ message: 'Saved to watchlist' }); };
 exports.getMentorHistory = async (req, res) => res.json({ items: mockMentorHistory });
 exports.addMentorHistory = async (req, res) => { mockMentorHistory.push(req.body); return res.status(201).json({ message: 'Saved' }); };

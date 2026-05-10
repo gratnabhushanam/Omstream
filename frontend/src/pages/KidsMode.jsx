@@ -190,8 +190,36 @@ export default function KidsMode() {
         </div>
       </nav>
 
-       <section className="relative h-[80vh] lg:h-[85vh] w-full px-6 lg:px-24 pt-24 mb-16 flex items-center">
+       <section className="relative h-[85vh] lg:h-[90vh] w-full px-4 lg:px-24 pt-20 lg:pt-28 mb-16 flex flex-col items-center">
           <div className="relative w-full h-full rounded-[2.5rem] lg:rounded-[4rem] border-2 border-white/10 overflow-hidden shadow-[0_40px_100px_rgba(0,0,0,0.6)] group">
+             {/* Navigation Arrows */}
+             <div className="absolute inset-y-0 left-6 lg:left-12 z-40 flex items-center">
+                <button 
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    const idx = videos.indexOf(featuredVideo);
+                    const prevIdx = (idx - 1 + videos.length) % videos.length;
+                    setFeaturedVideo(videos[prevIdx]);
+                  }}
+                  className="w-14 h-14 lg:w-20 lg:h-20 rounded-full bg-black/30 backdrop-blur-xl border border-white/10 text-white flex items-center justify-center hover:bg-[#FF7A00] hover:text-navy-deep hover:scale-110 transition-all shadow-2xl group/nav"
+                >
+                   <ChevronLeft className="w-8 h-8 lg:w-10 lg:h-10 group-hover/nav:-translate-x-1 transition-transform" />
+                </button>
+             </div>
+             <div className="absolute inset-y-0 right-6 lg:right-12 z-40 flex items-center">
+                <button 
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    const idx = videos.indexOf(featuredVideo);
+                    const nextIdx = (idx + 1) % videos.length;
+                    setFeaturedVideo(videos[nextIdx]);
+                  }}
+                  className="w-14 h-14 lg:w-20 lg:h-20 rounded-full bg-black/30 backdrop-blur-xl border border-white/10 text-white flex items-center justify-center hover:bg-[#FF7A00] hover:text-navy-deep hover:scale-110 transition-all shadow-2xl group/nav"
+                >
+                   <ChevronRight className="w-8 h-8 lg:w-10 lg:h-10 group-hover/nav:translate-x-1 transition-transform" />
+                </button>
+             </div>
+
              <AnimatePresence mode="wait">
                 {featuredVideo && (
                    <motion.div 
@@ -262,7 +290,7 @@ export default function KidsMode() {
                         initial={{ y: 50, opacity: 0 }}
                         animate={{ y: 0, opacity: 1 }}
                         transition={{ delay: 0.6, duration: 1 }}
-                        className="text-5xl lg:text-[8rem] font-black uppercase tracking-tighter leading-[0.8] mb-10 italic premium-text-gradient drop-shadow-3xl"
+                        className="text-5xl lg:text-[7rem] font-black uppercase tracking-tighter leading-[0.8] mb-10 italic premium-text-gradient drop-shadow-3xl"
                       >
                          {t(featuredVideo, 'title')}
                       </motion.h1>
@@ -298,18 +326,35 @@ export default function KidsMode() {
                       </motion.div>
                    </div>
 
+                   {/* Hero Teasers Section */}
+                   <div className="absolute bottom-8 lg:bottom-12 right-10 lg:right-24 z-30 hidden md:flex items-center gap-6 max-w-2xl overflow-x-auto no-scrollbar py-4 px-4">
+                      {videos.slice(0, 5).map((v) => (
+                         <motion.div
+                           key={v._id || v.id}
+                           whileHover={{ scale: 1.1, y: -5 }}
+                           onClick={() => setFeaturedVideo(v)}
+                           className={`w-40 lg:w-56 aspect-video rounded-2xl overflow-hidden border-2 cursor-pointer transition-all duration-500 flex-shrink-0 shadow-2xl ${featuredVideo?._id === v._id ? 'border-[#FF7A00] scale-105 shadow-[0_0_30px_rgba(255,122,0,0.5)]' : 'border-white/10 grayscale hover:grayscale-0'}`}
+                         >
+                            <img src={v.thumbnail || "/scene-krishna.svg"} alt="" className="w-full h-full object-cover" />
+                            <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
+                               <Play className="w-8 h-8 text-[#FF7A00]" />
+                            </div>
+                         </motion.div>
+                      ))}
+                   </div>
+
                    {/* Mascot Overlay */}
                    <motion.div 
                      initial={{ x: 100, opacity: 0 }}
                      animate={{ x: 0, opacity: 1 }}
                      transition={{ delay: 1.2, duration: 1 }}
-                     className="absolute bottom-10 right-10 w-[300px] h-[300px] z-30 pointer-events-none hidden lg:block"
+                     className="absolute bottom-20 right-10 w-[200px] h-[200px] z-30 pointer-events-none hidden lg:block opacity-40"
                    >
                      <img src="/kids_mascot_1778310861074.png" alt="Mascot" className="w-full h-full object-contain drop-shadow-[0_20px_60px_rgba(255,122,0,0.4)] animate-float" />
                    </motion.div>
                 </motion.div>
-             )}
-          </AnimatePresence>
+                )}
+             </AnimatePresence>
           </div>
        </section>
 

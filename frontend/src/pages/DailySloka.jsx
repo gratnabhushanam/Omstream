@@ -7,8 +7,6 @@ export default function DailySloka() {
   const {
     dailySloka,
     loading,
-    language,
-    setLanguage,
     isPlaying,
     notificationEnabled,
     copied,
@@ -31,10 +29,12 @@ export default function DailySloka() {
     handleLoadSavedVerse,
     handleRemoveSavedVerse,
     getMeaningByLanguage,
+    getExplanationByLanguage,
+    getExampleByLanguage,
     getVerseKey,
     stopPlayback
   } = useDailySloka();
-  const { language: globalLang, setLanguage: setGlobalLang } = useLanguage();
+  const { language: globalLang, setLanguage: setGlobalLang, languages, tLabel } = useLanguage();
 
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [customApiKey, setCustomApiKey] = useState(() => localStorage.getItem('geminiApiKey') || '');
@@ -56,7 +56,6 @@ export default function DailySloka() {
     );
   }
 
-  const meaning = getMeaningByLanguage(dailySloka, globalLang);
   const canShare = typeof navigator !== 'undefined' && typeof navigator.share === 'function';
   const isCurrentVerseSaved = savedVerses.some((item) => item.verseKey === getVerseKey(dailySloka));
 
@@ -68,20 +67,20 @@ export default function DailySloka() {
         {/* Header */}
         <div className="text-center mb-12 animate-fade-in-up">
           <div className="inline-flex items-center gap-3 px-5 py-2 rounded-full border border-devotion-gold/30 bg-devotion-gold/10 text-devotion-gold text-[10px] font-black tracking-[0.4em] uppercase mb-6">
-            Daily Wisdom
+            {tLabel('divineWisdom')}
           </div>
           <h1 className="text-4xl sm:text-5xl md:text-6xl tv:text-8xl font-serif font-black text-devotion-gold drop-shadow-2xl mb-4 tracking-tight uppercase">
-            Daily Sloka
+            {tLabel('dailySloka')}
           </h1>
           <p className="text-base sm:text-lg md:text-xl tv:text-2xl text-gray-300 font-light font-serif italic max-w-2xl mx-auto">
-            A verse from the Bhagavad Gita to guide your day
+            {tLabel('gitaQuote')}
           </p>
           <div className="mt-6 flex items-center justify-center gap-3 flex-wrap">
             <button
               onClick={openPreviousDay}
               className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-white/15 bg-white/5 hover:bg-white/10 text-[10px] font-black uppercase tracking-widest transition-all"
             >
-              <ChevronLeft className="w-4 h-4" /> Previous Day
+              <ChevronLeft className="w-4 h-4" /> {tLabel('previousDay')}
             </button>
             <span className="px-4 py-2 rounded-xl border border-devotion-gold/30 bg-devotion-gold/10 text-devotion-gold text-[10px] font-black uppercase tracking-widest">
               {selectedDateKey}
@@ -90,7 +89,7 @@ export default function DailySloka() {
               onClick={() => setShowSettingsModal(true)}
               className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 text-gray-300 text-[10px] font-black uppercase tracking-widest transition-all"
             >
-              <Settings className="w-4 h-4" /> API Config
+              <Settings className="w-4 h-4" /> {tLabel('apiConfig')}
             </button>
           </div>
           
@@ -101,11 +100,11 @@ export default function DailySloka() {
               className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-devotion-gold/25 bg-white/5 hover:bg-white/10 text-gray-200 text-[10px] font-black uppercase tracking-widest transition-all hover:border-devotion-gold/50"
             >
               <CalendarDays className="w-4 h-4 text-devotion-gold" />
-              <span>{showCalendar ? 'Hide' : 'Choose'} Date</span>
+              <span>{showCalendar ? tLabel('hide') : tLabel('choose')} {tLabel('selectDate')}</span>
             </button>
             {showCalendar && (
               <div className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-devotion-gold/30 bg-devotion-darkBlue/60 backdrop-blur-md">
-                <span className="text-[10px] font-black uppercase tracking-widest text-gray-400 mr-2">Select Date:</span>
+                <span className="text-[10px] font-black uppercase tracking-widest text-gray-400 mr-2">{tLabel('selectDate')}:</span>
                 <input
                   type="date"
                   value={selectedDateKey}
@@ -145,8 +144,8 @@ export default function DailySloka() {
 
           <div className="relative z-10">
             {/* Sanskrit */}
-        <div className="mb-10 text-center">
-              <p className="text-[10px] font-black uppercase tracking-[0.4em] text-devotion-gold mb-4">Sacred Verse</p>
+            <div className="mb-10 text-center">
+              <p className="text-[10px] font-black uppercase tracking-[0.4em] text-devotion-gold mb-4">{tLabel('sacredVerse')}</p>
               <p className="text-3xl md:text-5xl font-serif text-white leading-relaxed italic mb-6 drop-shadow-lg" style={{ transform: 'translateZ(60px)' }}>
                 {(dailySloka.sanskrit || '').split('\n').map((line, i) => (
                   <span key={i} className="block mb-2">
@@ -156,68 +155,55 @@ export default function DailySloka() {
               </p>
               <div className="h-px bg-gradient-to-r from-transparent via-devotion-gold/40 to-transparent mb-8"></div>
               <p className="text-sm md:text-base text-gray-400" style={{ transform: 'translateZ(30px)' }}>
-                {dailySloka.chapter && dailySloka.verse && `Chapter ${dailySloka.chapter}, Verse ${dailySloka.verse}`}
+                {dailySloka.chapter && dailySloka.verse && `${tLabel('chapter')} ${dailySloka.chapter}, ${tLabel('verse')} ${dailySloka.verse}`}
               </p>
             </div>
 
             {/* Language Selector */}
-            <div className="flex justify-center mb-10 flex-wrap gap-3">
-              <button
-                onClick={() => {
-                  setGlobalLang('en');
-                  if (isPlaying) stopPlayback();
-                }}
-                className={`px-6 py-2 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${globalLang === 'en' ? 'bg-devotion-gold text-devotion-darkBlue shadow-lg scale-105' : 'bg-white/5 border border-white/10 text-gray-300 hover:text-white'}`}
-              >
-                English
-              </button>
-              <button
-                onClick={() => {
-                  setGlobalLang('hi');
-                  if (isPlaying) stopPlayback();
-                }}
-                className={`px-6 py-2 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${globalLang === 'hi' ? 'bg-devotion-gold text-devotion-darkBlue shadow-lg scale-105' : 'bg-white/5 border border-white/10 text-gray-300 hover:text-white'}`}
-              >
-                हिंदी
-              </button>
-              <button
-                onClick={() => {
-                  setGlobalLang('te');
-                  if (isPlaying) stopPlayback();
-                }}
-                className={`px-6 py-2 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${globalLang === 'te' ? 'bg-devotion-gold text-devotion-darkBlue shadow-lg scale-105' : 'bg-white/5 border border-white/10 text-gray-300 hover:text-white'}`}
-              >
-                తెలుగు
-              </button>
+            <div className="flex justify-center mb-10 flex-wrap gap-2 md:gap-3 px-2">
+              {languages.map(lang => (
+                <button
+                  key={lang.code}
+                  onClick={() => {
+                    setGlobalLang(lang.code);
+                    if (isPlaying) stopPlayback();
+                  }}
+                  className={`px-4 md:px-6 py-2 rounded-full text-[9px] md:text-[10px] font-black uppercase tracking-widest transition-all ${globalLang === lang.code ? 'bg-devotion-gold text-devotion-darkBlue shadow-[0_0_15px_rgba(255,215,0,0.4)] scale-105' : 'bg-white/5 border border-white/10 text-gray-300 hover:text-white hover:bg-white/10'}`}
+                >
+                  {lang.native || lang.label}
+                </button>
+              ))}
             </div>
 
             {/* Meaning */}
-            <div className="bg-devotion-darkBlue/40 backdrop-blur-md p-8 rounded-3xl border border-white/5 mb-10">
-              <p className="text-[10px] font-black uppercase tracking-[0.25em] text-devotion-gold mb-4">Meaning</p>
-              <p className="text-lg md:text-xl font-medium leading-relaxed text-white">
-                {meaning}
+            <div className="bg-devotion-darkBlue/40 backdrop-blur-md p-8 rounded-2xl border border-white/5 mb-10 relative overflow-hidden group">
+              <div className="absolute top-0 left-0 w-1 h-full bg-devotion-gold/50 group-hover:bg-devotion-gold transition-colors"></div>
+              <p className="text-[10px] font-black uppercase tracking-[0.25em] text-gray-400 mb-4">{tLabel('meaning')}</p>
+              <p className={`text-xl md:text-2xl text-gray-200 leading-relaxed font-light ${globalLang === 'te' ? 'font-telugu' : globalLang === 'hi' ? 'font-hindi' : ''}`}>
+                {getMeaningByLanguage(dailySloka, globalLang)}
               </p>
             </div>
 
             {/* Explanation & Example */}
             <div className="grid md:grid-cols-2 gap-6 mb-10">
-              {dailySloka.simpleExplanation && (
+              {getExplanationByLanguage(dailySloka, globalLang) && (
                 <div className="bg-devotion-darkBlue/40 backdrop-blur-md p-8 rounded-2xl border border-white/5">
-                  <div className="w-10 h-10 bg-blue-500/10 rounded-xl flex items-center justify-center mb-4 border border-blue-500/20">
-                    <BookOpen className="w-5 h-5 text-blue-400" />
+                    <div className="w-10 h-10 bg-blue-500/10 rounded-xl flex items-center justify-center mb-4 border border-blue-500/20">
+                      <BookOpen className="w-5 h-5 text-blue-400" />
+                    </div>
+                    <p className="text-[10px] font-black uppercase tracking-[0.25em] text-blue-400 mb-3">{tLabel('insight')}</p>
+                    <p className="text-gray-200 leading-relaxed">{getExplanationByLanguage(dailySloka, globalLang)}</p>
                   </div>
-                  <p className="text-[10px] font-black uppercase tracking-[0.25em] text-blue-400 mb-3">Modern Insight</p>
-                  <p className="text-gray-200 leading-relaxed">{dailySloka.simpleExplanation}</p>
-                </div>
               )}
-              {dailySloka.realLifeExample && (
+
+              {getExampleByLanguage(dailySloka, globalLang) && (
                 <div className="bg-devotion-darkBlue/40 backdrop-blur-md p-8 rounded-2xl border border-white/5">
-                  <div className="w-10 h-10 bg-devotion-gold/10 rounded-xl flex items-center justify-center mb-4 border border-devotion-gold/20">
-                    <CheckCircle className="w-5 h-5 text-devotion-gold" />
+                    <div className="w-10 h-10 bg-devotion-gold/10 rounded-xl flex items-center justify-center mb-4 border border-devotion-gold/20">
+                      <CheckCircle className="w-5 h-5 text-devotion-gold" />
+                    </div>
+                    <p className="text-[10px] font-black uppercase tracking-[0.25em] text-devotion-gold mb-3">{tLabel('wisdom')}</p>
+                    <p className="text-gray-200 leading-relaxed">{getExampleByLanguage(dailySloka, globalLang)}</p>
                   </div>
-                  <p className="text-[10px] font-black uppercase tracking-[0.25em] text-devotion-gold mb-3">Applied Wisdom</p>
-                  <p className="text-gray-200 leading-relaxed">{dailySloka.realLifeExample}</p>
-                </div>
               )}
             </div>
 
@@ -228,7 +214,7 @@ export default function DailySloka() {
                 className="flex items-center gap-3 bg-white/5 hover:bg-white/10 border border-white/10 px-6 py-3 rounded-2xl transition-all font-black text-xs uppercase tracking-widest"
               >
                 {isPlaying ? <Pause className="w-5 h-5" /> : <Volume2 className="w-5 h-5" />}
-                {isPlaying ? 'Stop' : 'Listen'}
+                {isPlaying ? tLabel('stop') : tLabel('listen')}
               </button>
 
               <button
@@ -236,7 +222,7 @@ export default function DailySloka() {
                 className={`flex items-center gap-3 px-6 py-3 rounded-2xl transition-all font-black text-xs uppercase tracking-widest ${copied ? 'bg-green-500/20 border border-green-500/50 text-green-400' : 'bg-white/5 hover:bg-white/10 border border-white/10'}`}
               >
                 <Copy className="w-5 h-5" />
-                {copied ? 'Copied!' : 'Copy'}
+                {copied ? tLabel('copied') : tLabel('copy')}
               </button>
 
               {canShare && (
@@ -245,7 +231,7 @@ export default function DailySloka() {
                   className="flex items-center gap-3 bg-white/5 hover:bg-white/10 border border-white/10 px-6 py-3 rounded-2xl transition-all font-black text-xs uppercase tracking-widest"
                 >
                   <Share2 className="w-5 h-5" />
-                  Share
+                  {tLabel('share')}
                 </button>
               )}
 
@@ -254,7 +240,7 @@ export default function DailySloka() {
                 className={`flex items-center gap-3 border px-6 py-3 rounded-2xl transition-all font-black text-xs uppercase tracking-widest ${isCurrentVerseSaved ? 'bg-devotion-gold/20 border-devotion-gold/50 text-devotion-gold' : 'bg-white/5 hover:bg-white/10 border-white/10 text-white'}`}
               >
                 <Bookmark className="w-5 h-5 text-devotion-gold" />
-                {isCurrentVerseSaved ? 'Saved Verse' : 'Save Verse'}
+                {isCurrentVerseSaved ? tLabel('savedVerse') : tLabel('saveVerse')}
               </button>
 
               <button
@@ -262,7 +248,7 @@ export default function DailySloka() {
                 className={`flex items-center gap-3 px-6 py-3 rounded-2xl transition-all font-black text-xs uppercase tracking-widest ml-auto ${notificationEnabled ? 'bg-purple-500/20 border border-purple-500/50 text-purple-400' : 'bg-white/5 hover:bg-white/10 border border-white/10'}`}
               >
                 <Bell className="w-5 h-5" />
-                {notificationEnabled ? 'Notifications On' : 'Enable Notifications'}
+                {notificationEnabled ? tLabel('notificationsOn') : tLabel('enableNotifications')}
               </button>
             </div>
 
@@ -281,7 +267,7 @@ export default function DailySloka() {
             {/* Tags */}
             {dailySloka.tags && dailySloka.tags.length > 0 && (
               <div className="mt-10 pt-8 border-t border-white/10">
-                <p className="text-[10px] font-black uppercase tracking-[0.25em] text-devotion-gold mb-4">Related Topics</p>
+                <p className="text-[10px] font-black uppercase tracking-[0.25em] text-devotion-gold mb-4">{tLabel('relatedTopics')}</p>
                 <div className="flex flex-wrap gap-2">
                   {dailySloka.tags.map((tag) => (
                     <span key={tag} className="bg-white/5 backdrop-blur-md border border-white/10 px-4 py-2 rounded-full uppercase text-[9px] font-black tracking-widest text-gray-400 hover:text-devotion-gold transition-colors">
@@ -294,11 +280,17 @@ export default function DailySloka() {
 
             {history.length > 1 && (
               <div className="mt-12 pt-8 border-t border-white/10">
-                <p className="text-[10px] font-black uppercase tracking-[0.25em] text-devotion-gold mb-4">Previous Daily Slokas</p>
+                <p className="text-[10px] font-black uppercase tracking-[0.25em] text-devotion-gold mb-4">{tLabel('previous')}</p>
                 <div className="grid md:grid-cols-2 gap-4">
                   {history.slice(1, 7).map((item) => (
-                    <div key={`${item.dailyKey}-${item.id}`} className="rounded-2xl border border-white/10 bg-white/5 p-4">
-                      <p className="text-[10px] uppercase tracking-[0.2em] text-gray-400 mb-2">{item.dailyKey}</p>
+                    <div 
+                      key={`${item.dailyKey}-${item.id}`} 
+                      className="rounded-2xl border border-white/10 bg-white/5 p-4 cursor-pointer hover:bg-white/10 hover:border-devotion-gold/30 transition-all"
+                      onClick={() => handleDateSelection({ target: { value: item.dailyKey } })}
+                    >
+                      <p className="text-[10px] uppercase tracking-[0.2em] text-devotion-gold mb-2 flex items-center gap-2">
+                        <CalendarDays className="w-3 h-3" /> {item.dailyKey}
+                      </p>
                       <p className="text-sm text-white line-clamp-2 italic mb-2">{item.sanskrit}</p>
                       <p className="text-xs text-gray-300 line-clamp-2">{item.englishMeaning}</p>
                     </div>
@@ -309,12 +301,12 @@ export default function DailySloka() {
 
             {savedVerses.length > 0 && (
               <div className="mt-12 pt-8 border-t border-white/10">
-                <p className="text-[10px] font-black uppercase tracking-[0.25em] text-devotion-gold mb-4">Saved Daily Verses</p>
+                <p className="text-[10px] font-black uppercase tracking-[0.25em] text-devotion-gold mb-4">{tLabel('savedDailyVerses')}</p>
                 <div className="grid md:grid-cols-2 gap-4">
                   {savedVerses.slice(0, 8).map((item) => (
                     <div key={item.verseKey} className="rounded-2xl border border-devotion-gold/25 bg-devotion-gold/5 p-4">
                       <p className="text-[10px] uppercase tracking-[0.2em] text-devotion-gold mb-2">
-                        {item.chapter && item.verse ? `Chapter ${item.chapter}, Verse ${item.verse}` : item.dailyKey || 'Saved Verse'}
+                        {item.chapter && item.verse ? `${tLabel('chapter')} ${item.chapter}, ${tLabel('verse')} ${item.verse}` : item.dailyKey || tLabel('savedVerse')}
                       </p>
                       <p className="text-sm text-white line-clamp-2 italic mb-2">{item.sanskrit}</p>
                       <p className="text-xs text-gray-300 line-clamp-2 mb-3">{item.englishMeaning}</p>
@@ -323,7 +315,7 @@ export default function DailySloka() {
                           onClick={() => handleLoadSavedVerse(item)}
                           className="flex-1 rounded-xl border border-white/20 bg-white/5 px-3 py-2 text-[10px] font-black uppercase tracking-widest text-white hover:bg-white/10"
                         >
-                          Open
+                          {tLabel('open')}
                         </button>
                         <button
                           onClick={() => handleRemoveSavedVerse(item.verseKey)}
