@@ -431,7 +431,7 @@ function MovieRowComponent({ title, icon, movies, onSelect, setFeaturedMovie, wa
   );
 }
 
-function MovieCardComponent({ movie, onSelect, setFeaturedMovie, isActive, setHoveredMovieId }) {
+function MovieCardComponent({ movie, onSelect, setFeaturedMovie, isActive, setHoveredMovieId, isSaved, onToggleWatchlist }) {
   const [isHovered, setIsHovered] = useState(false);
   const { t } = useLanguage();
 
@@ -493,6 +493,19 @@ function MovieCardComponent({ movie, onSelect, setFeaturedMovie, isActive, setHo
             />
           )}
           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
+        </div>
+
+        {/* Floating Watchlist Button */}
+        <div className={`absolute top-6 right-6 z-30 transition-all duration-500 ${isHovered ? 'opacity-100 scale-100' : 'opacity-0 scale-50'}`}>
+          <button 
+            onClick={(e) => {
+              e.stopPropagation();
+              onToggleWatchlist(movie._id);
+            }}
+            className={`w-12 h-12 rounded-2xl flex items-center justify-center backdrop-blur-3xl border-2 transition-all ${isSaved ? 'bg-devotion-saffron border-devotion-saffron text-navy-deep shadow-[0_0_20px_#FF7A00]' : 'bg-black/20 border-white/20 text-white hover:border-devotion-saffron/50'}`}
+          >
+            {isSaved ? <Check className="w-6 h-6" /> : <Plus className="w-6 h-6" />}
+          </button>
         </div>
 
         {/* Metadata Overlay */}

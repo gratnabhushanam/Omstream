@@ -10,10 +10,16 @@ axios.defaults.baseURL = isProd
   ? 'https://gitawisdom.onrender.com' 
   : (import.meta.env.VITE_API_BASE_URL || 'http://localhost:8888');
 
-// Interceptor to ensure app api key is set natively if missing in env
+// Interceptor to ensure app api key and auth token are set natively
 axios.interceptors.request.use((config) => {
   const apiKey = import.meta.env.VITE_APP_API_KEY || 'Gita@2026';
   config.headers['x-api-key'] = apiKey;
+  
+  const token = localStorage.getItem('token');
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  
   return config;
 });
 
