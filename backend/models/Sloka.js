@@ -42,7 +42,6 @@ const SlokaSchema = new mongoose.Schema({
 });
 
 // Performance Indexes
-SlokaSchema.index({ id: 1 });
 SlokaSchema.index({ dailyKey: 1 });
 SlokaSchema.index({ isDaily: 1 });
 SlokaSchema.index({ tags: 1 });
