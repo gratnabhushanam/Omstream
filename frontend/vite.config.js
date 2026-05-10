@@ -15,8 +15,8 @@ export default defineConfig({
         globPatterns: ['**/*.{js,css,html,ico,png,svg}'],
         rollupOptions: {
           output: {
-            codeSplitting: false,
-            format: 'es'
+            format: 'es',
+            entryFileNames: 'sw.js'
           }
         }
       },
@@ -46,6 +46,7 @@ export default defineConfig({
     })
   ],
   build: {
+    codeSplitting: false,
     chunkSizeWarningLimit: 700,
     rollupOptions: {
       output: {
