@@ -58,6 +58,7 @@ const allowedOrigins = [
   'https://gitawisdom.onrender.com',
   'https://gita-wisdom-1.onrender.com',
   // Vercel production & preview deployments
+  'https://gitwisdom.vercel.app',
   'https://gita-wisdom.vercel.app',
   'https://gitawisdom.vercel.app',
   'https://gita-wisdom-devotion.vercel.app',
