@@ -16,6 +16,7 @@ export default defineConfig({
         maximumFileSizeToCacheInBytes: 5242880, // Increase to 5MB to handle larger bundles
         rollupOptions: {
           output: {
+            codeSplitting: false,
             format: 'es'
           }
         }
