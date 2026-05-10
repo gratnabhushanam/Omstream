@@ -15,8 +15,8 @@ export default defineConfig({
         globPatterns: ['**/*.{js,css,html,ico,png,svg}'],
         maximumFileSizeToCacheInBytes: 5242880, // Increase to 5MB to handle larger bundles
         rollupOptions: {
-          codeSplitting: false,
           output: {
+            codeSplitting: false,
             format: 'es'
           }
         }
@@ -49,7 +49,6 @@ export default defineConfig({
   build: {
     chunkSizeWarningLimit: 1000,
     rollupOptions: {
-      codeSplitting: false,
       output: {
         manualChunks: (id) => {
           if (id.includes('node_modules/react') || id.includes('node_modules/react-dom')) {
