@@ -15,8 +15,7 @@ export default defineConfig({
         globPatterns: ['**/*.{js,css,html,ico,png,svg}'],
         rollupOptions: {
           output: {
-            format: 'es',
-            entryFileNames: 'sw.js'
+            format: 'es'
           }
         }
       },
@@ -50,21 +49,7 @@ export default defineConfig({
     chunkSizeWarningLimit: 700,
     rollupOptions: {
       output: {
-        manualChunks: (id) => {
-          if (id.includes('node_modules/react') || id.includes('node_modules/react-dom')) {
-            return 'react-vendor';
-          }
-          if (id.includes('node_modules/react-router-dom')) {
-            return 'router-vendor';
-          }
-          if (id.includes('node_modules/axios')) {
-            return 'http-vendor';
-          }
-          if (id.includes('node_modules/lucide-react')) {
-            return 'icon-vendor';
-          }
-          return undefined;
-        },
+        codeSplitting: false
       },
     },
   },
