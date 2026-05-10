@@ -178,20 +178,29 @@ exports.getSlokaById = async (req, res) => {
 };
 
 exports.getDailySloka = async (req, res) => {
+  const start = Date.now();
   try {
     const { isoDay } = resolveDailySeed(req.query.date);
+    console.log(`[DAILY] Fetching sloka for ${isoDay}`);
     
-    let sloka = await Sloka.findOne({ dailyKey: isoDay });
+    // 1. Try to find existing assigned sloka
+    let sloka = await Sloka.findOne({ dailyKey: isoDay }).lean();
     
+    // 2. If not found and it's today/past, try to assign one
     if (!sloka) {
       const todayIso = new Date().toISOString().split('T')[0];
       if (isoDay <= todayIso) {
+         console.log(`[DAILY] No sloka for ${isoDay}. Triggering auto-assignment...`);
          const { assignDailySloka } = require('../services/cronJobs');
          sloka = await assignDailySloka(isoDay);
       }
     }
 
+    const duration = Date.now() - start;
+    if (duration > 500) console.warn(`[PERF] getDailySloka took ${duration}ms`);
+
     if (!sloka) {
+       console.log(`[DAILY] No sloka found in DB for ${isoDay}, returning mock.`);
        const { dayIndex } = resolveDailySeed(req.query.date);
        const selectedMock = mockSlokas[dayIndex % mockSlokas.length];
        return res.json({ ...mapSloka(selectedMock), dailyKey: isoDay, source: 'mock' });
@@ -199,7 +208,7 @@ exports.getDailySloka = async (req, res) => {
 
     return res.json({ ...mapSloka(sloka), dailyKey: isoDay });
   } catch (error) {
-    console.error('getDailySloka Error:', error);
+    console.error('[PERF] getDailySloka Error:', error);
     const { isoDay, dayIndex } = resolveDailySeed(req.query.date);
     const selected = mockSlokas[dayIndex % mockSlokas.length];
     return res.json({ ...mapSloka(selected), dailyKey: isoDay, source: 'mock' });
@@ -225,51 +234,86 @@ exports.addSloka = async (req, res) => {
 };
 
 exports.getMentorSloka = async (req, res) => {
+  const start = Date.now();
   try {
     const problem = String(req.query.problem || '').trim().toLowerCase();
     if (!problem) return res.status(400).json({ message: 'Problem keyword is required' });
 
     const mentorMeta = getMentorMeta(problem);
-    // Expand tag matching to be more inclusive
-    const slokas = await Sloka.find({ 
-      $or: [
-        { tags: { $regex: problem, $options: 'i' } },
-        { englishMeaning: { $regex: problem, $options: 'i' } },
-        { simpleExplanation: { $regex: problem, $options: 'i' } }
-      ]
-    });
     
+    // 1. Try high-performance Text Search first
+    let slokas = [];
+    try {
+      slokas = await Sloka.find({ $text: { $search: problem } }).limit(5).lean();
+    } catch (textSearchErr) {
+      console.warn('[MENTOR] Text search failed or index not ready, falling back to regex:', textSearchErr.message);
+      // Fallback to regex if text index is not yet built or supported
+      slokas = await Sloka.find({ 
+        $or: [
+          { tags: { $regex: problem, $options: 'i' } },
+          { englishMeaning: { $regex: problem, $options: 'i' } }
+        ]
+      }).limit(5).lean();
+    }
+    
+    const duration = Date.now() - start;
+    if (duration > 1000) console.warn(`[PERF] getMentorSloka took ${duration}ms for problem: ${problem}`);
+
     if (slokas.length === 0) {
       const fallback = getProblemMockFallback(problem);
       return res.json({ ...mapSloka(fallback), problem, mentorTitle: mentorMeta.title, mentorTip: mentorMeta.tip, mentorPractice: mentorMeta.practice });
     }
 
     const randomSloka = slokas[Math.floor(Math.random() * slokas.length)];
-    const relatedVideo = await Video.findOne({ tags: { $regex: problem, $options: 'i' } });
+    // Quick lookup for related video
+    const relatedVideo = await Video.findOne({ tags: { $regex: problem, $options: 'i' } }).lean();
 
-    res.json({ ...mapSloka(randomSloka), problem, mentorTitle: mentorMeta.title, mentorTip: mentorMeta.tip, mentorPractice: mentorMeta.practice, recommendedVideo: relatedVideo ? mapVideo(relatedVideo) : null });
+    res.json({ 
+      ...mapSloka(randomSloka), 
+      problem, 
+      mentorTitle: mentorMeta.title, 
+      mentorTip: mentorMeta.tip, 
+      mentorPractice: mentorMeta.practice, 
+      recommendedVideo: relatedVideo ? mapVideo(relatedVideo) : null 
+    });
   } catch (error) {
+    console.error('[PERF] getMentorSloka Fatal Error:', error);
     res.status(500).json({ message: error.message });
   }
 };
 
 exports.getMentorContent = async (req, res) => {
+  const start = Date.now();
   try {
     const problem = String(req.query.problem || '').trim().toLowerCase();
     const mentorMeta = getMentorMeta(problem);
 
-    const relatedSlokas = await Sloka.find({ 
-      $or: [
-        { tags: { $regex: problem, $options: 'i' } },
-        { englishMeaning: { $regex: problem, $options: 'i' } }
-      ]
-    }).limit(10); // Increased limit to 10
-    
-    const relatedStories = await Story.find({ tags: { $regex: problem, $options: 'i' } }).limit(6);
-    const relatedVideos = await Video.find({ tags: { $regex: problem, $options: 'i' } }).limit(6);
+    // Optimized parallel lookups
+    const [relatedSlokas, relatedStories, relatedVideos] = await Promise.all([
+      Sloka.find({ 
+        $or: [
+          { tags: problem }, // Exact tag match is fast if indexed
+          { $text: { $search: problem } }
+        ]
+      }).limit(6).lean().catch(() => Sloka.find({ tags: { $regex: problem, $options: 'i' } }).limit(6).lean()),
+      Story.find({ tags: { $regex: problem, $options: 'i' } }).limit(6).lean(),
+      Video.find({ tags: { $regex: problem, $options: 'i' } }).limit(6).lean()
+    ]);
 
-    res.json({ problem, mentorTitle: mentorMeta.title, mentorTip: mentorMeta.tip, mentorPractice: mentorMeta.practice, slokas: relatedSlokas.map(mapSloka), stories: relatedStories, videos: relatedVideos });
+    const duration = Date.now() - start;
+    if (duration > 1500) console.warn(`[PERF] getMentorContent took ${duration}ms for problem: ${problem}`);
+
+    res.json({ 
+      problem, 
+      mentorTitle: mentorMeta.title, 
+      mentorTip: mentorMeta.tip, 
+      mentorPractice: mentorMeta.practice, 
+      slokas: relatedSlokas.map(mapSloka), 
+      stories: relatedStories, 
+      videos: relatedVideos.map(mapVideo)
+    });
   } catch (error) {
+    console.error('[PERF] getMentorContent Error:', error);
     res.status(500).json({ message: error.message });
   }
 };

@@ -41,4 +41,24 @@ const SlokaSchema = new mongoose.Schema({
   strict: false // Allow extra fields
 });
 
+// Performance Indexes
+SlokaSchema.index({ id: 1 });
+SlokaSchema.index({ dailyKey: 1 });
+SlokaSchema.index({ isDaily: 1 });
+SlokaSchema.index({ tags: 1 });
+
+// Full-text index for high-performance Mentor searches (replaces slow regex)
+SlokaSchema.index({ 
+  tags: 'text', 
+  englishMeaning: 'text', 
+  simpleExplanation: 'text' 
+}, {
+  weights: {
+    tags: 10,
+    englishMeaning: 5,
+    simpleExplanation: 2
+  },
+  name: "SlokaTextIndex"
+});
+
 module.exports = mongoose.models.Sloka || mongoose.model('Sloka', SlokaSchema);

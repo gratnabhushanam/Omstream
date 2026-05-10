@@ -49,49 +49,33 @@ exports.searchAll = async (req, res) => {
 
     const qRegex = mongoRegex(normalizedQuery);
     
-    // Build multilingual search filters
+    // Optimized Multilingual Search using Text Indexes & Indexed Lookups
     const [slokas, stories, videos, movies] = await Promise.all([
       Sloka.find({
         $or: [
-          { sanskrit: qRegex },
-          { englishMeaning: qRegex },
-          { teluguMeaning: qRegex },
-          { hindiMeaning: qRegex },
+          { $text: { $search: normalizedQuery } },
+          { sanskrit: qRegex }, // Sanskrit still needs regex if not in text index
           { [`translations.${langCode}.meaning`]: qRegex }
         ],
-      }),
+      }).limit(20).lean(),
       Story.find({
         $or: [
-          { title: qRegex },
-          { summary: qRegex },
-          { content: qRegex },
-          { [`translations.${langCode}.title`]: qRegex },
-          { [`translations.${langCode}.description`]: qRegex },
-          { [`translations.${langCode}.content`]: qRegex },
+          { $text: { $search: normalizedQuery } },
           { tags: qRegex }
         ],
-      }),
+      }).limit(20).lean(),
       Video.find({
         $or: [
-          { title: qRegex },
-          { description: qRegex },
-          { category: qRegex },
-          { language: qRegex },
-          { [`translations.${langCode}.title`]: qRegex },
-          { [`translations.${langCode}.description`]: qRegex },
+          { $text: { $search: normalizedQuery } },
           { tags: qRegex }
         ],
-      }),
+      }).limit(30).lean(),
       Movie.find({
         $or: [
-          { title: qRegex },
-          { description: qRegex },
-          { [`translations.${langCode}.title`]: qRegex },
-          { [`translations.${langCode}.description`]: qRegex },
-          { genre: qRegex },
+          { $text: { $search: normalizedQuery } },
           { tags: qRegex }
         ],
-      }),
+      }).limit(20).lean(),
     ]);
 
     const separated = separateVideos(videos);
