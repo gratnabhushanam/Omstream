@@ -13,7 +13,8 @@ export default defineConfig({
       registerType: 'autoUpdate',
       injectManifest: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg}'],
-        maximumFileSizeToCacheInBytes: 5242880, // Increase to 5MB to handle larger bundles
+        maximumFileSizeToCacheInBytes: 5242880,
+        rollupFormat: 'iife'
       },
       includeAssets: ['logo-om-v2.png', 'screenshot-640x480.png', 'screenshot-1280x800.png'],
       manifest: {
