@@ -71,18 +71,35 @@ exports.broadcastNotification = async (req, res) => {
     const safeTitle = String(title || '').trim() || 'Gita Wisdom Update';
     const safeBody = String(body || '').trim() || 'You have a new update from Gita Wisdom.';
     const safeType = String(type || 'system').trim() || 'system';
-    const { sendPush, sendInApp } = require('../utils/notificationService');
-    const users = await User.find({}, { _id: 1, email: 1, settings: 1, pushSubscriptions: 1 });
+    const { sendPush } = require('../utils/notificationService');
+    const users = await User.find({}, { _id: 1, email: 1, settings: 1, pushSubscriptions: 1 }).lean();
 
+    // 1. Bulk insert in-app notifications
+    const notificationsToInsert = users.map(user => ({
+      userId: String(user._id),
+      type: safeType,
+      title: safeTitle,
+      body: safeBody,
+      message: safeBody,
+      isRead: false
+    }));
+    
+    if (notificationsToInsert.length > 0) {
+      await Notification.insertMany(notificationsToInsert, { ordered: false });
+    }
+
+    // 2. Fire and forget push notifications
+    const pushPromises = [];
     for (const user of users) {
-      await sendInApp({ userId: String(user._id), type: safeType, title: safeTitle, body: safeBody });
       if (user.settings?.notifications && user.pushSubscriptions?.length) {
         for (const sub of user.pushSubscriptions) {
-          await sendPush({ subscription: sub, title: safeTitle, body: safeBody }).catch(console.error);
+          pushPromises.push(sendPush({ subscription: sub, title: safeTitle, body: safeBody }).catch(e => {}));
         }
       }
     }
-    res.json({ success: true });
+    Promise.allSettled(pushPromises); // Background execution
+
+    res.json({ success: true, message: 'Broadcast initiated successfully' });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

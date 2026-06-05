@@ -86,8 +86,10 @@ exports.registerUser = async (req, res) => {
     pendingRegistrations.set(safeEmail, { name, email: safeEmail, phoneNumber, password: hashedPassword, otp, expiresAt: getOtpExpiryTime(), attempts: 0 });
 
     console.log(`[AUTH] Sending OTP to ${safeEmail}`);
-    const delivery = await sendOtpEmail({ email: safeEmail, name, otp });
-    return res.status(200).json({ message: 'OTP sent', email: safeEmail, previewCode: delivery.previewCode });
+    sendOtpEmail({ email: safeEmail, name, otp }).catch(e => console.error('[AUTH] Async email error:', e));
+    
+    const isPreview = process.env.EMAIL_PROVIDER === 'preview';
+    return res.status(200).json({ message: 'OTP sent', email: safeEmail, previewCode: isPreview ? otp : undefined });
   } catch (error) { 
     console.error(`[AUTH] Registration error: ${error.message}`);
     res.status(500).json({ message: error.message }); 
@@ -105,8 +107,9 @@ exports.resendRegistrationOtp = async (req, res) => {
     pending.otp = otp;
     pending.expiresAt = getOtpExpiryTime();
     
-    const delivery = await sendOtpEmail({ email: safeEmail, name: pending.name, otp });
-    res.json({ message: 'OTP resent', previewCode: delivery.previewCode });
+    sendOtpEmail({ email: safeEmail, name: pending.name, otp }).catch(e => console.error('[AUTH] Async resend email error:', e));
+    const isPreview = process.env.EMAIL_PROVIDER === 'preview';
+    res.json({ message: 'OTP resent', previewCode: isPreview ? otp : undefined });
   } catch (error) { res.status(500).json({ message: error.message }); }
 };
 
@@ -155,9 +158,12 @@ exports.loginUser = async (req, res) => {
           return res.status(403).json({ message: "Maximum device limit reached. This account can be used on up to 3 devices only." });
         }
 
+        await User.updateOne({ _id: user._id }, { 
+          $set: { lastActive: new Date() },
+          $inc: { streak: 1 } 
+        });
         user.lastActive = new Date();
         user.streak = (user.streak || 0) + 1;
-        await user.save();
         console.log(`[AUTH] Login successful: ${email}`);
         return res.json({ ...sanitizeUserForResponse(user), token: generateToken(user.id) });
       } else {

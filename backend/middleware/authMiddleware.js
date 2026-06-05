@@ -1,5 +1,6 @@
 const jwt = require('jsonwebtoken');
 const authController = require('../controllers/authController');
+const { User } = require('../models');
 
 const resolveJwtSecret = () => {
   const secret = String(process.env.JWT_SECRET || '').trim();
@@ -27,10 +28,13 @@ const checkAndRegisterDevice = async (user, headers) => {
       return false;
     }
     user.devices.push({ deviceId, deviceName, lastLogin: new Date() });
-    await user.save();
+    await User.updateOne(
+      { _id: user._id }, 
+      { $push: { devices: { deviceId, deviceName, lastLogin: new Date() } } }
+    );
   } else {
     // Update last login asynchronously (fire-and-forget) to prevent blocking the API response
-    user.constructor.updateOne(
+    User.updateOne(
       { _id: user._id, "devices.deviceId": deviceId },
       { $set: { "devices.$.lastLogin": new Date() } }
     ).catch(err => console.error('Device lastLogin update failed:', err.message));

@@ -31,6 +31,7 @@ export default function Navbar() {
 
   const navLinks = [
     { name: 'Home', path: '/home', icon: <BookOpen className="w-4 h-4 mr-2" /> },
+    { name: 'Community', path: '/satsangs', icon: <Users className="w-4 h-4 mr-2" /> },
     { name: 'Mentor', path: '/mentor', icon: <Heart className="w-4 h-4 mr-2" /> },
     { name: 'Kids', path: '/kids', icon: <Star className="w-4 h-4 mr-2" /> },
     { name: 'Movies', path: '/movies', icon: <Film className="w-4 h-4 mr-2" /> },
