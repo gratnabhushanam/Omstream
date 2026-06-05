@@ -227,6 +227,9 @@ const isProduction = process.env.NODE_ENV === 'production';
 const cluster = require('cluster');
 const os = require('os');
 
+// Health check & Keep-alive route
+app.get('/ping', (req, res) => res.status(200).send('pong'));
+
 const startServer = async () => {
   try {
     if (false) { // Disabled cluster for debugging
@@ -237,6 +240,18 @@ const startServer = async () => {
       await initializeApp();
       app.listen(PORT, '0.0.0.0', () => {
         console.log(`[SERVER] Running on port ${PORT}`);
+        
+        // Prevent Render Free Tier Sleep
+        if (isProduction) {
+          console.log('[KEEP-ALIVE] Initialized self-ping every 14 minutes');
+          setInterval(() => {
+            require('https').get('https://gita-wisdom-1.onrender.com/ping', (resp) => {
+              console.log('[KEEP-ALIVE] Ping status:', resp.statusCode);
+            }).on("error", (err) => {
+              console.error('[KEEP-ALIVE] Ping failed:', err.message);
+            });
+          }, 14 * 60 * 1000); // 14 minutes
+        }
       });
       if (!isProduction && String(LEGACY_PORT) !== String(PORT)) {
         app.listen(LEGACY_PORT, '0.0.0.0', () => {
