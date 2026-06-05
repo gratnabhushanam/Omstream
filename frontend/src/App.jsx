@@ -283,7 +283,9 @@ function App() {
 
   useEffect(() => {
     if (needRefresh) {
-      updateServiceWorker(true);
+      updateServiceWorker(true).then(() => {
+        window.location.reload(true);
+      });
     }
   }, [needRefresh, updateServiceWorker]);
 
