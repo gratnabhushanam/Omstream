@@ -1,11 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
-import { Search as SearchIcon, X, Book, Video, BookOpen, ExternalLink, Film, Mic, MicOff, Sparkles, TrendingUp, Star, Filter } from 'lucide-react';
+import { Search as SearchIcon, X, Book, Video, BookOpen, ExternalLink, Film, Mic, MicOff, Sparkles } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import '../styles/MoviesPremium.css'; // Shared cinematic styles
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
 const RECENT_SEARCHES_KEY = 'gita_recent_searches';
 const MAX_RECENT_SEARCHES = 8;
 
@@ -51,21 +50,30 @@ export default function Search() {
   };
 
   useEffect(() => {
+    const trimmed = query.trim();
+    // Don't fire search on empty query — show the landing UI instead
+    if (!trimmed) {
+      setResults({ slokas: [], stories: [], videos: [], movies: [], reels: [] });
+      setAiInsight(null);
+      setLoading(false);
+      return;
+    }
+
     const delayDebounceFn = setTimeout(() => {
       performSearch();
-      if (query.trim().length > 5) getAIWisdom(query.trim());
+      if (trimmed.length > 5) getAIWisdom(trimmed);
     }, 500);
 
     return () => clearTimeout(delayDebounceFn);
   }, [query]);
 
   const performSearch = async () => {
+    const normalizedQuery = query.trim();
+    if (!normalizedQuery) return;
+
     setLoading(true);
     try {
-      const normalizedQuery = query.trim();
-      const searchUrl = normalizedQuery
-        ? `${API_BASE_URL}/api/search?q=${encodeURIComponent(normalizedQuery)}&lang=${language}`
-        : `${API_BASE_URL}/api/search?lang=${language}`;
+      const searchUrl = `/api/search?q=${encodeURIComponent(normalizedQuery)}&lang=${language}`;
       const response = await axios.get(searchUrl);
       setResults({
         slokas: Array.isArray(response.data?.slokas) ? response.data.slokas : [],
@@ -75,15 +83,13 @@ export default function Search() {
         movies: Array.isArray(response.data?.movies) ? response.data.movies : [],
       });
 
-      if (normalizedQuery) {
-        const updatedRecentSearches = [
-          normalizedQuery,
-          ...recentSearches.filter((item) => item.toLowerCase() !== normalizedQuery.toLowerCase()),
-        ].slice(0, MAX_RECENT_SEARCHES);
+      const updatedRecentSearches = [
+        normalizedQuery,
+        ...recentSearches.filter((item) => item.toLowerCase() !== normalizedQuery.toLowerCase()),
+      ].slice(0, MAX_RECENT_SEARCHES);
 
-        setRecentSearches(updatedRecentSearches);
-        localStorage.setItem(RECENT_SEARCHES_KEY, JSON.stringify(updatedRecentSearches));
-      }
+      setRecentSearches(updatedRecentSearches);
+      localStorage.setItem(RECENT_SEARCHES_KEY, JSON.stringify(updatedRecentSearches));
     } catch (error) {
       console.error('Search error:', error);
       setResults({ slokas: [], stories: [], videos: [], movies: [], reels: [] });
@@ -164,21 +170,24 @@ export default function Search() {
   };
 
   const openResult = (item, type) => {
+    if (type === 'sloka') {
+      // Navigate to the sloka page with chapter & verse to show the actual verse
+      navigate('/sloka', { state: { chapter: item.chapter, verse: item.verse } });
+      return;
+    }
     const pathMap = {
       story: '/stories',
       reel: '/reels',
       video: item?.isKids ? '/kids' : '/videos',
       movie: '/movies',
-      sloka: '/daily-sloka'
     };
     const keyMap = {
       story: 'openStoryId',
       reel: 'focusReelId',
       video: 'openVideoId',
       movie: 'openMovieId',
-      sloka: 'savedVerse'
     };
-    navigate(pathMap[type], { state: { [keyMap[type]]: type === 'sloka' ? item : (item._id || item.id) } });
+    navigate(pathMap[type], { state: { [keyMap[type]]: item._id || item.id } });
   };
 
   return (
@@ -310,59 +319,17 @@ export default function Search() {
                  </section>
                )}
             </div>
-          ) : (
-            <div className="space-y-32 animate-slide-up">
-               <div className="grid grid-cols-1 lg:grid-cols-2 gap-20 items-center">
-                  <div className="space-y-10">
-                     <h3 className="text-7xl lg:text-8xl font-black uppercase tracking-tighter leading-[0.8] italic premium-text-gradient">Seek &<br/>Awaken</h3>
-                     <p className="text-white/40 text-2xl leading-relaxed font-serif italic max-w-xl">"Beyond the veil of ignorance lies the eternal truth. Use the Divine Oracle to find your path."</p>
-                     
-                     <div className="flex flex-wrap gap-4 pt-4">
-                        {['Bhagavad Gita', 'Karma Yoga', 'Meditation', 'Krishna', 'Dharma', 'Peace'].map(tag => (
-                          <button 
-                            key={tag} 
-                            onClick={() => setQuery(tag)}
-                            className="px-8 py-4 rounded-2xl bg-white/5 border border-white/10 text-[11px] font-black uppercase tracking-[0.3em] text-[#FF7A00] hover:bg-[#FF7A00] hover:text-navy-deep transition-all shadow-2xl active:scale-95"
-                          >
-                            #{tag}
-                          </button>
-                        ))}
-                     </div>
-                  </div>
-                  <div className="relative aspect-video rounded-[4rem] overflow-hidden border-[8px] border-white/5 shadow-[0_40px_100px_rgba(0,0,0,0.6)] group">
-                     <img src="/scene-krishna.svg" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-[4s] opacity-50" alt="Wisdom" />
-                     <div className="absolute inset-0 bg-gradient-to-t from-[#0F172A] via-transparent to-transparent" />
-                     <div className="absolute bottom-12 left-12 right-12 flex items-end justify-between">
-                        <div className="space-y-3">
-                           <div className="flex items-center gap-3">
-                              <Sparkles className="w-4 h-4 text-[#FF7A00] animate-pulse" />
-                              <span className="text-[10px] font-black text-[#FF7A00] uppercase tracking-[0.4em]">Oracle Guidance</span>
-                           </div>
-                           <h4 className="text-4xl font-black uppercase tracking-tighter italic">The Path of Devotion</h4>
-                        </div>
-                        <TrendingUp className="w-10 h-10 text-white/20" />
-                     </div>
-                  </div>
-               </div>
-
-               <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
-                  {[
-                    { title: 'Divine Cinema', count: results.movies.length || '50+', color: 'text-[#F5C542]' },
-                    { title: 'Sacred Slokas', count: results.slokas.length || '700+', color: 'text-[#FF7A00]' },
-                    { title: 'Wisdom Tales', count: results.stories.length || '120+', color: 'text-blue-400' }
-                  ].map(stat => (
-                    <div key={stat.title} className="bg-white/5 p-12 rounded-[3rem] border border-white/5 backdrop-blur-3xl hover:border-[#FF7A00]/20 transition-all group relative overflow-hidden">
-                       <div className="absolute -top-10 -right-10 w-24 h-24 bg-white/5 rounded-full blur-2xl group-hover:bg-[#FF7A00]/10 transition-all" />
-                       <p className="text-[10px] font-black uppercase tracking-[0.4em] text-white/20 mb-4">{stat.title}</p>
-                       <div className="flex items-end justify-between relative z-10">
-                          <span className={`text-6xl font-serif font-black ${stat.color} italic`}>{stat.count}</span>
-                          <span className="text-[8px] text-white/10 font-bold uppercase tracking-[0.5em] mb-3">Vault Records</span>
-                       </div>
-                    </div>
-                  ))}
-               </div>
+          ) : query.trim() ? (
+            <div className="h-[300px] flex flex-col items-center justify-center gap-6 text-center">
+              <SearchIcon className="w-12 h-12 text-white/10" />
+              <div>
+                <p className="text-white/40 font-black uppercase tracking-widest text-sm">No results found for</p>
+                <p className="text-[#FF7A00] font-black text-2xl uppercase tracking-tighter mt-2">"{query}"</p>
+                <p className="text-white/20 text-xs mt-3 font-serif italic">Try searching with different keywords</p>
+              </div>
             </div>
-          )}
+          ) : null
+          }
        </div>
     </div>
   );

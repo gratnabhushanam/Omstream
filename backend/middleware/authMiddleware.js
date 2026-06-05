@@ -14,6 +14,30 @@ const resolveJwtSecret = () => {
   return 'gita_wisdom_super_secret_key';
 };
 
+const checkAndRegisterDevice = async (user, headers) => {
+  if (user.role === 'admin') return true;
+  const deviceId = headers['x-device-id'];
+  const deviceName = headers['x-device-name'] || 'Unknown Device';
+
+  if (!deviceId) return true;
+
+  const isDeviceRegistered = user.devices.some(d => d.deviceId === deviceId);
+  if (!isDeviceRegistered) {
+    if (user.devices.length >= 3) {
+      return false;
+    }
+    user.devices.push({ deviceId, deviceName, lastLogin: new Date() });
+    await user.save();
+  } else {
+    // Update last login
+    await user.constructor.updateOne(
+      { _id: user._id, "devices.deviceId": deviceId },
+      { $set: { "devices.$.lastLogin": new Date() } }
+    );
+  }
+  return true;
+};
+
 const protect = async (req, res, next) => {
   let token;
 
@@ -31,6 +55,19 @@ const protect = async (req, res, next) => {
       if (!req.user) {
          return res.status(401).json({ message: 'User not found' });
       }
+
+      // Check trial expiration automatically on request
+      if (req.user.subscriptionStatus === 'Trial Active' && req.user.trialEndDate && new Date() > req.user.trialEndDate) {
+        req.user.subscriptionStatus = 'Trial Expired';
+        await req.user.save();
+      }
+
+      // Enforce device limit
+      const allowed = await checkAndRegisterDevice(req.user, req.headers);
+      if (!allowed) {
+        return res.status(403).json({ message: "Maximum device limit reached. This account can be used on up to 3 devices only." });
+      }
+
       next();
     } catch (error) {
       console.error('Auth middleware error:', error.message);
@@ -49,4 +86,4 @@ const admin = (req, res, next) => {
   }
 };
 
-module.exports = { protect, admin };
+module.exports = { protect, admin, checkAndRegisterDevice };

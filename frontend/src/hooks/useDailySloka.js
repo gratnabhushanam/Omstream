@@ -2,7 +2,12 @@ import { useEffect, useRef, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import axios from 'axios';
 import { requestNotificationPermission, sendNotification } from '../utils/notificationService';
-import { ENV, API_ORIGIN } from '../config/env';
+
+// Use Vite proxy in dev, direct URL in prod
+const SLOKA_API = import.meta.env.MODE === 'production'
+  ? (import.meta.env.VITE_API_BASE_URL || 'https://gita-wisdom-1.onrender.com')
+  : '';
+const API_KEY = String(import.meta.env.VITE_APP_API_KEY || import.meta.env.VITE_PERMANENT_API_KEY || 'spiritual-wisdom-permanent-key-2025').trim();
 
 const HISTORY_KEY = 'daily_sloka_history_v1';
 const SAVED_VERSES_KEY = 'daily_saved_verses_v1';
@@ -91,7 +96,7 @@ export const useDailySloka = () => {
 
   const loadHistory = async () => {
     try {
-      const response = await axios.get(`${ENV.API_BASE_URL}/api/slokas/daily/history`, { headers: { 'x-api-key': ENV.API_KEY } });
+      const response = await axios.get(`${SLOKA_API}/api/slokas/daily/history`, { headers: { 'x-api-key': API_KEY } });
       const apiItems = response.data && Array.isArray(response.data.items) ? response.data.items : [];
       if (apiItems.length) {
         setHistory(apiItems);
@@ -127,7 +132,7 @@ export const useDailySloka = () => {
 
   const saveHistory = async (entry) => {
     try {
-      await axios.post(`${ENV.API_BASE_URL}/api/slokas/daily/history`, entry, { headers: { 'x-api-key': ENV.API_KEY } });
+      await axios.post(`${SLOKA_API}/api/slokas/daily/history`, entry, { headers: { 'x-api-key': API_KEY } });
     } catch (error) {
       console.error('Failed to save daily history to API, using local cache:', error);
     }
@@ -167,7 +172,7 @@ export const useDailySloka = () => {
   const fetchDailySloka = async (dateKey = selectedDateKey) => {
     setLoading(true);
     try {
-      const response = await axios.get(`${ENV.API_BASE_URL}/api/slokas/daily?date=${encodeURIComponent(dateKey)}`, { headers: { 'x-api-key': ENV.API_KEY } });
+      const response = await axios.get(`${SLOKA_API}/api/slokas/daily?date=${encodeURIComponent(dateKey)}`, { headers: { 'x-api-key': API_KEY } });
       const payload = response.data;
       if (hasValidSloka(payload)) {
         setDailySloka(payload);
@@ -247,18 +252,28 @@ export const useDailySloka = () => {
   const getMeaningByLanguage = (sloka, lang) => {
     if (!sloka) return '';
     
-    // Priority 1: Unified translations object (AI Generated)
-    if (sloka.translations?.[lang]?.meaning) return sloka.translations[lang].meaning;
+    const code = String(lang || 'en').toLowerCase().substring(0, 2);
+
+    // Priority 1: Authentic scraped fields (Highest accuracy)
+    if ((lang === 'telugu' || code === 'te') && sloka.teluguMeaning) return sloka.teluguMeaning;
+    if ((lang === 'hindi' || code === 'hi') && sloka.hindiMeaning) return sloka.hindiMeaning;
+    if ((lang === 'english' || code === 'en') && sloka.englishMeaning) return sloka.englishMeaning;
+
+    // Priority 2: Unified translations object (AI Generated - may contain mock '[te] English' data)
+    // We only use this if the authentic field is missing
+    if (sloka.translations?.[lang]?.meaning) {
+      const mockMeaning = sloka.translations[lang].meaning;
+      // If it's a mock string like "[te] English meaning", we ignore it and fallback to English
+      if (!mockMeaning.startsWith('[')) {
+         return mockMeaning;
+      }
+    }
     
     const localized = sloka.localizedMeaning || {};
-    // Priority 2: New dynamic Map/Object format (supports all languages: en, hi, te, ta, kn, ml, etc.)
-    const code = String(lang || 'en').toLowerCase().substring(0, 2);
     if (localized[code]) return localized[code];
     if (localized[lang]) return localized[lang];
 
-    // Priority 3: Legacy field-based meanings
-    if (lang === 'telugu' || code === 'te') return sloka.teluguMeaning || sloka.englishMeaning || '';
-    if (lang === 'hindi' || code === 'hi') return sloka.hindiMeaning || sloka.englishMeaning || '';
+    // Priority 3: Other field-based meanings and fallbacks
     if (lang === 'tamil' || code === 'ta') return sloka.tamilMeaning || sloka.englishMeaning || '';
     if (lang === 'kannada' || code === 'kn') return sloka.kannadaMeaning || sloka.englishMeaning || '';
     if (lang === 'malayalam' || code === 'ml') return sloka.malayalamMeaning || sloka.englishMeaning || '';
@@ -402,12 +417,12 @@ export const useDailySloka = () => {
 
     try {
       const customTtsKey = localStorage.getItem('elevenlabsApiKey') || '';
-      const ttsResponse = await axios.post(`${ENV.API_BASE_URL}/api/ai/tts`, {
+      const ttsResponse = await axios.post(`${SLOKA_API}/api/ai/tts`, {
         text: speechText,
         voiceType: 'narrator',
         customAiKey: customTtsKey
       }, {
-        headers: { 'x-api-key': ENV.API_KEY },
+        headers: { 'x-api-key': API_KEY },
         responseType: 'arraybuffer'
       });
 

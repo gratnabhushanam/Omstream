@@ -1,12 +1,16 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ArrowRight, Sparkles, Shield, Heart, Eye, EyeOff } from 'lucide-react';
+import PhoneInput from '../components/PhoneInput';
 import { useAuth } from '../context/AuthContext';
 import heroImage from '../assets/hero.png';
 import '../styles/auth.css';
 
 export default function Login() {
+  const [loginType, setLoginType] = useState('email');
   const [formData, setFormData] = useState({ email: '', password: '' });
+  const [selectedCountry, setSelectedCountry] = useState(null);
+  const [phoneVal, setPhoneVal] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [focusedField, setFocusedField] = useState(null);
@@ -19,17 +23,31 @@ export default function Login() {
     event.preventDefault();
     setError('');
 
-    if (!formData.email || !formData.password) {
-      setError('Please enter both Email and Password');
+    let loginIdentifier = formData.email;
+    if (loginType === 'phone') {
+      if (!phoneVal) {
+        setError('Please enter your Phone Number');
+        return;
+      }
+      loginIdentifier = selectedCountry ? selectedCountry.dial + phoneVal.replace(/\D/g, '') : phoneVal.replace(/\D/g, '');
+    } else {
+      if (!formData.email) {
+        setError('Please enter your Email Address');
+        return;
+      }
+    }
+
+    if (!formData.password) {
+      setError('Please enter your Password');
       return;
     }
 
     setLoading(true);
     try {
-      await login(formData.email, formData.password);
+      await login(loginIdentifier, formData.password);
       navigate('/home', { replace: true });
     } catch (err) {
-      setError(err.response?.data?.message || 'Invalid email or password.');
+      setError(err.response?.data?.message || 'Invalid credentials.');
     } finally {
       setLoading(false);
     }
@@ -107,23 +125,55 @@ export default function Login() {
               </div>
             )}
 
-            <div className="animate-fade-in-up">
+             <div className="animate-fade-in-up">
+                {/* Tabs to toggle login type */}
+                <div className="flex gap-4 mb-6 border-b border-white/10 pb-3">
+                  <button
+                    type="button"
+                    onClick={() => { setLoginType('email'); setError(''); }}
+                    className={`text-xs font-bold uppercase tracking-wider pb-1 transition-all ${loginType === 'email' ? 'text-[#f7d77d] border-b-2 border-[#f7d77d]' : 'text-white/50 hover:text-white'}`}
+                  >
+                    Email Login
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => { setLoginType('phone'); setError(''); }}
+                    className={`text-xs font-bold uppercase tracking-wider pb-1 transition-all ${loginType === 'phone' ? 'text-[#f7d77d] border-b-2 border-[#f7d77d]' : 'text-white/50 hover:text-white'}`}
+                  >
+                    Phone Login
+                  </button>
+                </div>
+
                 <form onSubmit={handleLogin} className="space-y-4">
-                    <div>
-                        <label className="mb-2 block text-xs font-bold uppercase tracking-[0.2em] text-white/80">
-                            Email Address
-                        </label>
-                        <input
-                            type="email"
-                            required
-                            value={formData.email}
-                            onChange={(event) => setFormData(c => ({...c, email: event.target.value}))}
-                            onFocus={() => setFocusedField('id')}
-                            onBlur={() => setFocusedField(null)}
-                            placeholder="arjuna@example.com"
-                            className={`auth-input ${focusedField === 'id' ? 'shadow-[0_0_0_4px_rgba(255,215,0,0.12)]' : ''}`}
-                        />
-                    </div>
+                    {loginType === 'email' ? (
+                      <div>
+                          <label className="mb-2 block text-xs font-bold uppercase tracking-[0.2em] text-white/80">
+                              Email Address
+                          </label>
+                          <input
+                              type="email"
+                              required
+                              value={formData.email}
+                              onChange={(event) => setFormData(c => ({...c, email: event.target.value}))}
+                              onFocus={() => setFocusedField('id')}
+                              onBlur={() => setFocusedField(null)}
+                              placeholder="arjuna@example.com"
+                              className={`auth-input ${focusedField === 'id' ? 'shadow-[0_0_0_4px_rgba(255,215,0,0.12)]' : ''}`}
+                          />
+                      </div>
+                    ) : (
+                      <div>
+                          <label className="mb-2 block text-xs font-bold uppercase tracking-[0.2em] text-white/80">
+                              Phone Number
+                          </label>
+                          <PhoneInput
+                            value={phoneVal}
+                            onChange={setPhoneVal}
+                            selectedCountry={selectedCountry}
+                            setSelectedCountry={setSelectedCountry}
+                          />
+                      </div>
+                    )}
                     <div>
                         <label className="mb-2 block text-xs font-bold uppercase tracking-[0.2em] text-white/80">
                           Password

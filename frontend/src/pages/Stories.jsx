@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { useLocation } from 'react-router-dom';
-import { BookOpenText, ChevronRight, PlayCircle, Volume2, PauseCircle, Sparkles, Book, Heart, Star, Award, ArrowRight, MessageCircle, Send, X as CloseX, VolumeX, Bookmark } from 'lucide-react';
+import { BookOpenText, ChevronRight, PlayCircle, Volume2, PauseCircle, Sparkles, Book, Heart, Star, Award, ArrowRight, MessageCircle, Send, X as CloseX, VolumeX, Bookmark, Folder, Search, SlidersHorizontal } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import { useAuth } from '../context/AuthContext';
 
@@ -25,7 +25,11 @@ export default function Stories() {
   const [isTranslating, setIsTranslating] = useState(false);
   const [translationWarning, setTranslationWarning] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
+  const [selectedVoice, setSelectedVoice] = useState('saikumar');
   const [voices, setVoices] = useState([]);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [sortOption, setSortOption] = useState('newest');
+  const [chapterSearchQuery, setChapterSearchQuery] = useState('');
   const speechQueueRef = useRef([]);
   const speechStartTimeoutRef = useRef(null);
   
@@ -37,18 +41,35 @@ export default function Stories() {
   const chatEndRef = useRef(null);
   const audioRef = useRef(null);
 
+  const fetchStories = async () => {
+    try {
+      setLoading(true);
+      const { data } = await axios.get('/api/stories?_t=' + Date.now());
+      setStories(Array.isArray(data) ? data : []);
+    } catch (error) {
+      console.error('Error fetching stories:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Re-fetch every time the user navigates to this page (location.key is unique per visit)
   useEffect(() => {
-    const fetchStories = async () => {
-      try {
-        const { data } = await axios.get('/api/stories');
-        setStories(data);
-      } catch (error) {
-        console.error('Error fetching stories:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
     fetchStories();
+  }, [location.key]);
+
+  // Also re-fetch when the browser tab regains focus (e.g. after using Admin Dashboard)
+  useEffect(() => {
+    const handleVisible = () => {
+      if (document.visibilityState === 'visible') fetchStories();
+    };
+    const handleFocus = () => fetchStories();
+    document.addEventListener('visibilitychange', handleVisible);
+    window.addEventListener('focus', handleFocus);
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisible);
+      window.removeEventListener('focus', handleFocus);
+    };
   }, []);
 
   useEffect(() => {
@@ -238,27 +259,39 @@ export default function Stories() {
     }
   };
 
-  const handleOpenStory = (story) => {
+  const handleOpenStory = async (story) => {
+    // Show the story immediately with cached data for instant UX
     setActiveStory(story);
     setActiveChapterIndex(0);
     const savedLang = localStorage.getItem('preferred_story_lang');
     const initialLang = savedLang || globalLanguage || 'en';
     setSelectedLanguage(initialLang);
-    
-    // Trigger translation check if opening in non-English
-    if (initialLang !== 'en') {
-      const langMap = { te: 'Telugu', hi: 'Hindi', ta: 'Tamil', kn: 'Kannada', ml: 'Malayalam', bn: 'Bengali', mr: 'Marathi', sa: 'Sanskrit' };
-      const hasNewTranslation = story.translations && story.translations[initialLang];
-      const langName = langMap[initialLang];
-      const hasLegacyTranslation = langName && (story[`title${langName}`] || story[`content${langName}`]);
-      
-      if (!hasNewTranslation && !hasLegacyTranslation) {
-        // We can't call handleLanguageChange directly because setActiveStory is async
-        // Instead, we let the useEffect or direct call handle it if needed
-        // For simplicity, we'll just trigger a small delay or use the state
-      }
-    }
     setTranslationWarning(false);
+
+    // Silently refresh with latest data from server (captures admin chapter edits)
+    try {
+      const storyId = story._id || story.id;
+      const { data: fresh } = await axios.get(`/api/stories/${storyId}?_t=` + Date.now());
+      if (fresh && (fresh._id || fresh.id)) {
+        // Merge fresh chapters into the story so UI updates seamlessly
+        setActiveStory(prev => ({
+          ...prev,
+          chapters: Array.isArray(fresh.chapters) && fresh.chapters.length > 0
+            ? fresh.chapters
+            : prev.chapters,
+          content: fresh.content || prev.content,
+          description: fresh.description || prev.description,
+        }));
+        // Also update the stories list cache
+        setStories(prev => prev.map(s =>
+          String(s._id || s.id) === String(storyId) ? { ...s, ...fresh } : s
+        ));
+      }
+    } catch (err) {
+      // Non-critical: keep showing cached data if refresh fails
+      console.warn('Story refresh failed, using cached data:', err.message);
+    }
+
   };
 
   const handleCloseStory = () => {
@@ -284,7 +317,7 @@ export default function Stories() {
       setIsSpeaking(true);
       const response = await axios.post('/api/ai/tts', { 
         text, 
-        voiceType: activeStory?.category?.toLowerCase().includes('krishna') ? 'krishna' : 'ram' 
+        voiceType: selectedVoice 
       }, { responseType: 'blob' });
 
       const url = URL.createObjectURL(response.data);
@@ -368,17 +401,37 @@ export default function Stories() {
     }
   };
 
-  const groupedCollections = stories.reduce((collections, story) => {
-    const category = story.category || 'General Stories';
-    if (!collections[category]) collections[category] = [];
-    collections[category].push(story);
-    return collections;
-  }, {});
+  const filteredAndSortedStories = stories
+    .filter(story => {
+      const q = searchQuery.toLowerCase().trim();
+      if (!q) return true;
+      const folderTitle = (story.title || '').toLowerCase();
+      const folderDesc = (story.description || '').toLowerCase();
+      const folderCategory = (story.category || '').toLowerCase();
+      const matchesFolder = folderTitle.includes(q) || folderDesc.includes(q) || folderCategory.includes(q);
+      
+      const matchesChapters = (story.chapters || []).some(chapter => 
+        (chapter.title || '').toLowerCase().includes(q) || 
+        (chapter.summary || '').toLowerCase().includes(q)
+      );
 
-  const collectionEntries = Object.entries(groupedCollections).map(([category, catStories]) => ({
-    category,
-    stories: catStories
-  }));
+      return matchesFolder || matchesChapters;
+    })
+    .sort((a, b) => {
+      if (sortOption === 'newest') {
+        return new Date(b.createdAt || b.publishedAt || 0) - new Date(a.createdAt || a.publishedAt || 0);
+      }
+      if (sortOption === 'oldest') {
+        return new Date(a.createdAt || a.publishedAt || 0) - new Date(b.createdAt || b.publishedAt || 0);
+      }
+      if (sortOption === 'alphabetical_asc') {
+        return (a.title || '').localeCompare(b.title || '');
+      }
+      if (sortOption === 'alphabetical_desc') {
+        return (b.title || '').localeCompare(a.title || '');
+      }
+      return 0;
+    });
 
   const getCategoryTheme = (category) => {
     const cat = category.toLowerCase();
@@ -410,53 +463,94 @@ export default function Stories() {
                <p className="text-gray-400 text-lg max-w-2xl mx-auto">Immerse yourself in the eternal wisdom of India through AI-powered chapters and audiobooks.</p>
             </div>
 
-            {collectionEntries.map(({ category, stories: catStories }) => {
-              const theme = getCategoryTheme(category);
-              return (
-                <div key={category} className="mb-16">
-                  <div className="flex items-center gap-4 mb-8">
-                     <div className={`h-8 w-1 rounded-full bg-gradient-to-b ${theme.accent}`} />
-                     <h2 className="text-2xl font-serif font-bold text-white uppercase tracking-wider">{category}</h2>
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                    {catStories.map((story) => (
-                      <button
-                        key={story._id}
-                        onClick={() => handleOpenStory(story)}
-                        className="group relative bg-[#0B1F3A]/60 backdrop-blur-xl rounded-[2.5rem] border border-white/10 overflow-hidden hover:border-devotion-gold/40 transition-all text-left flex flex-col"
-                      >
-                        <div className="aspect-[16/10] overflow-hidden relative">
-                           {story.thumbnail ? (
-                             <img src={story.thumbnail} alt="" loading="lazy" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
-                           ) : (
-                             <div className={`w-full h-full bg-gradient-to-br ${theme.accent} opacity-20`} />
-                           )}
-                           <div className="absolute inset-0 bg-gradient-to-t from-[#0B1F3A] via-transparent to-transparent" />
-                           <div className="absolute top-4 right-4 bg-black/40 backdrop-blur-md border border-white/10 px-3 py-1 rounded-full flex items-center gap-2">
-                              <BookOpenText className="w-3 h-3 text-devotion-gold" />
-                              <span className="text-[10px] font-black uppercase tracking-widest text-white">{story.chapters?.length || 1} Chapters</span>
-                           </div>
+            {/* Folder & Search controls */}
+            <div className="mb-12 flex flex-col md:flex-row gap-6 items-center justify-between bg-[#0B1F3A]/40 backdrop-blur-xl border border-white/10 p-6 rounded-[2.5rem]">
+              <div className="relative w-full md:max-w-md">
+                <input
+                  type="text"
+                  placeholder="Search folders or chapters..."
+                  className="w-full bg-white/5 border border-white/10 rounded-2xl pl-12 pr-4 py-4 text-sm text-white placeholder-gray-400 focus:border-devotion-gold outline-none"
+                  value={searchQuery}
+                  onChange={e => setSearchQuery(e.target.value)}
+                />
+                <Search className="w-5 h-5 text-gray-400 absolute left-4 top-4.5" />
+                {searchQuery && (
+                  <button onClick={() => setSearchQuery('')} className="absolute right-4 top-4 text-gray-400 hover:text-white text-sm">
+                    ✕
+                  </button>
+                )}
+              </div>
+
+              <div className="flex gap-4 items-center w-full md:w-auto justify-end">
+                <SlidersHorizontal className="w-4 h-4 text-devotion-gold shrink-0" />
+                <span className="text-xs font-black uppercase tracking-wider text-gray-400 whitespace-nowrap">Sort By</span>
+                <select
+                  value={sortOption}
+                  onChange={e => setSortOption(e.target.value)}
+                  className="bg-[#051121] border border-white/10 rounded-xl px-4 py-3 text-xs text-white focus:border-devotion-gold outline-none cursor-pointer"
+                >
+                  <option value="newest">Newest First</option>
+                  <option value="oldest">Oldest First</option>
+                  <option value="alphabetical_asc">Alphabetical (A-Z)</option>
+                  <option value="alphabetical_desc">Alphabetical (Z-A)</option>
+                </select>
+              </div>
+            </div>
+
+            {/* Folders Grid */}
+            {filteredAndSortedStories.length === 0 ? (
+              <div className="text-center py-20 bg-[#0B1F3A]/20 rounded-[3rem] border border-white/5">
+                <Folder className="w-16 h-16 text-gray-600 mx-auto mb-4" />
+                <h3 className="text-xl font-bold text-white mb-2">No Folders Found</h3>
+                <p className="text-gray-400 text-sm">No spiritual stories or chapters match your search query.</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                {filteredAndSortedStories.map((story) => {
+                  const theme = getCategoryTheme(story.category || 'General');
+                  return (
+                    <button
+                      key={story._id || story.id}
+                      onClick={() => handleOpenStory(story)}
+                      className="group relative bg-[#0B1F3A]/60 backdrop-blur-xl rounded-[2.5rem] border border-white/10 overflow-hidden hover:border-devotion-gold/40 transition-all text-left flex flex-col hover:shadow-[0_20px_50px_rgba(255,215,0,0.05)] pt-6"
+                    >
+                      {/* Stylized Folder Tab Design */}
+                      <div className="absolute top-0 left-0 w-32 h-6 bg-gradient-to-r from-devotion-gold/20 to-transparent rounded-tr-xl border-r border-t border-white/10 flex items-center px-4">
+                        <Folder className="w-3.5 h-3.5 text-devotion-gold mr-1.5" />
+                        <span className="text-[9px] font-black uppercase tracking-wider text-devotion-gold/90">Folder</span>
+                      </div>
+
+                      <div className="aspect-[16/10] overflow-hidden relative">
+                        {story.thumbnail ? (
+                          <img src={story.thumbnail} alt="" loading="lazy" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
+                        ) : (
+                          <div className={`w-full h-full bg-gradient-to-br ${theme.accent} opacity-20`} />
+                        )}
+                        <div className="absolute inset-0 bg-gradient-to-t from-[#0B1F3A] via-transparent to-transparent" />
+                        <div className="absolute top-4 right-4 bg-black/40 backdrop-blur-md border border-white/10 px-3 py-1 rounded-full flex items-center gap-2">
+                          <BookOpenText className="w-3 h-3 text-devotion-gold" />
+                          <span className="text-[10px] font-black uppercase tracking-widest text-white">{story.chapters?.length || 0} Chapters</span>
                         </div>
-                        <div className="p-8">
-                           <h3 className="text-xl font-serif font-bold text-white mb-2 group-hover:text-devotion-gold transition-colors">
-                              {getLocalizedContent(story)?.title}
-                           </h3>
-                           <p className="text-sm text-gray-400 line-clamp-2 mb-6">
-                              {getLocalizedContent(story)?.description || 'Embark on a spiritual journey...'}
-                           </p>
-                           <div className="mt-auto flex items-center justify-between">
-                              <span className="text-[10px] font-black uppercase tracking-[0.2em] text-devotion-gold">Start Reading</span>
-                              <div className="w-10 h-10 rounded-full border border-devotion-gold/20 flex items-center justify-center group-hover:bg-devotion-gold group-hover:text-[#06101E] transition-all">
-                                 <ArrowRight className="w-5 h-5" />
-                              </div>
-                           </div>
+                      </div>
+                      <div className="p-8 flex-1 flex flex-col">
+                        <h3 className="text-xl font-serif font-bold text-white mb-2 group-hover:text-devotion-gold transition-colors">
+                          {getLocalizedContent(story)?.title}
+                        </h3>
+                        <p className="text-sm text-gray-400 line-clamp-2 mb-6">
+                          {getLocalizedContent(story)?.description || 'Embark on a spiritual journey...'}
+                        </p>
+                        <div className="mt-auto flex items-center justify-between">
+                          <span className="text-[10px] font-black uppercase tracking-[0.2em] text-devotion-gold">Open Folder</span>
+                          <div className="w-10 h-10 rounded-full border border-devotion-gold/20 flex items-center justify-center group-hover:bg-devotion-gold group-hover:text-[#06101E] transition-all">
+                            <ArrowRight className="w-5 h-5" />
+                          </div>
                         </div>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              );
-            })}
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
           </>
         ) : (
           <div className="animate-in fade-in slide-in-from-bottom-8 duration-700">
@@ -500,6 +594,36 @@ export default function Stories() {
                                   {lang.native}
                                 </button>
                              ))}
+                          </div>
+
+                          <div className="flex flex-col gap-2">
+                            <span className="text-[9px] font-black uppercase tracking-[0.25em] text-devotion-gold/80">AI Voice Style</span>
+                            <div className="flex flex-wrap gap-1 bg-[#051121] rounded-2xl p-1 border border-white/5 backdrop-blur-md">
+                              {[
+                                { id: 'saikumar', label: 'Tollywood' },
+                                { id: 'krishna', label: 'Soothing' },
+                                { id: 'ram', label: 'Gentle' },
+                                { id: 'hanuman', label: 'Strong' }
+                              ].map(v => (
+                                <button
+                                  key={v.id}
+                                  onClick={() => {
+                                    setSelectedVoice(v.id);
+                                    if (isSpeaking) {
+                                      if (audioRef.current) {
+                                        audioRef.current.pause();
+                                        audioRef.current = null;
+                                      }
+                                      if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+                                      setIsSpeaking(false);
+                                    }
+                                  }}
+                                  className={`px-3 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${selectedVoice === v.id ? 'bg-[#FF7A00] text-devotion-darkBlue font-black shadow-md' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}
+                                >
+                                  {v.label}
+                                </button>
+                              ))}
+                            </div>
                           </div>
 
                           {translationWarning && (
@@ -571,22 +695,42 @@ export default function Stories() {
                          Chapters
                          <span className="text-devotion-gold">{activeChapterIndex + 1} / {activeStory.chapters?.length || 1}</span>
                       </h4>
-                      <div className="space-y-3">
-                         {(activeStory.chapters || [{ title: activeStory.title, _id: 'main' }]).map((chapter, index) => (
-                           <button
-                             key={chapter._id || index}
-                             onClick={() => setActiveChapterIndex(index)}
-                             className={`w-full text-left p-5 rounded-2xl border transition-all flex items-center justify-between group ${activeChapterIndex === index ? 'bg-devotion-gold/10 border-devotion-gold/40 text-devotion-gold' : 'bg-white/5 border-white/5 text-gray-400 hover:bg-white/10'}`}
-                           >
-                              <div className="flex items-center gap-4">
-                                 <span className={`w-8 h-8 rounded-full border flex items-center justify-center text-[10px] font-black ${activeChapterIndex === index ? 'border-devotion-gold bg-devotion-gold text-[#06101E]' : 'border-white/20 text-white/40'}`}>
-                                    {index + 1}
-                                 </span>
-                                 <span className="text-sm font-bold truncate max-w-[150px]">{chapter.title}</span>
-                              </div>
-                              {activeChapterIndex === index ? <PlayCircle className="w-5 h-5 animate-pulse" /> : <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />}
-                           </button>
-                         ))}
+                      {/* Chapter Search */}
+                      <div className="mb-4 relative">
+                        <input
+                          type="text"
+                          placeholder="Search chapters..."
+                          className="w-full bg-white/5 border border-white/10 rounded-2xl pl-10 pr-4 py-3 text-xs text-white placeholder-gray-500 focus:border-devotion-gold outline-none"
+                          value={chapterSearchQuery}
+                          onChange={e => setChapterSearchQuery(e.target.value)}
+                        />
+                        <Search className="w-4 h-4 text-gray-500 absolute left-3.5 top-3.5" />
+                        {chapterSearchQuery && (
+                          <button onClick={() => setChapterSearchQuery('')} className="absolute right-3 top-3.5 text-gray-500 hover:text-white text-[10px]">
+                            ✕
+                          </button>
+                        )}
+                      </div>
+
+                      <div className="space-y-3 max-h-[400px] overflow-y-auto pr-1">
+                         {(activeStory.chapters || [{ title: activeStory.title, _id: 'main' }])
+                           .map((chapter, index) => ({ chapter, index }))
+                           .filter(({ chapter }) => !chapterSearchQuery || (chapter.title || '').toLowerCase().includes(chapterSearchQuery.toLowerCase()))
+                           .map(({ chapter, index }) => (
+                            <button
+                              key={chapter._id || index}
+                              onClick={() => setActiveChapterIndex(index)}
+                              className={`w-full text-left p-5 rounded-2xl border transition-all flex items-center justify-between group ${activeChapterIndex === index ? 'bg-devotion-gold/10 border-devotion-gold/40 text-devotion-gold' : 'bg-white/5 border-white/5 text-gray-400 hover:bg-white/10'}`}
+                            >
+                               <div className="flex items-center gap-4">
+                                  <span className={`w-8 h-8 rounded-full border flex items-center justify-center text-[10px] font-black ${activeChapterIndex === index ? 'border-devotion-gold bg-devotion-gold text-[#06101E]' : 'border-white/20 text-white/40'}`}>
+                                     {index + 1}
+                                  </span>
+                                  <span className="text-sm font-bold truncate max-w-[150px]">{chapter.title}</span>
+                               </div>
+                               {activeChapterIndex === index ? <PlayCircle className="w-5 h-5 animate-pulse" /> : <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />}
+                            </button>
+                          ))}
                       </div>
                    </div>
 

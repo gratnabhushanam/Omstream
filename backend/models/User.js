@@ -41,10 +41,44 @@ const UserSchema = new mongoose.Schema(
     japaCount: { type: Number, default: 0 },
     japaMalas: { type: Number, default: 0 },
     pushSubscriptions: { type: Array, default: [] },
+    devices: {
+      type: [{
+        deviceId: { type: String, required: true },
+        deviceName: { type: String },
+        lastLogin: { type: Date, default: Date.now }
+      }],
+      default: []
+    },
+    profiles: {
+      type: [{
+        name: { type: String, required: true },
+        avatar: { type: String, default: null }
+      }],
+      default: []
+    },
+    trialStartDate: { type: Date },
+    trialEndDate: { type: Date },
+    subscriptionStatus: { type: String, enum: ['Trial Active', 'Trial Expired', 'Subscription Active', 'Subscription Cancelled'], default: 'Trial Active' },
   },
   {
     timestamps: true,
   }
 );
+
+UserSchema.pre('save', function (next) {
+  if (this.isNew) {
+    if (!this.trialStartDate) {
+      this.trialStartDate = new Date();
+      const end = new Date();
+      end.setMonth(end.getMonth() + 1);
+      this.trialEndDate = end;
+      this.subscriptionStatus = 'Trial Active';
+    }
+    if (!this.profiles || this.profiles.length === 0) {
+      this.profiles = [{ name: this.name || 'Member 1', avatar: null }];
+    }
+  }
+  next();
+});
 
 module.exports = mongoose.models.User || mongoose.model('User', UserSchema);

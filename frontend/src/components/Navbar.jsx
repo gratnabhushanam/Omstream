@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { BookOpen, Book, Menu, X, BrainCircuit, User, Star, Zap, Heart, Search, Film, Shield, Users, Bell, Download, CheckCheck, Info, Megaphone, Gift, Sparkles, ChevronRight } from 'lucide-react';
+import { BookOpen, Book, Menu, X, BrainCircuit, User, Star, Heart, Search, Film, Shield, Users, Bell, Download, CheckCheck, Info, Megaphone, Gift, Sparkles, ChevronRight } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useInstallPrompt } from '../hooks/useInstallPrompt';
 import { DesktopNotificationPanel, MobileNotificationSheet } from './Notifications';
@@ -11,7 +11,7 @@ import { useLanguage } from '../context/LanguageContext';
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
   const location = useLocation();
-  const { user } = useAuth();
+  const { user, selectedProfile, selectProfile } = useAuth();
   const { isInstallable, showInstallModal, setShowInstallModal, handleInstallClick } = useInstallPrompt();
   const { notifications, showNotifications, setShowNotifications, unreadCount, handleMarkAsRead } = useNotifications(user);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 1024);
@@ -32,7 +32,6 @@ export default function Navbar() {
   const navLinks = [
     { name: 'Home', path: '/home', icon: <BookOpen className="w-4 h-4 mr-2" /> },
     { name: 'Mentor', path: '/mentor', icon: <Heart className="w-4 h-4 mr-2" /> },
-    { name: 'Reels', path: '/reels', icon: <Zap className="w-4 h-4 mr-2" /> },
     { name: 'Kids', path: '/kids', icon: <Star className="w-4 h-4 mr-2" /> },
     { name: 'Movies', path: '/movies', icon: <Film className="w-4 h-4 mr-2" /> },
     { name: 'Quizzes', path: '/quizzes', icon: <BrainCircuit className="w-4 h-4 mr-2" /> },
@@ -90,8 +89,8 @@ export default function Navbar() {
                   </button>
                   {showNotifications && (
                     <>
-                      <div className="fixed inset-0 z-50" onClick={() => setShowNotifications(false)} />
-                      <DesktopNotificationPanel notifications={notifications} unreadCount={unreadCount} handleMarkAsRead={handleMarkAsRead} />
+                       <div className="fixed inset-0 z-50" onClick={() => setShowNotifications(false)} />
+                       <DesktopNotificationPanel notifications={notifications} unreadCount={unreadCount} handleMarkAsRead={handleMarkAsRead} />
                     </>
                   )}
                 </div>
@@ -129,15 +128,25 @@ export default function Navbar() {
             </div>
             
             {user ? (
-              <Link to="/profile" className="tv-focusable focus:outline-none focus:ring-4 focus:ring-devotion-gold rounded-2xl flex items-center gap-3 pl-4 border-l border-white/10 ml-2 group">
-                <div className="w-10 h-10 tv:w-14 tv:h-14 rounded-xl overflow-hidden border border-white/10 group-hover:border-devotion-gold/50 transition-colors">
-                  {user.profilePicture ? <img src={user.profilePicture} alt="" className="w-full h-full object-cover" /> : <div className="w-full h-full bg-devotion-gold/10 flex items-center justify-center text-devotion-gold font-black text-xs tv:text-sm uppercase">{getInitials(user.name)}</div>}
-                </div>
-                <div className="hidden xl:flex flex-col">
-                  <span className="text-[10px] tv:text-xs font-black text-white group-hover:text-devotion-gold transition-colors uppercase tracking-widest truncate max-w-[100px] tv:max-w-[150px]">{user.name}</span>
-                  <span className="text-[8px] tv:text-[10px] font-bold text-gray-500 uppercase tracking-widest">Devotee</span>
-                </div>
-              </Link>
+              <div className="flex items-center gap-3 pl-4 border-l border-white/10 ml-2">
+                <Link to="/profile" className="tv-focusable focus:outline-none focus:ring-4 focus:ring-devotion-gold rounded-2xl flex items-center gap-3 group">
+                  <div className="w-10 h-10 tv:w-14 tv:h-14 rounded-xl overflow-hidden border border-white/10 group-hover:border-devotion-gold/50 transition-colors">
+                    {user.profilePicture ? <img src={user.profilePicture} alt="" className="w-full h-full object-cover" /> : <div className="w-full h-full bg-devotion-gold/10 flex items-center justify-center text-devotion-gold font-black text-xs tv:text-sm uppercase">{getInitials(selectedProfile?.name || user.name)}</div>}
+                  </div>
+                  <div className="hidden xl:flex flex-col">
+                    <span className="text-[10px] tv:text-xs font-black text-white group-hover:text-devotion-gold transition-colors uppercase tracking-widest truncate max-w-[100px] tv:max-w-[150px]">{selectedProfile?.name || user.name}</span>
+                    <span className="text-[8px] tv:text-[10px] font-bold text-gray-500 uppercase tracking-widest">{selectedProfile ? 'Profile' : 'Devotee'}</span>
+                  </div>
+                </Link>
+                {selectedProfile && selectedProfile._id !== 'default' && (
+                  <button
+                    onClick={() => selectProfile(null)}
+                    className="text-[9px] font-black uppercase tracking-wider text-devotion-gold hover:text-white transition-colors bg-white/5 border border-white/10 px-2.5 py-1.5 rounded-lg active:scale-95 ml-1"
+                  >
+                    Switch
+                  </button>
+                )}
+              </div>
             ) : (
               <Link to="/login" className="tv-focusable px-6 py-2 tv:px-8 tv:py-4 border border-devotion-gold/30 text-devotion-gold hover:bg-devotion-gold hover:text-devotion-darkBlue rounded-xl font-black text-[10px] tv:text-sm uppercase tracking-widest transition-all active:scale-95 ml-2 shadow-[0_0_20px_rgba(255,215,0,0.05)]">LOGIN</Link>
             )}
@@ -184,17 +193,27 @@ export default function Navbar() {
               </div>
             </div>
             <button onClick={() => { handleInstallClick(); setIsOpen(false); }} className="w-full mt-4 py-4 bg-gradient-to-r from-devotion-gold to-[#FFB800] text-[#06101E] rounded-2xl font-black text-[11px] uppercase tracking-widest shadow-xl active:scale-95 flex items-center justify-center gap-3"><Download className="w-5 h-5" /> INSTALL DIVINE APP</button>
-            {user ? (
-              <Link to="/profile" onClick={() => setIsOpen(false)} className="flex items-center gap-4 mt-6 p-4 bg-white/5 rounded-2xl border border-white/10 group">
-                <div className="w-10 h-10 rounded-xl overflow-hidden border border-devotion-gold/30">
-                  {user.profilePicture ? <img src={user.profilePicture} alt="" className="w-full h-full object-cover" /> : <div className="w-full h-full bg-devotion-gold/10 flex items-center justify-center text-devotion-gold font-black text-xs">{getInitials(user.name)}</div>}
-                </div>
-                <div className="flex flex-col flex-1 min-w-0">
-                  <span className="text-xs font-black text-white uppercase tracking-widest truncate">{user.name}</span>
-                  <span className="text-[9px] font-bold text-devotion-gold uppercase tracking-widest">Open Profile</span>
-                </div>
-                <ChevronRight className="w-5 h-5 text-gray-600" />
-              </Link>
+             {user ? (
+              <div className="flex flex-col gap-3 mt-6">
+                <Link to="/profile" onClick={() => setIsOpen(false)} className="flex items-center gap-4 p-4 bg-white/5 rounded-2xl border border-white/10 group">
+                  <div className="w-10 h-10 rounded-xl overflow-hidden border border-devotion-gold/30">
+                    {user.profilePicture ? <img src={user.profilePicture} alt="" className="w-full h-full object-cover" /> : <div className="w-full h-full bg-devotion-gold/10 flex items-center justify-center text-devotion-gold font-black text-xs">{getInitials(selectedProfile?.name || user.name)}</div>}
+                  </div>
+                  <div className="flex flex-col flex-1 min-w-0">
+                    <span className="text-xs font-black text-white uppercase tracking-widest truncate">{selectedProfile?.name || user.name}</span>
+                    <span className="text-[9px] font-bold text-devotion-gold uppercase tracking-widest">{selectedProfile ? 'Active Profile' : 'Open Profile'}</span>
+                  </div>
+                  <ChevronRight className="w-5 h-5 text-gray-600" />
+                </Link>
+                {selectedProfile && selectedProfile._id !== 'default' && (
+                   <button
+                     onClick={() => { selectProfile(null); setIsOpen(false); }}
+                     className="w-full py-3 bg-white/5 border border-white/10 text-[#f7d77d] rounded-2xl font-black text-[11px] uppercase tracking-widest text-center hover:bg-white/10 transition-colors"
+                   >
+                     Switch Profile
+                   </button>
+                 )}
+              </div>
             ) : (
               <Link to="/login" onClick={() => setIsOpen(false)} className="w-full mt-4 py-4 border-2 border-devotion-gold/30 text-devotion-gold rounded-2xl font-black text-[11px] uppercase tracking-widest text-center">LOGIN / JOIN COMMUNITY</Link>
             )}

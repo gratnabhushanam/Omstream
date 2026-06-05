@@ -18,6 +18,7 @@ export default function Sloka() {
   const [audio, setAudio] = useState(null);
   const [playbackType, setPlaybackType] = useState(null);
   const [voices, setVoices] = useState([]);
+  const [selectedVoice, setSelectedVoice] = useState('saikumar');
   const [bookmarkLoading, setBookmarkLoading] = useState(false);
   const [isBookmarked, setIsBookmarked] = useState(false);
   const [actionMessage, setActionMessage] = useState('');
@@ -182,7 +183,7 @@ export default function Sloka() {
       const customTtsKey = localStorage.getItem('elevenlabsApiKey') || '';
       const response = await axios.post(`${API_BASE_URL}/api/ai/tts`, {
         text: speechText,
-        voiceType: 'narrator',
+        voiceType: selectedVoice,
         customAiKey: customTtsKey
       }, {
         headers: { 'x-api-key': API_KEY },
@@ -425,6 +426,33 @@ export default function Sloka() {
                 <p className={`text-xl md:text-3xl tv:text-5xl text-gray-200 font-light leading-relaxed px-4 italic font-serif ${language === 'telugu' ? 'font-telugu leading-[2]' : ''}`}>
                   {getMeaningByLanguage(sloka, language)}
                 </p>
+              </div>
+            </div>
+
+            <div className="bg-devotion-darkBlue/25 px-10 py-4 border-t border-devotion-gold/15 flex flex-wrap items-center justify-between gap-4">
+              <span className="text-[10px] font-black uppercase tracking-[0.2em] text-devotion-gold/70">
+                AI Voice Style
+              </span>
+              <div className="flex flex-wrap gap-2 bg-devotion-darkBlue/60 rounded-2xl p-1 border border-white/5 backdrop-blur-md">
+                {[
+                  { id: 'saikumar', label: 'Tollywood' },
+                  { id: 'krishna', label: 'Soothing' },
+                  { id: 'ram', label: 'Gentle' },
+                  { id: 'hanuman', label: 'Strong' }
+                ].map(v => (
+                  <button
+                    key={v.id}
+                    onClick={() => {
+                      setSelectedVoice(v.id);
+                      if (isPlaying) {
+                        stopPlayback();
+                      }
+                    }}
+                    className={`px-4 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${selectedVoice === v.id ? 'bg-[#FF7A00] text-devotion-darkBlue font-black shadow-md' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}
+                  >
+                    {v.label}
+                  </button>
+                ))}
               </div>
             </div>
             

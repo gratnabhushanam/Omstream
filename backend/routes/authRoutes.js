@@ -15,6 +15,12 @@ const {
   getStats,
   deleteUserByAdmin,
   getCommunityProfiles,
+  getUserDevices,
+  removeUserDevice,
+  getUserProfiles,
+  createUserProfile,
+  removeUserProfile,
+  activateSubscription,
 } = require('../controllers/authController');
 const { protect, admin } = require('../middleware/authMiddleware');
 
@@ -36,6 +42,14 @@ router.post('/bookmarks', protect, toggleBookmark);
 router.post('/profile/japa', protect, require('../controllers/authController').updateJapaCounter);
 router.post('/profile/points', protect, require('../controllers/authController').addKarmaPoints);
 router.post('/streak', protect, require('../controllers/authController').updateStreak);
+
+// Device and Profile Management
+router.get('/devices', protect, getUserDevices);
+router.delete('/devices/:deviceId', protect, removeUserDevice);
+router.get('/profiles', protect, getUserProfiles);
+router.post('/profiles', protect, createUserProfile);
+router.delete('/profiles/:profileId', protect, removeUserProfile);
+router.post('/subscribe', protect, activateSubscription);
 
 // Admin Routes
 router.get('/users', protect, admin, getAllUsers);

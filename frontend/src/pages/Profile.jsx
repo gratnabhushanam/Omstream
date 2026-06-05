@@ -1,52 +1,23 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { User, Mail, Bell, Shield, Heart, Flame, Trophy, Settings, LogOut, Camera, Edit2, Check, ExternalLink, Sparkles, BookOpen, Share2, Bookmark, Video, Trash2, Library, Play } from 'lucide-react';
+import { User, Users, Mail, Bell, Shield, Heart, Flame, Trophy, Settings, LogOut, Camera, Edit2, Check, ExternalLink, Sparkles, BookOpen, Share2, Bookmark, Video, Trash2, Library, Play } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { requestNotificationPermission } from '../utils/notificationService';
 import JapaCounter from '../components/JapaCounter';
 
-const MAX_REEL_DURATION_SECONDS = 90;
 const INTEREST_OPTIONS = ['Karma Yoga', 'Bhakti Yoga', 'Meditation', 'Stress Relief', 'Motivation', 'Leadership'];
-
-const getVideoDuration = (file) => new Promise((resolve, reject) => {
-  const testVideo = document.createElement('video');
-  const objectUrl = URL.createObjectURL(file);
-
-  testVideo.preload = 'metadata';
-  testVideo.onloadedmetadata = () => {
-    const duration = Number(testVideo.duration || 0);
-    URL.revokeObjectURL(objectUrl);
-    resolve(duration);
-  };
-  testVideo.onerror = () => {
-    URL.revokeObjectURL(objectUrl);
-    reject(new Error('Unable to read video duration'));
-  };
-  testVideo.src = objectUrl;
-});
 
 export default function Profile() {
   const DAILY_SAVED_KEY = 'daily_saved_verses_v1';
-  const MENTOR_SAVED_KEY = 'mentor_saved_verses_v1';
-  const SAVED_REELS_KEY = 'saved_reels_v1';
-  const { user, setUser, logout, loading: authLoading } = useAuth();
+  const { user, setUser, logout, loading: authLoading, selectedProfile, selectProfile } = useAuth();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [savedVerses, setSavedVerses] = useState([]);
-  const [savedReels, setSavedReels] = useState([]);
   const [dailySavedVerses, setDailySavedVerses] = useState([]);
-  const [mentorSavedVerses, setMentorSavedVerses] = useState([]);
   const [savedLoading, setSavedLoading] = useState(false);
-  const [myReels, setMyReels] = useState([]);
-  const [myReelsLoading, setMyReelsLoading] = useState(false);
-  const [reelActionLoading, setReelActionLoading] = useState(false);
-  const [editingReelId, setEditingReelId] = useState(null);
-  const [reelForm, setReelForm] = useState({ title: '', description: '', tags: '' });
-  const [reelVideoFile, setReelVideoFile] = useState(null);
-  const [reelEditError, setReelEditError] = useState('');
   const [formData, setFormData] = useState({
     name: '',
     bio: '',
@@ -111,65 +82,18 @@ export default function Profile() {
     loadSavedVerses();
   }, [user]);
 
-  useEffect(() => {
-    try {
-      const currentUserId = user ? String(user.id || user._id) : null;
-      if (!currentUserId) {
-        setSavedReels([]);
-        return;
-      }
-
-      const raw = localStorage.getItem(SAVED_REELS_KEY);
-      const parsed = raw ? JSON.parse(raw) : [];
-      const list = Array.isArray(parsed) ? parsed : [];
-      const mine = list.filter((item) => String(item.savedByUserId) === currentUserId);
-      setSavedReels(mine);
-    } catch (error) {
-      console.error('Error loading saved reels:', error);
-      setSavedReels([]);
-    }
-  }, [user]);
 
   useEffect(() => {
     try {
       const rawDaily = localStorage.getItem(DAILY_SAVED_KEY);
       const daily = rawDaily ? JSON.parse(rawDaily) : [];
       setDailySavedVerses(Array.isArray(daily) ? daily : []);
-
-      const rawMentor = localStorage.getItem(MENTOR_SAVED_KEY);
-      const mentor = rawMentor ? JSON.parse(rawMentor) : [];
-      setMentorSavedVerses(Array.isArray(mentor) ? mentor : []);
     } catch (error) {
       console.error('Error loading local saved verses:', error);
       setDailySavedVerses([]);
-      setMentorSavedVerses([]);
     }
   }, []);
 
-  useEffect(() => {
-    const loadMyReels = async () => {
-      if (!user) {
-        setMyReels([]);
-        return;
-      }
-
-      try {
-        setMyReelsLoading(true);
-        const token = localStorage.getItem('token');
-        const { data } = await axios.get('/api/videos/user-reels/me', {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        setMyReels(Array.isArray(data) ? data : []);
-      } catch (error) {
-        console.error('Error loading uploaded reels:', error);
-        setMyReels([]);
-      } finally {
-        setMyReelsLoading(false);
-      }
-    };
-
-    loadMyReels();
-  }, [user]);
 
   useEffect(() => {
     const loadWatchlistMovies = async () => {
@@ -404,30 +328,9 @@ export default function Profile() {
     localStorage.setItem(DAILY_SAVED_KEY, JSON.stringify(next));
   };
 
-  const removeMentorSavedVerse = (verseKey) => {
-    const next = mentorSavedVerses.filter((item) => item.verseKey !== verseKey);
-    setMentorSavedVerses(next);
-    localStorage.setItem(MENTOR_SAVED_KEY, JSON.stringify(next));
-  };
+  // Mentor saves removed as part of the curated verses cleanup
 
-  const removeSavedReel = (reelId) => {
-    const currentUserId = user ? String(user.id || user._id) : null;
-    if (!currentUserId) return;
-    const next = savedReels.filter((item) => String(item.reelId) !== String(reelId));
-    setSavedReels(next);
 
-    try {
-      const raw = localStorage.getItem(SAVED_REELS_KEY);
-      const parsed = raw ? JSON.parse(raw) : [];
-      const list = Array.isArray(parsed) ? parsed : [];
-      const updated = list.filter(
-        (item) => !(String(item.reelId) === String(reelId) && String(item.savedByUserId) === currentUserId)
-      );
-      localStorage.setItem(SAVED_REELS_KEY, JSON.stringify(updated));
-    } catch (error) {
-      console.error('Error removing saved reel:', error);
-    }
-  };
 
   const removeWatchlistMovie = async (movieId) => {
     try {
@@ -443,94 +346,6 @@ export default function Profile() {
     }
   };
 
-  const openSavedReel = (reelId) => {
-    navigate('/reels', { state: { focusReelId: reelId } });
-  };
-
-  const openEditReel = (reel) => {
-    setEditingReelId(reel._id || reel.id);
-    setReelEditError('');
-    setReelForm({
-      title: reel.title || '',
-      description: reel.description || '',
-      tags: Array.isArray(reel.tags) ? reel.tags.join(', ') : '',
-    });
-    setReelVideoFile(null);
-  };
-
-  const closeEditReel = () => {
-    setEditingReelId(null);
-    setReelForm({ title: '', description: '', tags: '' });
-    setReelVideoFile(null);
-    setReelEditError('');
-  };
-
-  const handleReelEditVideoSelection = async (file) => {
-    if (!file) {
-      setReelVideoFile(null);
-      setReelEditError('');
-      return;
-    }
-
-    try {
-      const duration = await getVideoDuration(file);
-      if (!duration || duration > MAX_REEL_DURATION_SECONDS) {
-        setReelVideoFile(null);
-        setReelEditError(`Video must be ${MAX_REEL_DURATION_SECONDS} seconds or less.`);
-        return;
-      }
-
-      setReelVideoFile(file);
-      setReelEditError('');
-    } catch {
-      setReelVideoFile(null);
-      setReelEditError('Could not validate selected file. Please choose another video.');
-    }
-  };
-
-  const saveEditedReel = async (reelId) => {
-    try {
-      setReelActionLoading(true);
-      const token = localStorage.getItem('token');
-      const payload = new FormData();
-      payload.append('title', reelForm.title);
-      payload.append('description', reelForm.description);
-      payload.append('tags', reelForm.tags);
-      if (reelVideoFile) {
-        payload.append('video', reelVideoFile);
-      }
-
-      const { data } = await axios.patch(`/api/videos/user-reels/${reelId}`, payload, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
-      setMyReels((prev) => prev.map((item) => ((item._id || item.id) === reelId ? data : item)));
-      closeEditReel();
-      alert(data.message || 'Reel updated successfully');
-    } catch (error) {
-      alert(error.response?.data?.message || 'Failed to update reel');
-    } finally {
-      setReelActionLoading(false);
-    }
-  };
-
-  const deleteReel = async (reelId) => {
-    const confirmed = window.confirm('Delete this reel permanently?');
-    if (!confirmed) return;
-
-    try {
-      setReelActionLoading(true);
-      const token = localStorage.getItem('token');
-      await axios.delete(`/api/videos/user-reels/${reelId}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      setMyReels((prev) => prev.filter((item) => (item._id || item.id) !== reelId));
-    } catch (error) {
-      alert(error.response?.data?.message || 'Failed to delete reel');
-    } finally {
-      setReelActionLoading(false);
-    }
-  };
 
   if (authLoading || loading) return (
     <div className="min-h-screen flex items-center justify-center">
@@ -643,6 +458,33 @@ export default function Profile() {
 
                <div className="mb-8">
                  <JapaCounter />
+               </div>
+
+               {/* Subscription Status Block */}
+               <div className="mb-8 bg-gradient-to-br from-devotion-darkBlue to-[#0a192f] border border-devotion-gold/20 p-5 rounded-2xl text-left relative overflow-hidden">
+                 <div className="absolute -right-4 -top-4 opacity-10">
+                   <Shield className="w-24 h-24 text-devotion-gold" />
+                 </div>
+                 <h4 className="text-devotion-gold font-black text-[10px] uppercase tracking-[0.2em] mb-2 flex items-center gap-2">
+                   <Sparkles className="w-3 h-3" /> Current Plan
+                 </h4>
+                 <div className="flex items-center justify-between mb-3">
+                   <p className="text-lg font-serif font-bold text-white uppercase">{user?.subscriptionStatus || 'No Active Plan'}</p>
+                   {user?.subscriptionStatus?.includes('Active') && (
+                     <span className="bg-green-500/20 text-green-400 px-2 py-1 rounded text-[10px] font-black uppercase">Active</span>
+                   )}
+                 </div>
+                 {user?.trialEndDate && (
+                   <p className="text-xs text-gray-400 mb-4">
+                     Valid until: <span className="text-gray-200 font-bold">{new Date(user.trialEndDate).toLocaleDateString()}</span>
+                   </p>
+                 )}
+                 <button
+                   onClick={() => navigate('/subscription')}
+                   className="w-full bg-devotion-gold/10 border border-devotion-gold/30 text-devotion-gold hover:bg-devotion-gold hover:text-devotion-darkBlue transition-colors py-2 rounded-xl text-xs font-black uppercase tracking-widest"
+                 >
+                   Upgrade / Renew Plan
+                 </button>
                </div>
 
                <div className="space-y-3">
@@ -760,8 +602,8 @@ export default function Profile() {
                      { id: 'verses', label: 'Verses', icon: <BookOpen className="w-4 h-4" /> },
                      { id: 'library', label: 'Library', icon: <Library className="w-4 h-4" /> },
                      { id: 'movies', label: 'Cinematic', icon: <Play className="w-4 h-4" /> },
-                     { id: 'reels', label: 'Reels', icon: <Video className="w-4 h-4" /> },
-                     { id: 'daily', label: 'Daily & Mentor', icon: <Bookmark className="w-4 h-4" /> }
+                     
+                     { id: 'daily', label: 'Daily Sloka', icon: <Bookmark className="w-4 h-4" /> }
                    ].map(tab => (
                      <button
                        key={tab.id}
@@ -937,257 +779,194 @@ export default function Profile() {
                )
              )}
 
-             {/* Reels Tab */}
-             {activeSavedTab === 'reels' && (
-               savedReels.length === 0 ? (
-                 <div className="rounded-2xl border border-dashed border-white/10 p-8 text-center text-gray-400">
-                   No saved reels yet. Tap Save on any reel to collect it here.
-                 </div>
-               ) : (
-                 <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                   {savedReels.slice(0, 30).map((reel) => (
-                     <div 
-                        key={`${reel.reelId}-${reel.savedAt}`} 
-                        className="rounded-2xl border border-white/10 bg-white/5 p-5 preserve-3d transition-all duration-300 ease-out"
-                        onMouseMove={(e) => {
-                          const card = e.currentTarget;
-                          const rect = card.getBoundingClientRect();
-                          const x = e.clientX - rect.left;
-                          const y = e.clientY - rect.top;
-                          const centerX = rect.width / 2;
-                          const centerY = rect.height / 2;
-                          const rotateX = ((y - centerY) / centerY) * -5;
-                          const rotateY = ((x - centerX) / centerX) * 5;
-                          card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.transform = 'perspective(1000px) rotateX(0) rotateY(0)';
-                        }}
-                      >
-                       <h4 className="text-white font-bold text-lg line-clamp-1 mb-2">{reel.title || 'Saved Reel'}</h4>
-                       <p className="text-sm text-gray-300 line-clamp-2 mb-3">{reel.description || 'No description'}</p>
-                       <p className="text-[10px] uppercase tracking-widest text-gray-400 mb-4">
-                         ❤ {reel.likesCount || 0} • 💬 {reel.commentsCount || 0} • ↗ {reel.sharesCount || 0}
-                       </p>
-                       <div className="flex gap-2">
-                         <button
-                           onClick={() => openSavedReel(reel.reelId)}
-                           className="flex-1 px-3 py-2 rounded-lg border border-devotion-gold/30 text-devotion-gold text-[10px] font-black uppercase tracking-widest hover:bg-devotion-gold/10"
-                         >
-                           Watch
-                         </button>
-                         <button
-                           onClick={() => removeSavedReel(reel.reelId)}
-                           className="px-3 py-2 rounded-lg border border-red-500/30 text-red-300 text-[10px] font-black uppercase tracking-widest hover:bg-red-500/10"
-                         >
-                           Remove
-                         </button>
-                       </div>
-                     </div>
-                   ))}
-                 </div>
-               )
-             )}
 
-             {/* Daily & Mentor Tab */}
+
+             {/* Daily Sloka Saves Tab */}
              {activeSavedTab === 'daily' && (
-               dailySavedVerses.length === 0 && mentorSavedVerses.length === 0 ? (
+               dailySavedVerses.length === 0 ? (
                  <div className="rounded-2xl border border-dashed border-white/10 p-8 text-center text-gray-400">
-                   No locally saved verses yet. Save verses from Daily Sloka or Mentor pages.
+                   No locally saved daily verses yet. Save verses from Daily Sloka page.
                  </div>
                ) : (
                  <div className="space-y-8">
-                   {dailySavedVerses.length > 0 && (
-                     <div>
-                       <h4 className="text-devotion-gold font-black text-xs uppercase tracking-[0.2em] mb-4">Daily Sloka Saves</h4>
-                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                         {dailySavedVerses.slice(0, 8).map((item) => (
-                           <div 
-                              key={item.verseKey} 
-                              className="rounded-2xl border border-white/10 bg-white/5 p-4 preserve-3d transition-all duration-300 ease-out"
-                              onMouseMove={(e) => {
-                                const card = e.currentTarget;
-                                const rect = card.getBoundingClientRect();
-                                const x = e.clientX - rect.left;
-                                const y = e.clientY - rect.top;
-                                const centerX = rect.width / 2;
-                                const centerY = rect.height / 2;
-                                const rotateX = ((y - centerY) / centerY) * -5;
-                                const rotateY = ((x - centerX) / centerX) * 5;
-                                card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
-                              }}
-                              onMouseLeave={(e) => {
-                                e.currentTarget.style.transform = 'perspective(1000px) rotateX(0) rotateY(0)';
-                              }}
-                            >
-                             <p className="text-[10px] uppercase tracking-[0.2em] text-gray-400 mb-2">
-                               {item.chapter && item.verse ? `Chapter ${item.chapter} • Verse ${item.verse}` : item.dailyKey || 'Daily Verse'}
-                             </p>
-                             <p className="text-sm text-white line-clamp-2 italic mb-2">{item.sanskrit}</p>
-                             <p className="text-xs text-gray-300 line-clamp-2 mb-3">{item.englishMeaning}</p>
-                             <div className="flex gap-2">
-                               <button
-                                 onClick={() => navigate('/daily-sloka', { state: { savedVerse: item } })}
-                                 className="flex-1 px-3 py-2 rounded-lg border border-devotion-gold/30 text-devotion-gold text-[10px] font-black uppercase tracking-widest hover:bg-devotion-gold/10"
-                               >
-                                 Open
-                               </button>
-                               <button
-                                 onClick={() => removeDailySavedVerse(item.verseKey)}
-                                 className="px-3 py-2 rounded-lg border border-red-500/30 text-red-300 text-[10px] font-black uppercase tracking-widest hover:bg-red-500/10"
-                               >
-                                 Remove
-                               </button>
-                             </div>
+                   <div>
+                     <h4 className="text-devotion-gold font-black text-xs uppercase tracking-[0.2em] mb-4">Daily Sloka Saves</h4>
+                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                       {dailySavedVerses.slice(0, 8).map((item) => (
+                         <div 
+                            key={item.verseKey} 
+                            className="rounded-2xl border border-white/10 bg-white/5 p-4 preserve-3d transition-all duration-300 ease-out"
+                            onMouseMove={(e) => {
+                              const card = e.currentTarget;
+                              const rect = card.getBoundingClientRect();
+                              const x = e.clientX - rect.left;
+                              const y = e.clientY - rect.top;
+                              const centerX = rect.width / 2;
+                              const centerY = rect.height / 2;
+                              const rotateX = ((y - centerY) / centerY) * -5;
+                              const rotateY = ((x - centerX) / centerX) * 5;
+                              card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.transform = 'perspective(1000px) rotateX(0) rotateY(0)';
+                            }}
+                          >
+                           <p className="text-[10px] uppercase tracking-[0.2em] text-gray-400 mb-2">
+                             {item.chapter && item.verse ? `Chapter ${item.chapter} • Verse ${item.verse}` : item.dailyKey || 'Daily Verse'}
+                           </p>
+                           <p className="text-sm text-white line-clamp-2 italic mb-2">{item.sanskrit}</p>
+                           <p className="text-xs text-gray-300 line-clamp-2 mb-3">{item.englishMeaning}</p>
+                           <div className="flex gap-2">
+                             <button
+                               onClick={() => navigate('/daily-sloka', { state: { savedVerse: item } })}
+                               className="flex-1 px-3 py-2 rounded-lg border border-devotion-gold/30 text-devotion-gold text-[10px] font-black uppercase tracking-widest hover:bg-devotion-gold/10"
+                             >
+                               Open
+                             </button>
+                             <button
+                               onClick={() => removeDailySavedVerse(item.verseKey)}
+                               className="px-3 py-2 rounded-lg border border-red-500/30 text-red-300 text-[10px] font-black uppercase tracking-widest hover:bg-red-500/10"
+                             >
+                               Remove
+                             </button>
                            </div>
-                         ))}
-                       </div>
+                         </div>
+                       ))}
                      </div>
-                   )}
-
-                   {mentorSavedVerses.length > 0 && (
-                     <div>
-                       <h4 className="text-devotion-gold font-black text-xs uppercase tracking-[0.2em] mb-4">Mentor Saves</h4>
-                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                         {mentorSavedVerses.slice(0, 8).map((item) => (
-                           <div key={item.verseKey} className="rounded-2xl border border-white/10 bg-white/5 p-4">
-                             <p className="text-[10px] uppercase tracking-[0.2em] text-devotion-gold mb-2">{item.problem || 'mentor'}</p>
-                             <p className="text-sm text-white line-clamp-2 italic mb-2">{item.sanskrit}</p>
-                             <p className="text-xs text-gray-300 line-clamp-2 mb-3">{item.englishMeaning}</p>
-                             <div className="flex gap-2">
-                               <button
-                                 onClick={() => navigate('/mentor', { state: { savedVerse: item } })}
-                                 className="flex-1 px-3 py-2 rounded-lg border border-devotion-gold/30 text-devotion-gold text-[10px] font-black uppercase tracking-widest hover:bg-devotion-gold/10"
-                               >
-                                 Open
-                               </button>
-                               <button
-                                 onClick={() => removeMentorSavedVerse(item.verseKey)}
-                                 className="px-3 py-2 rounded-lg border border-red-500/30 text-red-300 text-[10px] font-black uppercase tracking-widest hover:bg-red-500/10"
-                               >
-                                 Remove
-                               </button>
-                             </div>
-                           </div>
-                         ))}
-                       </div>
-                     </div>
-                   )}
+                   </div>
                  </div>
                )
              )}
           </section>
-          <section className="bg-glass-gradient backdrop-blur-3xl rounded-[2.5rem] border border-devotion-gold/20 p-10 shadow-2xl">
-             <div className="flex items-center justify-between mb-8">
-                <div className="flex items-center gap-4">
-                   <Video className="text-devotion-gold w-8 h-8" />
-                   <h3 className="text-3xl font-serif font-bold text-white uppercase tracking-tighter">Your Uploaded Reels</h3>
-                </div>
-                <button
-                  onClick={() => navigate('/upload-reel')}
-                  className="flex items-center gap-2 bg-devotion-gold text-devotion-darkBlue px-4 py-2 rounded-xl font-black text-xs uppercase tracking-widest hover:bg-yellow-400 transition-colors"
-                >
-                   <Camera className="w-4 h-4" /> New Reel
-                </button>
+          
+
+          {/* Family Profiles Section */}
+          <section className="bg-glass-gradient backdrop-blur-3xl rounded-[2.5rem] border border-devotion-gold/20 p-10 shadow-2xl mt-10">
+             <div className="flex items-center gap-4 mb-8">
+                <Users className="text-devotion-gold w-8 h-8" />
+                <h3 className="text-3xl font-serif font-bold text-white uppercase tracking-tighter">Family Profiles</h3>
              </div>
 
-             {myReelsLoading ? (
-               <div className="py-16 flex justify-center">
-                 <div className="animate-spin rounded-full h-10 w-10 border-t-4 border-devotion-gold"></div>
-               </div>
-             ) : myReels.length === 0 ? (
-               <div className="rounded-2xl border border-dashed border-white/10 p-8 text-center text-gray-400">
-                 You haven't uploaded any reels yet.
-               </div>
-             ) : (
-               <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                 {myReels.map((reel) => (
-                   <div key={reel.id || reel._id} className="rounded-2xl border border-white/10 bg-white/5 p-5">
-                     {editingReelId === (reel.id || reel._id) ? (
-                       <div className="space-y-4">
-                         <input
-                           className="w-full bg-devotion-darkBlue text-white border border-white/10 rounded-xl px-4 py-2 text-sm focus:outline-none focus:border-devotion-gold"
-                           value={reelForm.title}
-                           onChange={(e) => setReelForm({ ...reelForm, title: e.target.value })}
-                           placeholder="Title"
-                         />
-                         <textarea
-                           className="w-full bg-devotion-darkBlue text-white border border-white/10 rounded-xl px-4 py-2 text-sm focus:outline-none focus:border-devotion-gold"
-                           value={reelForm.description}
-                           onChange={(e) => setReelForm({ ...reelForm, description: e.target.value })}
-                           placeholder="Description"
-                         />
-                         <input
-                           className="w-full bg-devotion-darkBlue text-white border border-white/10 rounded-xl px-4 py-2 text-sm focus:outline-none focus:border-devotion-gold"
-                           value={reelForm.tags}
-                           onChange={(e) => setReelForm({ ...reelForm, tags: e.target.value })}
-                           placeholder="Tags (comma separated)"
-                         />
-                         
-                         {reelEditError && <p className="text-red-400 text-xs">{reelEditError}</p>}
-                         
-                         <div className="flex gap-2">
-                           <button
-                             disabled={reelActionLoading}
-                             onClick={() => saveEditedReel(reel.id || reel._id)}
-                             className="flex-1 bg-devotion-gold text-devotion-darkBlue py-2 rounded-xl font-black text-xs uppercase tracking-widest disabled:opacity-50"
-                           >
-                             {reelActionLoading ? 'Saving...' : 'Save'}
-                           </button>
-                           <button
-                             disabled={reelActionLoading}
-                             onClick={() => closeEditReel()}
-                             className="flex-1 bg-white/10 text-white py-2 rounded-xl font-black text-xs uppercase tracking-widest hover:bg-white/20 disabled:opacity-50"
-                           >
-                             Cancel
-                           </button>
-                         </div>
-                       </div>
-                     ) : (
-                       <>
-                         <div className="flex justify-between items-start mb-2">
-                           <h4 className="text-white font-bold text-lg line-clamp-1 flex-1">{reel.title}</h4>
-                           <div className="flex gap-2 ml-2">
-                             <button 
-                               onClick={() => openEditReel(reel)}
-                               className="text-gray-400 hover:text-white transition-colors"
-                             >
-                               <Edit2 className="w-4 h-4" />
-                             </button>
-                             <button 
-                               onClick={() => deleteReel(reel.id || reel._id)}
-                               disabled={reelActionLoading}
-                               className="text-red-400 hover:text-red-300 transition-colors disabled:opacity-50"
-                             >
-                               <Trash2 className="w-4 h-4" />
-                             </button>
-                           </div>
-                         </div>
-                         <p className="text-sm text-gray-300 line-clamp-2 mb-3">{reel.description || 'No description'}</p>
-                         <div className="flex items-center justify-between">
-                           <span className={`text-[10px] font-black uppercase tracking-widest px-2 py-1 rounded-md ${reel.moderationStatus === 'approved' ? 'bg-green-500/20 text-green-400' : reel.moderationStatus === 'rejected' ? 'bg-red-500/20 text-red-400' : 'bg-yellow-500/20 text-yellow-400'}`}>
-                             {reel.moderationStatus || 'pending'}
-                           </span>
-                           <span className="text-[10px] text-gray-400 uppercase tracking-widest">
-                             ❤ {reel.likesCount || 0} • 💬 {reel.commentsCount || 0}
-                           </span>
-                         </div>
-                         {reel.moderationStatus === 'approved' && (
-                           <div className="mt-3 text-[10px] text-green-400 bg-green-500/10 p-2 rounded-lg border border-green-500/20">
-                             Approved: Your reel is now visible in public spiritual reels.
-                           </div>
-                         )}
-                         {reel.moderationStatus === 'rejected' && (
-                           <div className="mt-3 text-[10px] text-red-400 bg-red-500/10 p-2 rounded-lg border border-red-500/20">
-                             Rejected: Did not meet community guidelines.
-                           </div>
-                         )}
-                       </>
-                     )}
-                   </div>
-                 ))}
-               </div>
-             )}
+             <div className="space-y-6">
+                <p className="text-xs text-gray-400">
+                  Share your spiritual journey with your family. Create up to 3 family profiles under your account.
+                </p>
+                
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  {(user?.profiles || []).map((prof) => (
+                    <div key={prof._id || prof.name} className="bg-white/5 border border-white/10 rounded-2xl p-4 flex flex-col items-center justify-between relative group">
+                      <div className="w-16 h-16 rounded-full bg-devotion-gold/20 flex items-center justify-center mb-3 border-2 border-devotion-gold/30">
+                        <span className="text-xl font-bold text-[#f7d77d]">
+                          {prof.name[0].toUpperCase()}
+                        </span>
+                      </div>
+                      <p className="text-sm font-semibold truncate max-w-full">{prof.name}</p>
+                      
+                      <button
+                        onClick={async () => {
+                          const confirmed = window.confirm(`Remove profile "${prof.name}"?`);
+                          if (!confirmed) return;
+                          try {
+                            const token = localStorage.getItem('token');
+                            const { data } = await axios.delete(`/api/auth/profiles/${prof._id}`, {
+                              headers: { Authorization: `Bearer ${token}` }
+                            });
+                            setUser(prev => ({ ...prev, profiles: data.profiles }));
+                            if (selectedProfile && String(selectedProfile._id) === String(prof._id)) {
+                              selectProfile(null);
+                            }
+                          } catch (err) {
+                            alert(err.response?.data?.message || 'Failed to remove profile');
+                          }
+                        }}
+                        className="mt-3 text-[10px] text-red-400 hover:text-red-300 font-bold uppercase tracking-widest transition-colors"
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  ))}
+                </div>
+
+                {(user?.profiles || []).length < 3 ? (
+                  <form onSubmit={async (e) => {
+                    e.preventDefault();
+                    const name = e.target.elements.profileName.value.trim();
+                    if (!name) return;
+                    try {
+                      const token = localStorage.getItem('token');
+                      const { data } = await axios.post('/api/auth/profiles', { name }, {
+                        headers: { Authorization: `Bearer ${token}` }
+                      });
+                      setUser(prev => ({ ...prev, profiles: data }));
+                      e.target.reset();
+                    } catch (err) {
+                      alert(err.response?.data?.message || 'Failed to create profile');
+                    }
+                  }} className="flex gap-2">
+                    <input
+                      name="profileName"
+                      type="text"
+                      placeholder="Enter profile name"
+                      required
+                      className="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-devotion-gold"
+                    />
+                    <button
+                      type="submit"
+                      className="bg-devotion-gold text-devotion-darkBlue px-4 py-2 rounded-xl font-black text-xs uppercase tracking-widest hover:bg-yellow-400 transition-colors"
+                    >
+                      Add Profile
+                    </button>
+                  </form>
+                ) : (
+                  <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-3 text-xs text-red-300 text-center font-bold">
+                    Maximum member limit reached.
+                  </div>
+                )}
+             </div>
+          </section>
+
+          {/* Device Management Section */}
+          <section className="bg-glass-gradient backdrop-blur-3xl rounded-[2.5rem] border border-devotion-gold/20 p-10 shadow-2xl mt-10">
+             <div className="flex items-center gap-4 mb-8">
+                <Shield className="text-devotion-gold w-8 h-8" />
+                <h3 className="text-3xl font-serif font-bold text-white uppercase tracking-tighter">Device Management</h3>
+             </div>
+
+             <div className="space-y-4">
+                <p className="text-xs text-gray-400">
+                  This account can be used on up to 3 devices simultaneously. Here are the currently active devices:
+                </p>
+                <div className="divide-y divide-white/5">
+                  {(user?.devices || []).map((dev) => (
+                    <div key={dev.deviceId} className="flex justify-between items-center py-3">
+                      <div>
+                        <p className="text-sm font-semibold text-white">{dev.deviceName || 'Unknown Device'}</p>
+                        <p className="text-[10px] text-gray-500">
+                          Last active: {new Date(dev.lastLogin).toLocaleString()}
+                        </p>
+                      </div>
+                      <button
+                        onClick={async () => {
+                          const confirmed = window.confirm(`Remove device "${dev.deviceName}"?`);
+                          if (!confirmed) return;
+                          try {
+                            const token = localStorage.getItem('token');
+                            const { data } = await axios.delete(`/api/auth/devices/${dev.deviceId}`, {
+                              headers: { Authorization: `Bearer ${token}` }
+                            });
+                            setUser(prev => ({ ...prev, devices: data.devices }));
+                          } catch (err) {
+                            alert(err.response?.data?.message || 'Failed to remove device');
+                          }
+                        }}
+                        className="text-xs text-red-400 hover:text-red-300 font-bold uppercase tracking-widest transition-colors"
+                      >
+                        Remove Device
+                      </button>
+                    </div>
+                  ))}
+                </div>
+             </div>
           </section>
 
         </div>
@@ -1195,3 +974,6 @@ export default function Profile() {
     </div>
   );
 }
+
+
+

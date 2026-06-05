@@ -9,6 +9,14 @@ export const useAuth = () => useContext(AuthContext);
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [selectedProfile, setSelectedProfile] = useState(() => {
+    try {
+      const saved = localStorage.getItem('gita_wisdom_profile');
+      return saved ? JSON.parse(saved) : null;
+    } catch {
+      return null;
+    }
+  });
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -28,7 +36,9 @@ export const AuthProvider = ({ children }) => {
       console.error('Failed to fetch user', error);
       localStorage.removeItem('token');
       localStorage.removeItem('user');
+      localStorage.removeItem('gita_wisdom_profile');
       setUser(null);
+      setSelectedProfile(null);
     } finally {
       setLoading(false);
     }
@@ -75,15 +85,28 @@ export const AuthProvider = ({ children }) => {
     return data;
   };
 
+  const selectProfile = (profile) => {
+    setSelectedProfile(profile);
+    if (profile) {
+      localStorage.setItem('gita_wisdom_profile', JSON.stringify(profile));
+    } else {
+      localStorage.removeItem('gita_wisdom_profile');
+    }
+  };
+
   const logout = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
+    localStorage.removeItem('gita_wisdom_profile');
     setUser(null);
+    setSelectedProfile(null);
   };
 
   const value = {
     user,
     loading,
+    selectedProfile,
+    selectProfile,
     login,
     register,
     verifyRegisterOtp,

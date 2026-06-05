@@ -6,6 +6,10 @@ const StorySchema = new mongoose.Schema({
   content:     { type: String }, // Optional full text if not using chapters
   seriesTitle: { type: String, default: 'General' }, // e.g. 'Bhagavad Gita Series'
   language:    { type: String, default: 'en' },      // Primary source language code
+  folderId:    { type: mongoose.Schema.Types.ObjectId, ref: 'Story' },
+  parentFolder: { type: String },
+  parentFolderId: { type: String },
+  isFolder:     { type: Boolean, default: false },
   chapters: [{
     title:     String,
     content:   String,
@@ -13,7 +17,9 @@ const StorySchema = new mongoose.Schema({
     duration:  Number,
     sequence:  Number,
     summary:   String,
-    takeaways: [String]
+    takeaways: [String],
+    folderId:  { type: mongoose.Schema.Types.ObjectId, ref: 'Story' },
+    parentFolder: { type: String }
   }],
   translations: { type: mongoose.Schema.Types.Mixed, default: {} }, // { 'hi': { title: '...', description: '...', chapters: [...] } }
   author:    { type: String },

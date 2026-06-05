@@ -272,13 +272,13 @@ async function processStoryIntoChapters(fullContent, title) {
 /**
  * Generates AI Voiceover for a script in a target language
  */
-async function generateDubbing(text, language = 'en') {
-  console.log(`[AI] Generating dubbing for: ${language}`);
+async function generateDubbing(text, voice = 'alloy') {
+  console.log(`[AI] Generating dubbing with voice: ${voice}`);
   
   try {
     const mp3 = await openai.audio.speech.create({
       model: "tts-1",
-      voice: "alloy",
+      voice: voice,
       input: text,
     });
     
@@ -295,9 +295,20 @@ async function generateDubbing(text, language = 'en') {
  */
 async function generateElevenLabsTTS(text, voiceType = 'krishna', customApiKey = '') {
   const apiKey = customApiKey || process.env.ELEVENLABS_API_KEY;
+  
+  // OpenAI fallback voice mapping
+  const openaiVoiceMap = {
+    krishna: 'onyx',
+    ram: 'alloy',
+    hanuman: 'echo',
+    arjuna: 'onyx',
+    saikumar: 'onyx',
+  };
+  const fallbackVoice = openaiVoiceMap[String(voiceType).toLowerCase()] || 'alloy';
+
   if (!apiKey) {
     console.warn('[AI] ElevenLabs API key missing, falling back to OpenAI TTS');
-    return generateDubbing(text);
+    return generateDubbing(text, fallbackVoice);
   }
 
   // Map our voice types to ElevenLabs Voice IDs (These would be pre-cloned spiritual voices)
@@ -306,6 +317,7 @@ async function generateElevenLabsTTS(text, voiceType = 'krishna', customApiKey =
     ram: "onwK4e9ZLuTAKqWW03F9",     // Gentle, noble voice
     hanuman: "CwhSge9S5S7u95tU4x45", // Strong, devoted voice
     arjuna: "MF3mGyEYCl7XYW7ANLiW",  // Confident warrior voice
+    saikumar: "pNInz6obpgq5paNs9W5y", // Powerful, booming Tollywood-style dramatic voice (Sai Kumar style)
   };
 
   const voiceId = VOICE_MAP[voiceType.toLowerCase()] || VOICE_MAP.krishna;
@@ -335,7 +347,7 @@ async function generateElevenLabsTTS(text, voiceType = 'krishna', customApiKey =
     return Buffer.from(response.data);
   } catch (error) {
     console.error(`[AI] ElevenLabs TTS failed:`, error.response?.data?.toString() || error.message);
-    return generateDubbing(text); // Fallback to OpenAI
+    return generateDubbing(text, fallbackVoice); // Fallback to OpenAI
   }
 }
 

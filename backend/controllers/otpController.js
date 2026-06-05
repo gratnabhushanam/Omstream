@@ -59,6 +59,13 @@ exports.verifyOtp = async (req, res) => {
             user.role = 'admin';
         }
 
+        // Check device limit
+        const { checkAndRegisterDevice } = require('../middleware/authMiddleware');
+        const allowed = await checkAndRegisterDevice(user, req.headers);
+        if (!allowed) {
+            return res.status(403).json({ message: "Maximum device limit reached. This account can be used on up to 3 devices only." });
+        }
+
         user.otpHash = undefined;
         user.otpExpiry = undefined;
         await user.save();

@@ -2,11 +2,14 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { ArrowRight, Check, Eye, EyeOff, Sparkles, Shield, X, BookOpen } from 'lucide-react';
+import PhoneInput from '../components/PhoneInput';
 import heroImage from '../assets/hero.png';
 import '../styles/auth.css';
 
 export default function Register() {
-  const [formData, setFormData] = useState({ name: '', email: '', phoneNumber: '', password: '' });
+  const [formData, setFormData] = useState({ name: '', email: '', password: '' });
+  const [selectedCountry, setSelectedCountry] = useState(null);
+  const [phoneVal, setPhoneVal] = useState('');
   const [infoMessage, setInfoMessage] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -72,7 +75,8 @@ export default function Register() {
     setLoading(true);
 
     try {
-      const response = await register(formData.name, formData.email, formData.phoneNumber, formData.password);
+      const fullPhone = selectedCountry ? selectedCountry.dial + phoneVal.replace(/\D/g, '') : phoneVal.replace(/\D/g, '');
+      const response = await register(formData.name, formData.email, fullPhone, formData.password);
 
       const pendingRegistration = {
         name: formData.name,
@@ -173,19 +177,15 @@ export default function Register() {
                 {emailError && <p className="mt-2 text-xs text-red-300">{emailError}</p>}
               </div>
 
-              <div>
+               <div>
                 <label htmlFor="phoneNumber" className="mb-2 block text-xs font-bold uppercase tracking-[0.2em] text-white/80">
                   Phone Number
                 </label>
-                <input
-                  id="phoneNumber"
-                  type="tel"
-                  value={formData.phoneNumber}
-                  onChange={(event) => setFormData((current) => ({ ...current, phoneNumber: event.target.value }))}
-                  onFocus={() => setFocusedField('phoneNumber')}
-                  onBlur={() => setFocusedField(null)}
-                  placeholder="1234567890"
-                  className={`auth-input ${focusedField === 'phoneNumber' ? 'shadow-[0_0_0_4px_rgba(255,215,0,0.12)]' : ''}`}
+                <PhoneInput
+                  value={phoneVal}
+                  onChange={setPhoneVal}
+                  selectedCountry={selectedCountry}
+                  setSelectedCountry={setSelectedCountry}
                 />
               </div>
 

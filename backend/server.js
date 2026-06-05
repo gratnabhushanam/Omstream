@@ -73,6 +73,8 @@ const allowedOrigins = [
 
 const isOriginAllowed = (origin) => {
   if (!origin) return true;
+  // Allow all localhost origins
+  if (origin.startsWith('http://localhost:')) return true;
   // Allow all Vercel preview deployments (*.vercel.app)
   if (origin && origin.endsWith('.vercel.app')) return true;
   return allowedOrigins.some(o => origin.startsWith(o));
@@ -110,6 +112,64 @@ const initializeApp = async () => {
       await connectDB();
       console.log('MongoDB Connected successfully');
 
+      // Migrate existing chapters and reconcile folders/chapters database state
+      try {
+        const Story = require('./models/Story');
+        const User = require('./models/User');
+        const bcrypt = require('bcryptjs');
+        const mongoose = require('mongoose');
+        
+        // 1. Ensure the 6 folder documents exist
+        const folderNames = [
+          "Ramayanam",
+          "Mahabharatam",
+          "Bhagavad Gita",
+          "Krishna Leela",
+          "Hanuman Charitra",
+          "Shiva Purana"
+        ];
+        for (const name of folderNames) {
+          let folder = await Story.findOne({ title: name });
+          if (!folder) {
+            folder = await Story.create({
+              title: name,
+              description: `Explore the sacred stories of ${name}`,
+              isFolder: true,
+              status: 'published'
+            });
+            console.log(`[MIGRATION] Created folder: "${name}".`);
+          } else if (!folder.isFolder) {
+            folder.isFolder = true;
+            await folder.save();
+            console.log(`[MIGRATION] Updated existing story to folder: "${name}".`);
+          }
+        }
+
+        // 2. Set isFolder: false for all other stories
+        await Story.updateMany(
+          { title: { $nin: folderNames } },
+          { $set: { isFolder: false } }
+        );
+
+        // 3. Move "marriage" story into "Ramayanam" folder
+        const ramFolder = await Story.findOne({ title: "Ramayanam" });
+        if (ramFolder) {
+          const marriageStory = await Story.findOne({ title: /marriage/i });
+          if (marriageStory && String(marriageStory._id) !== String(ramFolder._id)) {
+            marriageStory.parentFolderId = "Ramayanam";
+            marriageStory.isFolder = false;
+            marriageStory.folderId = ramFolder._id;
+            marriageStory.parentFolder = "Ramayanam";
+            await marriageStory.save();
+            console.log(`[MIGRATION] Successfully moved "marriage" story into folder "Ramayanam".`);
+          }
+        }
+
+        // Admin credentials are handled by initializeAdminCredentials() below (uses ADMIN_EMAIL/ADMIN_PASSWORD from .env)
+      } catch (migrationError) {
+        console.error('[MIGRATION-ERROR] Failed to run database migration:', migrationError.message);
+      }
+
       // Ensure upload directories exist
       const dirs = ['uploads/reels', 'uploads/temp', 'uploads/thumbnails'];
       dirs.forEach(dir => {
@@ -143,6 +203,7 @@ app.post('/api/stories/:id/translate', require('./controllers/storyController').
 
 // API Routes
 app.use('/api/auth', require('./routes/authRoutes'));
+app.use('/api/payments', require('./routes/payments'));
 app.use('/api/content', require('./routes/syncRoutes'));
 app.use('/api/admin', require('./routes/adminRoutes'));
 console.log('Loading storyRoutes...');

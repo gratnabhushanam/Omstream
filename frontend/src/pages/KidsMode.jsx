@@ -13,6 +13,49 @@ import { useAuth } from '../context/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import '../styles/MoviesPremium.css'; // Shared cinematic styles
 
+// Utility to get kid-friendly content-related thumbnails
+const getKidsContentThumbnail = (item) => {
+  if (!item) return 'https://images.unsplash.com/photo-1614850523459-c2f4c699c52e?q=80&w=600&auto=format&fit=crop';
+  
+  if (item.thumbnail && !item.thumbnail.includes('logo-om') && !item.thumbnail.includes('scene-krishna')) {
+    return item.thumbnail;
+  }
+  
+  // YouTube fallback
+  const ytId = item.videoUrl?.match(/[?&]v=([^&]+)/)?.[1] || item.videoUrl?.match(/youtu\.be\/([^?]+)/)?.[1];
+  if (ytId) {
+    return `https://img.youtube.com/vi/${ytId}/maxresdefault.jpg`;
+  }
+
+  const title = (item.title || '').toLowerCase();
+  const tags = Array.isArray(item.tags) 
+    ? item.tags.map(t => String(t).toLowerCase()) 
+    : String(item.tags || '').toLowerCase().split(',').map(t => t.trim());
+
+  // Topic matching
+  if (title.includes('krishna') || tags.includes('krishna') || tags.includes('govinda') || tags.includes('gita')) {
+    return 'https://images.unsplash.com/photo-1584824486509-112e4181ff6b?q=80&w=600&auto=format&fit=crop'; // Colorful playful theme
+  }
+  if (title.includes('ramayan') || title.includes('rama') || tags.includes('ramayana') || title.includes('sita')) {
+    return 'https://images.unsplash.com/photo-1509198397868-475647b2a1e5?q=80&w=600&auto=format&fit=crop'; // Archery/sunset epic theme
+  }
+  if (title.includes('hanuman') || tags.includes('hanuman') || title.includes('monkey') || tags.includes('bajrang')) {
+    return 'https://images.unsplash.com/photo-1536240478700-b869070f9279?q=80&w=600&auto=format&fit=crop'; // Flying cartoon/clouds theme
+  }
+  if (title.includes('shiva') || title.includes('mahadev') || tags.includes('shiva') || title.includes('shivaya')) {
+    return 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?q=80&w=600&auto=format&fit=crop'; // Majestic mountains theme
+  }
+  if (title.includes('panchatantra') || tags.includes('panchatantra') || title.includes('moral') || tags.includes('moral') || title.includes('folklore')) {
+    return 'https://images.unsplash.com/photo-1500622944204-b135684e99fd?q=80&w=600&auto=format&fit=crop'; // Whimsical jungle theme
+  }
+  if (title.includes('educational') || tags.includes('educational') || title.includes('learning') || title.includes('kids')) {
+    return 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=600&auto=format&fit=crop'; // Cosmic learning theme
+  }
+  
+  // Default cartoon layout background
+  return 'https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?q=80&w=600&auto=format&fit=crop';
+};
+
 export default function KidsMode() {
   const navigate = useNavigate();
   const { t } = useLanguage();
@@ -251,7 +294,7 @@ export default function KidsMode() {
                           </div>
                         ) : (
                           <img 
-                            src={featuredVideo.thumbnail || "/scene-krishna.svg"} 
+                            src={getKidsContentThumbnail(featuredVideo)} 
                             className="w-full h-full object-cover scale-105 premium-video-refinement"
                             alt=""
                           />
@@ -333,25 +376,27 @@ export default function KidsMode() {
                            key={v._id || v.id}
                            whileHover={{ scale: 1.1, y: -5 }}
                            onClick={() => setFeaturedVideo(v)}
-                           className={`w-40 lg:w-56 aspect-video rounded-2xl overflow-hidden border-2 cursor-pointer transition-all duration-500 flex-shrink-0 shadow-2xl ${featuredVideo?._id === v._id ? 'border-[#FF7A00] scale-105 shadow-[0_0_30px_rgba(255,122,0,0.5)]' : 'border-white/10 grayscale hover:grayscale-0'}`}
+                           className={`w-40 lg:w-56 aspect-video rounded-3xl overflow-hidden border-[3px] cursor-pointer transition-all duration-500 flex-shrink-0 shadow-2xl relative ${featuredVideo?._id === v._id ? 'border-[#FF7A00] scale-105 shadow-[0_0_40px_rgba(255,122,0,0.6)]' : 'border-white/15 grayscale hover:grayscale-0'}`}
                          >
-                            <img src={v.thumbnail || "/scene-krishna.svg"} alt="" className="w-full h-full object-cover" />
-                            <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
-                               <Play className="w-8 h-8 text-[#FF7A00]" />
+                            <img src={getKidsContentThumbnail(v)} alt="" className="w-full h-full object-cover" />
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent flex flex-col justify-between p-3 opacity-90 hover:opacity-100 transition-opacity">
+                               <div className="flex justify-between items-start">
+                                  <span className="bg-gradient-to-r from-purple-600 to-pink-500 text-white text-[7px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider shadow-md">
+                                     KIDS
+                                  </span>
+                               </div>
+                               <div className="flex items-center gap-2">
+                                  <div className="w-7 h-7 rounded-full bg-[#FF7A00] flex items-center justify-center shadow-lg">
+                                     <Play className="w-3.5 h-3.5 text-navy-deep fill-current ml-0.5" />
+                                  </div>
+                                  <span className="text-[9px] font-black text-white truncate uppercase tracking-wider">
+                                     {t(v, 'title')}
+                                  </span>
+                                </div>
                             </div>
                          </motion.div>
                       ))}
                    </div>
-
-                   {/* Mascot Overlay */}
-                   <motion.div 
-                     initial={{ x: 100, opacity: 0 }}
-                     animate={{ x: 0, opacity: 1 }}
-                     transition={{ delay: 1.2, duration: 1 }}
-                     className="absolute bottom-20 right-10 w-[200px] h-[200px] z-30 pointer-events-none hidden lg:block opacity-40"
-                   >
-                     <img src="/kids_mascot_1778310861074.png" alt="Mascot" className="w-full h-full object-contain drop-shadow-[0_20px_60px_rgba(255,122,0,0.4)] animate-float" />
-                   </motion.div>
                 </motion.div>
                 )}
              </AnimatePresence>
@@ -496,8 +541,7 @@ function KidsCard({ video, onSelect, setFeaturedVideo, setOpenQuizVideo, setHove
 
   const trailers = (video.trailerUrl || video.videoUrl || '').split(',').map(u => u.trim()).filter(Boolean);
   const currentTrailer = trailers[0];
-  const ytId = video.videoUrl?.match(/[?&]v=([^&]+)/)?.[1] || video.videoUrl?.match(/youtu\.be\/([^?]+)/)?.[1];
-  const thumbUrl = video.thumbnail || (ytId ? `https://img.youtube.com/vi/${ytId}/maxresdefault.jpg` : '/scene-krishna.svg');
+  const thumbUrl = getKidsContentThumbnail(video);
 
   useEffect(() => {
     if (!isHovered) {
@@ -546,7 +590,7 @@ function KidsCard({ video, onSelect, setFeaturedVideo, setOpenQuizVideo, setHove
       }}
       className={`flex-shrink-0 aspect-video group cursor-pointer relative snap-start outline-none premium-focus-ring ${wideTeaser ? 'w-[320px] lg:w-[680px]' : 'w-[240px] lg:w-[420px]'}`}
     >
-       <div className="absolute inset-0 rounded-[2rem] lg:rounded-[2.5rem] overflow-hidden border-4 border-white/5 group-hover:border-[#FF7A00]/60 transition-all duration-500 bg-[#0F172A] shadow-2xl">
+       <div className="absolute inset-0 rounded-[2.5rem] overflow-hidden border-[4px] border-white/10 group-hover:border-[#FF7A00] transition-all duration-500 bg-[#0F172A] shadow-2xl">
           <img 
             src={thumbUrl} 
             loading="lazy" 
@@ -581,19 +625,37 @@ function KidsCard({ video, onSelect, setFeaturedVideo, setOpenQuizVideo, setHove
           )}
 
           {/* Static UI Elements */}
-          <div className="absolute inset-0 flex flex-col justify-end p-6 lg:p-10 z-10">
-             <div className={`transition-all duration-500 ${isHovered ? 'translate-y-0' : 'translate-y-4'}`}>
-                <div className="flex items-center gap-3 mb-3">
-                   <span className="px-3 py-1 bg-[#FF7A00] text-navy-deep text-[8px] font-black rounded-full uppercase tracking-widest shadow-lg">
-                      {video.category || 'Kids'}
-                   </span>
-                   <span className="text-[10px] font-black text-white/50 uppercase tracking-widest">
+          <div className="absolute inset-0 flex flex-col justify-between p-6 lg:p-10 z-10 bg-gradient-to-t from-black/90 via-black/40 to-transparent">
+             {/* Top Badges */}
+             <div className="flex justify-between items-start opacity-90">
+                <span className="bg-gradient-to-r from-[#FF7A00] to-[#FFD700] text-navy-deep text-[8px] font-black px-3 py-1 rounded-full uppercase tracking-widest shadow-md">
+                   {video.category || 'Kids'}
+                </span>
+                <span className="bg-black/60 backdrop-blur-md text-[8px] font-black text-[#FFD700] px-3 py-1 rounded-full uppercase tracking-widest border border-white/15">
+                   9.8 ★
+                </span>
+             </div>
+
+             {/* Bottom Details */}
+             <div className={`transition-all duration-500 ${isHovered ? 'translate-y-0' : 'translate-y-2'}`}>
+                <div className="flex items-center gap-3 mb-2">
+                   <span className="text-[10px] font-black text-white/60 uppercase tracking-widest">
                       {video.duration || '5:00'} MIN
                    </span>
+                   <span className="text-[10px] font-black text-green-400 uppercase tracking-widest">
+                      HD FREE
+                   </span>
                 </div>
-                <h4 className="text-xl lg:text-3xl font-black text-white uppercase tracking-tighter italic leading-none drop-shadow-2xl">
+                <h4 className="text-xl lg:text-3xl font-black text-white uppercase tracking-tighter italic leading-none drop-shadow-2xl flex items-center gap-3">
                    {t(video, 'title')}
                 </h4>
+             </div>
+
+             {/* Play Overlay Button on Center Hover */}
+             <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                <div className="w-16 h-16 rounded-full bg-gradient-to-tr from-[#FF7A00] to-[#FFD700] flex items-center justify-center text-navy-deep shadow-[0_0_30px_rgba(255,122,0,0.5)] transform scale-75 group-hover:scale-100 transition-all duration-300">
+                   <Play className="w-8 h-8 fill-current ml-1" />
+                </div>
              </div>
 
              {/* Hover Actions */}
@@ -604,18 +666,12 @@ function KidsCard({ video, onSelect, setFeaturedVideo, setOpenQuizVideo, setHove
                 >
                    <Brain className="w-6 h-6" />
                 </button>
-                <button 
-                   onClick={(e) => { e.stopPropagation(); onSelect(video); }}
-                   className="w-12 h-12 rounded-xl bg-white flex items-center justify-center text-navy-deep shadow-xl hover:scale-110 transition-all"
-                >
-                   <Play className="w-6 h-6 fill-current ml-0.5" />
-                </button>
              </div>
           </div>
        </div>
        
        {/* Background Glow */}
-       <div className={`absolute -inset-4 bg-[#FF7A00]/20 blur-[30px] rounded-full transition-opacity duration-500 -z-10 ${isHovered ? 'opacity-100' : 'opacity-0'}`} />
+       <div className={`absolute -inset-4 bg-[#FF7A00]/25 blur-[35px] rounded-full transition-opacity duration-500 -z-10 ${isHovered ? 'opacity-100' : 'opacity-0'}`} />
     </motion.div>
   );
 }

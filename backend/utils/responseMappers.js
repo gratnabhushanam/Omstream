@@ -33,6 +33,14 @@ const mapStory = (story) => {
   const plain = withMongoStyleId(story);
   if (!plain) return plain;
 
+  if (plain.chapters && Array.isArray(plain.chapters)) {
+    const currentId = String(plain._id || plain.id);
+    plain.chapters = plain.chapters.filter(ch => {
+      if (!ch.folderId) return true;
+      return String(ch.folderId) === currentId;
+    });
+  }
+
   return {
     ...plain,
     description: plain.description || plain.summary || '',

@@ -76,13 +76,7 @@ export default function DailySloka() {
             {tLabel('gitaQuote')}
           </p>
           <div className="mt-6 flex items-center justify-center gap-3 flex-wrap">
-            <button
-              onClick={openPreviousDay}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-white/15 bg-white/5 hover:bg-white/10 text-[10px] font-black uppercase tracking-widest transition-all"
-            >
-              <ChevronLeft className="w-4 h-4" /> {tLabel('previousDay')}
-            </button>
-            <span className="px-4 py-2 rounded-xl border border-devotion-gold/30 bg-devotion-gold/10 text-devotion-gold text-[10px] font-black uppercase tracking-widest">
+            <span className="px-5 py-2 rounded-xl border border-devotion-gold/30 bg-devotion-gold/10 text-devotion-gold text-xs font-black uppercase tracking-widest shadow-[0_0_15px_rgba(255,215,0,0.2)]">
               {selectedDateKey}
             </span>
             <button
@@ -91,34 +85,6 @@ export default function DailySloka() {
             >
               <Settings className="w-4 h-4" /> {tLabel('apiConfig')}
             </button>
-          </div>
-          
-          {/* Collapsible Calendar */}
-          <div className="mt-4 flex items-center justify-center gap-3 flex-wrap">
-            <button
-              onClick={() => setShowCalendar(!showCalendar)}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-devotion-gold/25 bg-white/5 hover:bg-white/10 text-gray-200 text-[10px] font-black uppercase tracking-widest transition-all hover:border-devotion-gold/50"
-            >
-              <CalendarDays className="w-4 h-4 text-devotion-gold" />
-              <span>{showCalendar ? tLabel('hide') : tLabel('choose')} {tLabel('selectDate')}</span>
-            </button>
-            {showCalendar && (
-              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-devotion-gold/30 bg-devotion-darkBlue/60 backdrop-blur-md">
-                <span className="text-[10px] font-black uppercase tracking-widest text-gray-400 mr-2">{tLabel('selectDate')}:</span>
-                <input
-                  type="date"
-                  value={selectedDateKey}
-                  min={MIN_DAILY_DATE_KEY}
-                  max={getTodayDateKey()}
-                  onChange={handleDateSelection}
-                  className="bg-transparent text-white text-xs font-bold outline-none px-2 py-1 rounded border border-devotion-gold/40 hover:border-devotion-gold/70 focus:border-devotion-gold transition-all"
-                  aria-label="Choose daily sloka date"
-                  style={{
-                    colorScheme: 'dark'
-                  }}
-                />
-              </div>
-            )}
           </div>
         </div>
 
@@ -278,26 +244,7 @@ export default function DailySloka() {
               </div>
             )}
 
-            {history.length > 1 && (
-              <div className="mt-12 pt-8 border-t border-white/10">
-                <p className="text-[10px] font-black uppercase tracking-[0.25em] text-devotion-gold mb-4">{tLabel('previous')}</p>
-                <div className="grid md:grid-cols-2 gap-4">
-                  {history.slice(1, 7).map((item) => (
-                    <div 
-                      key={`${item.dailyKey}-${item.id}`} 
-                      className="rounded-2xl border border-white/10 bg-white/5 p-4 cursor-pointer hover:bg-white/10 hover:border-devotion-gold/30 transition-all"
-                      onClick={() => handleDateSelection({ target: { value: item.dailyKey } })}
-                    >
-                      <p className="text-[10px] uppercase tracking-[0.2em] text-devotion-gold mb-2 flex items-center gap-2">
-                        <CalendarDays className="w-3 h-3" /> {item.dailyKey}
-                      </p>
-                      <p className="text-sm text-white line-clamp-2 italic mb-2">{item.sanskrit}</p>
-                      <p className="text-xs text-gray-300 line-clamp-2">{item.englishMeaning}</p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
+
 
             {savedVerses.length > 0 && (
               <div className="mt-12 pt-8 border-t border-white/10">

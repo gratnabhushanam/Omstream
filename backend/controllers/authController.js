@@ -120,6 +120,9 @@ exports.verifyRegistrationOtp = async (req, res) => {
     const user = await createPersistentUser({ name: pending.name, email: pending.email, password: pending.password, phone: pending.phoneNumber });
     pendingRegistrations.delete(safeEmail);
 
+    const { checkAndRegisterDevice } = require('../middleware/authMiddleware');
+    await checkAndRegisterDevice(user, req.headers);
+
     res.status(201).json({ ...sanitizeUserForResponse(user), token: generateToken(user.id) });
   } catch (error) { res.status(500).json({ message: error.message }); }
 };
@@ -128,7 +131,12 @@ exports.loginUser = async (req, res) => {
   try {
     const { email, password } = req.body;
     console.log(`[AUTH] Login attempt for: ${email}`);
-    const user = await findPersistentUserByEmail(normalizeEmail(email));
+    let user;
+    if (email && email.includes('@')) {
+      user = await findPersistentUserByEmail(normalizeEmail(email));
+    } else if (email) {
+      user = await User.findOne({ phone: email.trim() });
+    }
     
     if (!user) {
       console.warn(`[AUTH] User not found: ${email}`);
@@ -139,6 +147,14 @@ exports.loginUser = async (req, res) => {
         if (ADMIN_EMAIL && normalizeEmail(user.email) === normalizeEmail(ADMIN_EMAIL)) {
           user.role = 'admin';
         }
+
+        // Check device limit
+        const { checkAndRegisterDevice } = require('../middleware/authMiddleware');
+        const allowed = await checkAndRegisterDevice(user, req.headers);
+        if (!allowed) {
+          return res.status(403).json({ message: "Maximum device limit reached. This account can be used on up to 3 devices only." });
+        }
+
         user.lastActive = new Date();
         user.streak = (user.streak || 0) + 1;
         await user.save();
@@ -176,8 +192,44 @@ exports.updateUserProfile = async (req, res) => {
 
 exports.getStats = async (req, res) => {
   try {
+    const totalUsers = await User.countDocuments({});
+    const activeTrials = await User.countDocuments({ subscriptionStatus: 'Trial Active' });
+    const expiredTrials = await User.countDocuments({ subscriptionStatus: 'Trial Expired' });
+    const activeSubscribers = await User.countDocuments({ subscriptionStatus: 'Subscription Active' });
+
+    const users = await User.find({}, 'devices profiles');
+    let totalDevices = 0;
+    let totalProfiles = 0;
+    let deviceCounts = { 0: 0, 1: 0, 2: 0, 3: 0 };
+    let profileCounts = { 0: 0, 1: 0, 2: 0, 3: 0 };
+    
+    for (const u of users) {
+      const dc = u.devices ? u.devices.length : 0;
+      const pc = u.profiles ? u.profiles.length : 0;
+      totalDevices += dc;
+      totalProfiles += pc;
+      
+      const dcBounded = dc > 3 ? 3 : dc;
+      const pcBounded = pc > 3 ? 3 : pc;
+      deviceCounts[dcBounded] = (deviceCounts[dcBounded] || 0) + 1;
+      profileCounts[pcBounded] = (profileCounts[pcBounded] || 0) + 1;
+    }
+
     res.json({
-      totalUsers: await User.countDocuments({}),
+      totalUsers,
+      activeTrials,
+      expiredTrials,
+      activeSubscribers,
+      deviceUsageStats: {
+        totalDevices,
+        avgDevices: totalUsers ? (totalDevices / totalUsers).toFixed(1) : 0,
+        breakdown: deviceCounts
+      },
+      memberProfileStats: {
+        totalProfiles,
+        avgProfiles: totalUsers ? (totalProfiles / totalUsers).toFixed(1) : 0,
+        breakdown: profileCounts
+      },
       totalMovies: await Movie.countDocuments({}),
       totalStories: await Story.countDocuments({}),
       totalVideos: await Video.countDocuments({}),
@@ -298,3 +350,70 @@ exports.getAllUsers = async (req, res) => res.json(await User.find({}, { passwor
 exports.deleteUserByAdmin = async (req, res) => { await User.findByIdAndDelete(req.params.id); res.json({ message: 'Deleted' }); };
 exports.getCommunityProfiles = async (req, res) => res.json(await User.find({ role: 'user' }, 'name bio profilePicture streak benefits settings'));
 exports.getUserByIdForAuth = async (id) => User.findById(String(id));
+
+exports.getUserDevices = async (req, res) => {
+  try {
+    const user = await findPersistentUserById(req.user.id);
+    if (!user) return res.status(404).json({ message: 'User not found' });
+    res.json(user.devices || []);
+  } catch (error) { res.status(500).json({ message: error.message }); }
+};
+
+exports.removeUserDevice = async (req, res) => {
+  try {
+    const user = await findPersistentUserById(req.user.id);
+    if (!user) return res.status(404).json({ message: 'User not found' });
+    user.devices = (user.devices || []).filter(d => d.deviceId !== req.params.deviceId);
+    user.markModified('devices');
+    await user.save();
+    res.json({ message: 'Device removed successfully', devices: user.devices });
+  } catch (error) { res.status(500).json({ message: error.message }); }
+};
+
+exports.getUserProfiles = async (req, res) => {
+  try {
+    const user = await findPersistentUserById(req.user.id);
+    if (!user) return res.status(404).json({ message: 'User not found' });
+    res.json(user.profiles || []);
+  } catch (error) { res.status(500).json({ message: error.message }); }
+};
+
+exports.createUserProfile = async (req, res) => {
+  try {
+    const user = await findPersistentUserById(req.user.id);
+    if (!user) return res.status(404).json({ message: 'User not found' });
+    
+    if ((user.profiles || []).length >= 3) {
+      return res.status(400).json({ message: "Maximum member limit reached." });
+    }
+
+    const { name, avatar } = req.body;
+    if (!name) return res.status(400).json({ message: 'Profile name is required' });
+
+    user.profiles.push({ name, avatar: avatar || null });
+    user.markModified('profiles');
+    await user.save();
+    res.status(201).json(user.profiles);
+  } catch (error) { res.status(500).json({ message: error.message }); }
+};
+
+exports.removeUserProfile = async (req, res) => {
+  try {
+    const user = await findPersistentUserById(req.user.id);
+    if (!user) return res.status(404).json({ message: 'User not found' });
+    user.profiles = (user.profiles || []).filter(p => String(p._id) !== req.params.profileId);
+    user.markModified('profiles');
+    await user.save();
+    res.json({ message: 'Profile removed successfully', profiles: user.profiles });
+  } catch (error) { res.status(500).json({ message: error.message }); }
+};
+
+exports.activateSubscription = async (req, res) => {
+  try {
+    const user = await findPersistentUserById(req.user.id);
+    if (!user) return res.status(404).json({ message: 'User not found' });
+    user.subscriptionStatus = 'Subscription Active';
+    await user.save();
+    res.json({ message: 'Subscription activated successfully', subscriptionStatus: user.subscriptionStatus });
+  } catch (error) { res.status(500).json({ message: error.message }); }
+};

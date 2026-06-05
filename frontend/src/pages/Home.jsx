@@ -154,9 +154,9 @@ export default function Home() {
               {tLabel('startLearning')}
               <ArrowRight className="w-5 h-5 tv:w-7 tv:h-7 group-hover:translate-x-1 transition-transform" />
             </Link>
-            <Link to="/reels" className="group tv-focusable bg-devotion-darkBlue/40 backdrop-blur-2xl border border-devotion-gold/40 text-white hover:bg-devotion-darkBlue/70 hover:border-devotion-gold px-8 sm:px-10 tv:px-16 py-4 sm:py-5 tv:py-7 rounded-2xl font-black text-lg tv:text-2xl transition-all duration-500 flex items-center justify-center gap-3 hover:-translate-y-1.5 active:scale-95 shadow-2xl">
+            <Link to="/movies" className="group tv-focusable bg-devotion-darkBlue/40 backdrop-blur-2xl border border-devotion-gold/40 text-white hover:bg-devotion-darkBlue/70 hover:border-devotion-gold px-8 sm:px-10 tv:px-16 py-4 sm:py-5 tv:py-7 rounded-2xl font-black text-lg tv:text-2xl transition-all duration-500 flex items-center justify-center gap-3 hover:-translate-y-1.5 active:scale-95 shadow-2xl">
               <Play className="w-5 h-5 tv:w-7 tv:h-7 text-devotion-gold group-hover:scale-125 transition-transform" fill="currentColor" />
-              {tLabel('gitaReels')}
+              Divine Cinema
             </Link>
           </div>
         </div>

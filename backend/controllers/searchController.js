@@ -28,12 +28,13 @@ exports.searchAll = async (req, res) => {
     const normalizedQuery = String(q || '').trim();
     const langCode = String(lang).substring(0, 2).toLowerCase();
 
+    // Empty query — return a small set of trending/featured content
     if (!normalizedQuery) {
       const [slokas, stories, videos, movies] = await Promise.all([
-        Sloka.find({}),
-        Story.find({}),
-        Video.find({ isUserReel: { $ne: true } }),
-        Movie.find({}),
+        Sloka.find({}).limit(10).lean(),
+        Story.find({ isFolder: true }).limit(10).lean(),
+        Video.find({ isUserReel: { $ne: true } }).limit(10).lean(),
+        Movie.find({}).limit(10).lean(),
       ]);
 
       const separated = separateVideos(videos);
@@ -49,30 +50,44 @@ exports.searchAll = async (req, res) => {
 
     const qRegex = mongoRegex(normalizedQuery);
     
-    // Optimized Multilingual Search using Text Indexes & Indexed Lookups
+    // Use regex-based search across all relevant fields
+    // ($text + $or causes issues in MongoDB — pure regex is more reliable)
     const [slokas, stories, videos, movies] = await Promise.all([
       Sloka.find({
         $or: [
-          { $text: { $search: normalizedQuery } },
-          { sanskrit: qRegex }, // Sanskrit still needs regex if not in text index
-          { [`translations.${langCode}.meaning`]: qRegex }
-        ],
-      }).limit(20).lean(),
-      Story.find({
-        $or: [
-          { $text: { $search: normalizedQuery } },
+          { sanskrit: qRegex },
+          { englishMeaning: qRegex },
+          { teluguMeaning: qRegex },
+          { hindiMeaning: qRegex },
+          { [`translations.${langCode}.meaning`]: qRegex },
           { tags: qRegex }
         ],
       }).limit(20).lean(),
+      Story.find({
+        $and: [
+          { isFolder: true },
+          {
+            $or: [
+              { title: qRegex },
+              { description: qRegex },
+              { seriesTitle: qRegex },
+              { tags: qRegex }
+            ]
+          }
+        ]
+      }).limit(20).lean(),
       Video.find({
         $or: [
-          { $text: { $search: normalizedQuery } },
+          { title: qRegex },
+          { description: qRegex },
           { tags: qRegex }
         ],
       }).limit(30).lean(),
       Movie.find({
         $or: [
-          { $text: { $search: normalizedQuery } },
+          { title: qRegex },
+          { description: qRegex },
+          { genre: qRegex },
           { tags: qRegex }
         ],
       }).limit(20).lean(),
@@ -88,6 +103,7 @@ exports.searchAll = async (req, res) => {
       movies: movies.map(mapMovie),
     });
   } catch (error) {
+    console.error('Search error:', error.message);
     res.status(500).json({ message: error.message });
   }
 };

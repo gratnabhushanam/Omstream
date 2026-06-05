@@ -8,9 +8,39 @@ const { mapStory } = require('../utils/responseMappers');
  */
 exports.getStories = async (req, res) => {
   try {
+    if (req.query.parentFolderId) {
+      const stories = await Story.find({ parentFolderId: req.query.parentFolderId, status: 'published' }).sort({ createdAt: -1 });
+      return res.json(stories.map(mapStory));
+    }
+
     const filter = req.query.all === 'true' ? {} : { status: 'published' };
-    const stories = await Story.find(filter).sort({ createdAt: -1 });
-    return res.json(stories.map(mapStory));
+    filter.isFolder = true;
+    const folders = await Story.find(filter).sort({ createdAt: -1 });
+
+    const foldersWithChapters = await Promise.all(folders.map(async (story) => {
+      const subStories = await Story.find({ parentFolderId: story.title, status: 'published' }).sort({ sequence: 1, createdAt: 1 });
+      
+      const chaptersList = subStories.map(sub => ({
+        _id: sub._id,
+        id: sub._id,
+        title: sub.title,
+        content: sub.content || '',
+        description: sub.description || '',
+        summary: sub.description || '',
+        thumbnail: sub.thumbnail || '',
+        audioUrl: sub.audioUrl || '',
+        duration: sub.duration || 0,
+        sequence: sub.sequence || 1,
+        takeaways: sub.takeaways || [],
+        translations: sub.translations || {}
+      }));
+
+      const plain = story.toObject ? story.toObject() : story;
+      plain.chapters = chaptersList;
+      return mapStory(plain);
+    }));
+
+    return res.json(foldersWithChapters);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -22,15 +52,40 @@ exports.getStories = async (req, res) => {
  */
 exports.getKidsStories = async (req, res) => {
   try {
-    const stories = await Story.find({
+    const folders = await Story.find({
       status: 'published',
+      isFolder: true,
       $or: [
         { isKids: true },
         { tags: { $regex: 'kids', $options: 'i' } },
         { category: { $regex: 'kids', $options: 'i' } }
       ]
     }).sort({ viewCount: -1 });
-    res.json(stories.map(mapStory));
+
+    const foldersWithChapters = await Promise.all(folders.map(async (story) => {
+      const subStories = await Story.find({ parentFolderId: story.title, status: 'published' }).sort({ sequence: 1, createdAt: 1 });
+      
+      const chaptersList = subStories.map(sub => ({
+        _id: sub._id,
+        id: sub._id,
+        title: sub.title,
+        content: sub.content || '',
+        description: sub.description || '',
+        summary: sub.description || '',
+        thumbnail: sub.thumbnail || '',
+        audioUrl: sub.audioUrl || '',
+        duration: sub.duration || 0,
+        sequence: sub.sequence || 1,
+        takeaways: sub.takeaways || [],
+        translations: sub.translations || {}
+      }));
+
+      const plain = story.toObject ? story.toObject() : story;
+      plain.chapters = chaptersList;
+      return mapStory(plain);
+    }));
+
+    res.json(foldersWithChapters);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -48,6 +103,29 @@ exports.getStoryById = async (req, res) => {
       { new: true }
     );
     if (!story) return res.status(404).json({ message: 'Story not found' });
+
+    if (story.isFolder) {
+      const subStories = await Story.find({ parentFolderId: story.title, status: 'published' }).sort({ sequence: 1, createdAt: 1 });
+      const chaptersList = subStories.map(sub => ({
+        _id: sub._id,
+        id: sub._id,
+        title: sub.title,
+        content: sub.content || '',
+        description: sub.description || '',
+        summary: sub.description || '',
+        thumbnail: sub.thumbnail || '',
+        audioUrl: sub.audioUrl || '',
+        duration: sub.duration || 0,
+        sequence: sub.sequence || 1,
+        takeaways: sub.takeaways || [],
+        translations: sub.translations || {}
+      }));
+
+      const plain = story.toObject ? story.toObject() : story;
+      plain.chapters = chaptersList;
+      return res.json(mapStory(plain));
+    }
+
     return res.json(mapStory(story));
   } catch (error) {
     return res.status(500).json({ message: error.message });
@@ -60,14 +138,35 @@ exports.getStoryById = async (req, res) => {
  */
 exports.addStory = async (req, res) => {
   try {
+    const storyId = new mongoose.Types.ObjectId();
     const payload = {
+      _id: storyId,
       ...req.body,
       title: req.body.title || 'Untitled Story',
       seriesTitle: req.body.seriesTitle || req.body.category || 'General',
       status: req.body.status || 'draft',
+      isFolder: true,
     };
 
+    if (payload.chapters && Array.isArray(payload.chapters)) {
+      console.log(`[UPLOAD] Adding new story folder "${payload.title}" (${storyId}) with ${payload.chapters.length} chapters.`);
+      payload.chapters = payload.chapters.map((ch, idx) => {
+        const folderId = storyId;
+        const parentFolder = payload.title;
+        console.log(`[UPLOAD] Assigning chapter ${idx + 1} "${ch.title}" -> folderId: ${folderId}, parentFolder: "${parentFolder}"`);
+        return {
+          ...ch,
+          folderId,
+          parentFolder
+        };
+      });
+    }
+
     const newStory = await Story.create(payload);
+
+    if (newStory.chapters && newStory.chapters.length > 0) {
+      await syncChapters(newStory._id, newStory.chapters, newStory.title);
+    }
 
     // Kick off background AI processing via Job Queue
     if (req.body.autoProcess !== false && (newStory.content || newStory.chapters?.length)) {
@@ -91,8 +190,32 @@ exports.addStory = async (req, res) => {
  */
 exports.updateStory = async (req, res) => {
   try {
-    const story = await Story.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    const story = await Story.findById(req.params.id);
     if (!story) return res.status(404).json({ message: 'Story not found' });
+
+    const originalTitle = story.title;
+    
+    // Apply updates from request body to the document
+    Object.assign(story, req.body);
+
+    if (story.chapters && Array.isArray(story.chapters)) {
+      console.log(`[UPLOAD/UPDATE] Updating story folder "${story.title}" (${story._id}). Total chapters: ${story.chapters.length}`);
+      story.chapters = story.chapters.map((ch, idx) => {
+        const folderId = story._id;
+        const parentFolder = story.title;
+        console.log(`[UPLOAD/UPDATE] Chapter ${idx + 1} "${ch.title}" -> folderId: ${folderId}, parentFolder: "${parentFolder}"`);
+        ch.folderId = folderId;
+        ch.parentFolder = parentFolder;
+        return ch;
+      });
+      story.markModified('chapters');
+    }
+
+    await story.save();
+
+    if (story.chapters && Array.isArray(story.chapters)) {
+      await syncChapters(story._id, story.chapters, story.title);
+    }
 
     // Trigger AI re-processing if content changed
     if ((req.body.content || req.body.title) && story.status !== 'processing') {
@@ -103,7 +226,25 @@ exports.updateStory = async (req, res) => {
        );
     }
 
-    return res.json(mapStory(story));
+    // Re-fetch the synced sub-chapters so the response matches what getStories returns
+    const subStories = await Story.find({ parentFolderId: story.title }).sort({ sequence: 1, createdAt: 1 });
+    const chaptersList = subStories.map(sub => ({
+      _id: sub._id,
+      id: sub._id,
+      title: sub.title,
+      content: sub.content || '',
+      description: sub.description || '',
+      summary: sub.description || '',
+      thumbnail: sub.thumbnail || '',
+      audioUrl: sub.audioUrl || '',
+      duration: sub.duration || 0,
+      sequence: sub.sequence || 1,
+      takeaways: sub.takeaways || [],
+      translations: sub.translations || {}
+    }));
+    const plain = story.toObject ? story.toObject() : story;
+    plain.chapters = chaptersList;
+    return res.json(mapStory(plain));
   } catch (error) {
     return res.status(400).json({ message: error.message });
   }
@@ -274,3 +415,53 @@ exports.translateStory = async (req, res) => {
     }
   }
 };
+
+/**
+ * Helper to synchronize chapters stored as nested subdocuments in a Story folder
+ * with separate chapter documents in the Story collection.
+ */
+async function syncChapters(folderId, chapters, folderTitle) {
+  if (!chapters || !Array.isArray(chapters)) return;
+
+  const Story = mongoose.model('Story');
+  // Find existing sub-chapters by folderId (ObjectId) or parentFolderId (title) for backward compat
+  const existingChapters = await Story.find({
+    $or: [
+      { folderId: folderId },
+      ...(folderTitle ? [{ parentFolderId: folderTitle }] : [])
+    ]
+  });
+  const existingIds = existingChapters.map(ch => String(ch._id));
+
+  const incomingIds = chapters.map(ch => ch._id || ch.id).filter(Boolean).map(String);
+
+  const toDelete = existingIds.filter(id => !incomingIds.includes(id));
+  if (toDelete.length > 0) {
+    await Story.deleteMany({ _id: { $in: toDelete } });
+  }
+
+  for (const ch of chapters) {
+    const chId = ch._id || ch.id;
+    const chPayload = {
+      title: ch.title,
+      description: ch.summary || ch.description || '',
+      content: ch.content || '',
+      thumbnail: ch.image || ch.thumbnail || '',
+      folderId: folderId,
+      parentFolderId: folderTitle || ch.parentFolder || '',
+      parentFolder: folderTitle || ch.parentFolder || '',
+      sequence: ch.sequence,
+      audioUrl: ch.audioUrl || '',
+      takeaways: ch.takeaways || [],
+      duration: ch.duration || 0,
+      status: 'published',
+      isFolder: false,
+    };
+
+    if (chId && existingIds.includes(String(chId))) {
+      await Story.findByIdAndUpdate(chId, chPayload);
+    } else {
+      await Story.create(chPayload);
+    }
+  }
+}

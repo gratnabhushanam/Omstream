@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ErrorBoundary } from '../components/ErrorBoundary';
 import axios from 'axios';
-import { Database, Upload, Users, BookOpen, Video, LogOut, Settings, Film, Plus, X, Check, AlertCircle, Image as ImageIcon, Link as LinkIcon, FileText, Flame, Trash2, Pencil, Menu, Eye, Sparkles, RefreshCw, Cpu, Bell, BarChart3, Layers, Zap } from 'lucide-react';
+import { Database, Upload, Users, BookOpen, Video, LogOut, Settings, Film, Plus, X, Check, AlertCircle, Image as ImageIcon, Link as LinkIcon, FileText, Flame, Trash2, Pencil, Menu, Eye, Sparkles, RefreshCw, Cpu, Bell, BarChart3, Layers, Zap, Folder, FolderPlus, ArrowLeft, GripVertical } from 'lucide-react';
 import { resumableUpload } from '../utils/resumableUpload';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
@@ -21,6 +21,47 @@ const STORY_CATEGORIES = [
   'Yoga & Meditation Lessons', 'Ancient Science Stories', 'Ayurveda Knowledge', 
   'Historical Kingdom Stories', 'Indian Warrior Stories', 'Epic Battles & Legends'
 ];
+
+const SUPPORTED_LANGUAGES = [
+  { code: 'en', name: 'English' },
+  { code: 'hi', name: 'Hindi (हिन्दी)' },
+  { code: 'te', name: 'Telugu (తెలుగు)' },
+  { code: 'ta', name: 'Tamil (தமிழ்)' },
+  { code: 'kn', name: 'Kannada (ಕನ್ನಡ)' },
+  { code: 'ml', name: 'Malayalam (മലയാളം)' },
+  { code: 'bn', name: 'Bengali (বাংলা)' },
+  { code: 'mr', name: 'Marathi (मराठी)' },
+  { code: 'gu', name: 'Gujarati (ગુજરાતી)' },
+  { code: 'pa', name: 'Punjabi (ਪੰਜਾਬੀ)' },
+  { code: 'sa', name: 'Sanskrit (संस्कृतम्)' },
+  { code: 'ur', name: 'Urdu (اردو)' },
+  { code: 'es', name: 'Spanish (Español)' },
+  { code: 'fr', name: 'French (Français)' },
+  { code: 'de', name: 'German (Deutsch)' },
+  { code: 'ja', name: 'Japanese (日本語)' },
+  { code: 'ko', name: 'Korean (한국어)' },
+  { code: 'ar', name: 'Arabic (العربية)' },
+  { code: 'zh', name: 'Chinese (中文)' },
+  { code: 'ru', name: 'Russian (Русский)' },
+  { code: 'pt', name: 'Portuguese (Português)' },
+];
+
+function LanguageSelector({ value, onChange }) {
+  return (
+    <div className="space-y-4">
+      <label className="text-[10px] font-black uppercase tracking-widest text-devotion-gold ml-2">Original Language</label>
+      <select 
+        className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-5 text-white focus:border-devotion-gold outline-none" 
+        value={value || 'en'} 
+        onChange={e => onChange(e.target.value)}
+      >
+        {SUPPORTED_LANGUAGES.map(lang => (
+          <option key={lang.code} value={lang.code} className="bg-[#0B1F3A]">{lang.name}</option>
+        ))}
+      </select>
+    </div>
+  );
+}
 
 function AdminDashboardContent() {
   const [, setShowAuthError] = useState(false);
@@ -55,11 +96,20 @@ function AdminDashboardContent() {
     chapters: [],
     translations: {},
     selectedLang: 'en',
+    parentFolderId: '',
     rootTitle: '',
     rootDescription: '',
     rootContent: '',
     rootChapters: []
   });
+  const [selectedStoryForChapters, setSelectedStoryForChapters] = useState(null);
+  const [chapterEditIndex, setChapterEditIndex] = useState(-1);
+  const [chapterEditForm, setChapterEditForm] = useState({ title: '', content: '', summary: '', takeaways: '', sequence: 1 });
+  const [newChapterForm, setNewChapterForm] = useState({ title: '', summary: '', takeaways: '', content: '' });
+  const [newChapterTargetFolderId, setNewChapterTargetFolderId] = useState('');
+  const [showMultiUpload, setShowMultiUpload] = useState(false);
+  const [multiChaptersText, setMultiChaptersText] = useState('');
+  const [selectedTargetStoryId, setSelectedTargetStoryId] = useState('');
   const [videoForm, setVideoForm] = useState({ title: '', description: '', videoUrl: '', trailerUrl: '', category: 'reels', collectionTitle: 'Bhagavad Gita', isKids: false, isComingSoon: false, tags: '', quizSetId: '', views: 0 });
   // Quiz builder state for video upload
   const [videoQuizList, setVideoQuizList] = useState([]);
@@ -90,6 +140,36 @@ function AdminDashboardContent() {
     title: '', description: '', category: 'General', difficulty: 'medium', timeLimit: 0, thumbnail: '', tags: '', isPublished: false, questions: []
   });
   const [broadcastForm, setBroadcastForm] = useState({ title: '', body: '', type: 'system' });
+  const [draggedChapterIndex, setDraggedChapterIndex] = useState(null);
+
+  const handleDragStart = (e, idx) => {
+    setDraggedChapterIndex(idx);
+    e.dataTransfer.effectAllowed = 'move';
+  };
+
+  const handleDragOver = (e, idx) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+  };
+
+  const handleDrop = (e, targetIdx) => {
+    e.preventDefault();
+    if (draggedChapterIndex === null || draggedChapterIndex === targetIdx) {
+      setDraggedChapterIndex(null);
+      return;
+    }
+    if (!selectedStoryForChapters) return;
+
+    const chapters = [...(selectedStoryForChapters.chapters || [])];
+    const [moved] = chapters.splice(draggedChapterIndex, 1);
+    chapters.splice(targetIdx, 0, moved);
+    // Re-assign sequence numbers
+    const resequenced = chapters.map((ch, i) => ({ ...ch, sequence: i + 1 }));
+
+    setDraggedChapterIndex(null);
+    handleSaveStoryChapters(selectedStoryForChapters._id || selectedStoryForChapters.id, resequenced);
+  };
+
 
   const handleBroadcast = async (e) => {
     e.preventDefault();
@@ -174,7 +254,7 @@ function AdminDashboardContent() {
 
   const contentLabels = {
     movies: 'Movie',
-    stories: 'Story',
+    stories: 'Folder / Story',
     videos: 'Video',
   };
 
@@ -207,8 +287,8 @@ function AdminDashboardContent() {
         const { data: movies } = await axios.get('/api/movies', { headers });
         setData(prev => ({ ...prev, movies }));
       } else if (activeTab === 'stories') {
-        const { data: stories } = await axios.get('/api/stories', { headers });
-        setData(prev => ({ ...prev, stories }));
+        const { data: stories } = await axios.get('/api/stories?all=true&_t=' + Date.now(), { headers });
+        setData(prev => ({ ...prev, stories: Array.isArray(stories) ? stories : [] }));
       } else if (activeTab === 'videos') {
         const [videosResponse, quizSetsRes] = await Promise.all([
           axios.get('/api/videos', { headers }),
@@ -243,7 +323,7 @@ function AdminDashboardContent() {
       }
       console.error('Error fetching admin data:', error);
     }
-  }, [activeTab, data.videos, navigate, pendingContentFilter]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [activeTab, navigate, pendingContentFilter]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (!authLoading && (!user || user.role !== 'admin')) {
@@ -278,7 +358,7 @@ function AdminDashboardContent() {
     e.preventDefault();
     
     if (activeTab === 'stories' && editingStoryId) {
-       if (!window.confirm("Are you sure you want to save changes to this chapter?")) return;
+       // no confirm needed, user already clicked Save
     }
 
     setLoading(true);
@@ -291,7 +371,7 @@ function AdminDashboardContent() {
       
       if (activeTab === 'movies') {
         endpoint = editingMovieId ? `/api/movies/${editingMovieId}` : '/api/movies';
-        payload = { ...movieForm, tags: movieForm.tags.split(',').map(tag => tag.trim()) };
+        payload = { ...movieForm, tags: (typeof movieForm.tags === 'string' ? movieForm.tags : '').split(',').map(tag => tag.trim()).filter(Boolean) };
       } else if (activeTab === 'stories') {
         endpoint = editingStoryId ? `/api/stories/${editingStoryId}` : '/api/stories';
         
@@ -366,7 +446,7 @@ function AdminDashboardContent() {
           payload = {
             ...videoForm,
             collectionTitle: String(videoForm.collectionTitle || '').trim() || 'Bhagavad Gita',
-            tags: videoForm.tags.split(',').map(tag => tag.trim()),
+            tags: (typeof videoForm.tags === 'string' ? videoForm.tags : '').split(',').map(tag => tag.trim()).filter(Boolean),
             videoQuizDraft: videoQuizDraft && videoQuizDraft.questionText ? videoQuizDraft : null,
           };
         }
@@ -453,7 +533,7 @@ function AdminDashboardContent() {
       resetForms();
       setVideoQuizList([]);
       
-      if (activeTab === 'videos' || activeTab === 'quiz' || activeTab === 'reels' || activeTab === 'users' || activeTab === 'dashboard') {
+      if (activeTab === 'videos' || activeTab === 'quiz' || activeTab === 'reels' || activeTab === 'users' || activeTab === 'dashboard' || activeTab === 'stories') {
          await fetchAdminData();
       }
     } catch (error) {
@@ -486,6 +566,146 @@ function AdminDashboardContent() {
       setLoading(false);
       setTimeout(() => setMessage({ type: '', text: '' }), 4000);
     }
+  };
+
+  const handleSaveStoryChapters = async (storyId, updatedChapters) => {
+    try {
+      const token = localStorage.getItem('token');
+      const headers = { Authorization: `Bearer ${token}` };
+      const response = await axios.patch(`/api/stories/${storyId}`, { chapters: updatedChapters }, { headers });
+      
+      setData(prev => ({
+        ...prev,
+        stories: prev.stories.map(st => (String(st._id || st.id) === String(storyId)) ? response.data : st)
+      }));
+      
+      if (selectedStoryForChapters && String(selectedStoryForChapters._id || selectedStoryForChapters.id) === String(storyId)) {
+        setSelectedStoryForChapters(response.data);
+      }
+      
+      setMessage({ type: 'success', text: 'Chapters saved successfully!' });
+    } catch (err) {
+      setMessage({ type: 'error', text: err.response?.data?.message || err.message });
+    } finally {
+      setTimeout(() => setMessage({ type: '', text: '' }), 4000);
+    }
+  };
+
+  const handleMoveChapter = async (fromStoryId, chapterIndex, toStoryId) => {
+    if (!toStoryId) return;
+    const fromStory = data.stories.find(s => String(s._id || s.id) === String(fromStoryId));
+    const toStory = data.stories.find(s => String(s._id || s.id) === String(toStoryId));
+    if (!fromStory || !toStory) return;
+
+    const chapterToMove = { 
+      ...fromStory.chapters[chapterIndex],
+      folderId: toStory._id || toStory.id,
+      parentFolder: toStory.title
+    };
+    
+    const hasDuplicate = toStory.chapters?.some(c => (c.title || '').toLowerCase() === (chapterToMove.title || '').toLowerCase());
+    if (hasDuplicate) {
+      alert(`A chapter with the title "${chapterToMove.title}" already exists in the folder "${toStory.title}".`);
+      return;
+    }
+
+    const updatedFromChapters = [...fromStory.chapters];
+    updatedFromChapters.splice(chapterIndex, 1);
+    
+    const updatedToChapters = [...(toStory.chapters || []), chapterToMove];
+
+    try {
+      const token = localStorage.getItem('token');
+      const headers = { Authorization: `Bearer ${token}` };
+
+      await axios.patch(`/api/stories/${fromStoryId}`, { chapters: updatedFromChapters }, { headers });
+      const resTo = await axios.patch(`/api/stories/${toStoryId}`, { chapters: updatedToChapters }, { headers });
+
+      setData(prev => ({
+        ...prev,
+        stories: prev.stories.map(st => {
+          if (String(st._id || st.id) === String(fromStoryId)) {
+            return { ...st, chapters: updatedFromChapters };
+          }
+          if (String(st._id || st.id) === String(toStoryId)) {
+            return resTo.data;
+          }
+          return st;
+        })
+      }));
+
+      if (selectedStoryForChapters) {
+        const updatedSelected = String(selectedStoryForChapters._id || selectedStoryForChapters.id) === String(fromStoryId)
+          ? { ...selectedStoryForChapters, chapters: updatedFromChapters }
+          : selectedStoryForChapters;
+        setSelectedStoryForChapters(updatedSelected);
+      }
+
+      setMessage({ type: 'success', text: `Successfully moved chapter to "${toStory.title}"!` });
+    } catch (err) {
+      setMessage({ type: 'error', text: err.response?.data?.message || err.message });
+    } finally {
+      setTimeout(() => setMessage({ type: '', text: '' }), 4000);
+    }
+  };
+
+  const handleImportMultipleChapters = (storyId, text) => {
+    let parsedChapters = [];
+    try {
+      const trimmedText = text.trim();
+      if (trimmedText.startsWith('[')) {
+        parsedChapters = JSON.parse(trimmedText);
+      } else {
+        const sections = trimmedText.split(/===|CHAPTER/i).filter(Boolean);
+        parsedChapters = sections.map((sec, idx) => {
+          const lines = sec.split('\n').filter(l => l.trim());
+          const title = lines[0] || `Chapter ${idx + 1}`;
+          const content = lines.slice(1).join('\n');
+          return { title: title.trim(), content: content.trim(), summary: '', takeaways: [], sequence: idx + 1 };
+        });
+      }
+    } catch (err) {
+      alert('Failed to parse chapters. Please ensure valid JSON format or split with ===.');
+      return;
+    }
+
+    if (parsedChapters.length === 0) return;
+
+    const story = data.stories.find(s => String(s._id || s.id) === String(storyId));
+    if (!story) return;
+
+    const existingChapters = story.chapters || [];
+    const newChapters = [];
+    const duplicates = [];
+
+    parsedChapters.forEach(ch => {
+      const title = ch.title || `Chapter ${existingChapters.length + newChapters.length + 1}`;
+      const hasDuplicate = existingChapters.some(c => c.title.toLowerCase() === title.toLowerCase()) || newChapters.some(c => c.title.toLowerCase() === title.toLowerCase());
+      if (hasDuplicate) {
+        duplicates.push(title);
+      } else {
+        newChapters.push({
+          title,
+          content: ch.content || '',
+          summary: ch.summary || '',
+          takeaways: Array.isArray(ch.takeaways) ? ch.takeaways : (ch.takeaways ? [ch.takeaways] : []),
+          sequence: ch.sequence || (existingChapters.length + newChapters.length + 1),
+          folderId: story._id || story.id,
+          parentFolder: story.title
+        });
+      }
+    });
+
+    if (duplicates.length > 0) {
+      alert(`The following duplicate chapters were skipped: ${duplicates.join(', ')}`);
+    }
+
+    if (newChapters.length === 0) return;
+
+    const updatedChapters = [...existingChapters, ...newChapters];
+    handleSaveStoryChapters(storyId, updatedChapters);
+    setMultiChaptersText('');
+    setShowMultiUpload(false);
   };
 
   const handlePublishStory = async (id) => {
@@ -586,6 +806,7 @@ function AdminDashboardContent() {
       translations: {},
       selectedLang: 'en',
       language: 'en',
+      parentFolderId: '',
       rootTitle: '',
       rootDescription: '',
       rootContent: '',
@@ -627,6 +848,7 @@ function AdminDashboardContent() {
       chapters: story.chapters || [],
       translations: story.translations || {},
       selectedLang: 'en',
+      parentFolderId: story.parentFolderId || '',
       rootTitle: story.title || '',
       rootDescription: story.description || story.summary || '',
       rootContent: story.content || '',
@@ -654,6 +876,7 @@ function AdminDashboardContent() {
       isKids: movie.isKids || false,
       genre: movie.genre || 'Divine',
       duration: movie.duration || 0,
+      originalLanguage: movie.originalLanguage || 'en',
     });
     setShowAddModal(true);
   };
@@ -675,6 +898,7 @@ function AdminDashboardContent() {
       trailerUrl: video.trailerUrl || '',
       tags: Array.isArray(video.tags) ? video.tags.join(', ') : (video.tags || ''),
       views: video.views || 0,
+      language: video.language || 'en',
     });
     setShowAddModal(true);
   };
@@ -965,6 +1189,92 @@ function AdminDashboardContent() {
                 )}
               </div>
 
+              {data.stats && (
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-10 mt-10 mb-10">
+                   {/* Subscription & Trial */}
+                   <div className="bg-white/5 border border-white/10 rounded-[3rem] p-12 backdrop-blur-3xl">
+                      <h3 className="text-xl font-serif font-black text-white mb-6 uppercase tracking-widest text-center">Subscription & Trial Mix</h3>
+                      <div className="h-[300px] w-full flex items-center justify-center">
+                         <ResponsiveContainer width="99%" height="100%">
+                           <PieChart>
+                             <Pie
+                               data={[
+                                 { name: 'Active Trials', value: data.stats.activeTrials || 0 },
+                                 { name: 'Expired Trials', value: data.stats.expiredTrials || 0 },
+                                 { name: 'Active Subscribers', value: data.stats.activeSubscribers || 0 },
+                                 { name: 'Free Users', value: Math.max(0, data.stats.totalUsers - (data.stats.activeTrials || 0) - (data.stats.expiredTrials || 0) - (data.stats.activeSubscribers || 0)) }
+                               ]}
+                               innerRadius={80}
+                               outerRadius={110}
+                               paddingAngle={8}
+                               dataKey="value"
+                             >
+                               <Cell fill="#fbbf24" />
+                               <Cell fill="#ef4444" />
+                               <Cell fill="#10b981" />
+                               <Cell fill="#6b7280" />
+                             </Pie>
+                             <RechartsTooltip contentStyle={{ backgroundColor: '#0f172a', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px' }} />
+                           </PieChart>
+                         </ResponsiveContainer>
+                      </div>
+                      <div className="flex flex-wrap justify-center gap-4 text-xs font-bold mt-4">
+                        <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-[#fbbf24]"></span> Trial: {data.stats.activeTrials || 0}</span>
+                        <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-[#ef4444]"></span> Expired: {data.stats.expiredTrials || 0}</span>
+                        <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-[#10b981]"></span> Active: {data.stats.activeSubscribers || 0}</span>
+                      </div>
+                   </div>
+
+                   {/* Device Saturation */}
+                   <div className="bg-white/5 border border-white/10 rounded-[3rem] p-12 backdrop-blur-3xl">
+                      <h3 className="text-xl font-serif font-black text-white mb-6 uppercase tracking-widest text-center">Device Distribution</h3>
+                      <div className="h-[300px] w-full flex items-center justify-center">
+                        <ResponsiveContainer width="99%" height="100%">
+                          <BarChart
+                            data={[
+                              { name: '0 Dev', count: data.stats.deviceUsageStats?.breakdown?.['0'] || 0 },
+                              { name: '1 Dev', count: data.stats.deviceUsageStats?.breakdown?.['1'] || 0 },
+                              { name: '2 Dev', count: data.stats.deviceUsageStats?.breakdown?.['2'] || 0 },
+                              { name: '3 Dev', count: data.stats.deviceUsageStats?.breakdown?.['3'] || 0 },
+                            ]}
+                          >
+                            <XAxis dataKey="name" stroke="#64748b" />
+                            <RechartsTooltip contentStyle={{ backgroundColor: '#0f172a', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px' }} cursor={{ fill: 'rgba(255,255,255,0.05)' }} />
+                            <Bar dataKey="count" fill="#38bdf8" radius={[8, 8, 0, 0]} />
+                          </BarChart>
+                        </ResponsiveContainer>
+                      </div>
+                      <div className="text-center text-xs font-bold text-gray-400 mt-4">
+                        Total Devices: {data.stats.deviceUsageStats?.totalDevices || 0} (Avg: {data.stats.deviceUsageStats?.avgDevices || 0}/user)
+                      </div>
+                   </div>
+
+                   {/* Seeker Profiles */}
+                   <div className="bg-white/5 border border-white/10 rounded-[3rem] p-12 backdrop-blur-3xl">
+                      <h3 className="text-xl font-serif font-black text-white mb-6 uppercase tracking-widest text-center">Seeker Profiles</h3>
+                      <div className="h-[300px] w-full flex items-center justify-center">
+                        <ResponsiveContainer width="99%" height="100%">
+                          <BarChart
+                            data={[
+                              { name: '0 Prof', count: data.stats.memberProfileStats?.breakdown?.['0'] || 0 },
+                              { name: '1 Prof', count: data.stats.memberProfileStats?.breakdown?.['1'] || 0 },
+                              { name: '2 Prof', count: data.stats.memberProfileStats?.breakdown?.['2'] || 0 },
+                              { name: '3 Prof', count: data.stats.memberProfileStats?.breakdown?.['3'] || 0 },
+                            ]}
+                          >
+                            <XAxis dataKey="name" stroke="#64748b" />
+                            <RechartsTooltip contentStyle={{ backgroundColor: '#0f172a', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px' }} cursor={{ fill: 'rgba(255,255,255,0.05)' }} />
+                            <Bar dataKey="count" fill="#a78bfa" radius={[8, 8, 0, 0]} />
+                          </BarChart>
+                        </ResponsiveContainer>
+                      </div>
+                      <div className="text-center text-xs font-bold text-gray-400 mt-4">
+                        Total Profiles: {data.stats.memberProfileStats?.totalProfiles || 0} (Avg: {data.stats.memberProfileStats?.avgProfiles || 0}/user)
+                      </div>
+                   </div>
+                </div>
+              )}
+
               {data.stats && data.stats.recentUsers && (
                 <div className="bg-white/5 border border-white/10 rounded-[3rem] p-12 backdrop-blur-3xl">
                   <h3 className="text-2xl font-serif font-black text-white mb-10 uppercase tracking-widest flex items-center gap-4">
@@ -1158,96 +1468,465 @@ function AdminDashboardContent() {
             )}
 
             {activeTab === 'stories' && (
-               <div className="bg-white/5 border border-white/10 rounded-[3rem] p-12 backdrop-blur-3xl">
-                   <div className="flex justify-between items-center mb-10">
-                      <div className="flex flex-col">
-                         <h3 className="text-3xl font-serif font-black text-white uppercase tracking-tighter">Indian Story <span className="text-devotion-gold">Vault</span></h3>
-                         <span className="text-[10px] font-black uppercase tracking-[0.4em] text-white/30">Spiritual Wisdom Archive</span>
-                      </div>
-                      <div className="flex items-center gap-4">
-                         <button 
-                           onClick={() => {
-                             if (window.confirm(`Globalize ${data.stories.length} stories? This will queue AI translation and chaptering jobs.`)) {
-                               data.stories.forEach(s => handleAIProcess(s._id || s.id, 'Story', 'all'));
-                               setMessage({ type: 'success', text: `Queued ${data.stories.length} stories for globalization.` });
-                             }
-                           }}
-                           className="hidden md:flex items-center gap-2 px-6 py-2 rounded-xl bg-[#00A8FF]/10 border border-[#00A8FF]/30 text-[#00A8FF] font-black text-[10px] uppercase tracking-widest hover:bg-[#00A8FF]/20 transition-all"
-                         >
-                            <Sparkles className="w-4 h-4" /> Globalize All Stories
-                         </button>
-                         <span className="bg-devotion-gold/10 text-devotion-gold px-6 py-2 rounded-full font-black text-[10px] uppercase tracking-widest border border-devotion-gold/30">Total: {data.stories.length}</span>
-                      </div>
-                   </div>
+               <div className="bg-white/5 border border-white/10 rounded-[3rem] p-12 backdrop-blur-3xl space-y-8">
+                  {/* FOLDER CHAPTER EDITOR SWITCH/VIEW */}
+                  {!selectedStoryForChapters ? (
+                    <>
+                       <div className="flex justify-between items-center mb-10">
+                          <div className="flex flex-col">
+                             <h3 className="text-3xl font-serif font-black text-white uppercase tracking-tighter">Divine Folder <span className="text-devotion-gold">Library</span></h3>
+                             <span className="text-[10px] font-black uppercase tracking-[0.4em] text-white/30">Hierarchical Stories & Chapters</span>
+                          </div>
+                          <div className="flex items-center gap-4">
+                             <button 
+                               onClick={() => {
+                                 if (window.confirm(`Globalize all ${data.stories.length} story folders? This will queue AI translation and chaptering jobs.`)) {
+                                   data.stories.forEach(s => handleAIProcess(s._id || s.id, 'Story', 'all'));
+                                   setMessage({ type: 'success', text: `Queued ${data.stories.length} folders for globalization.` });
+                                 }
+                               }}
+                               className="hidden md:flex items-center gap-2 px-6 py-2 rounded-xl bg-[#00A8FF]/10 border border-[#00A8FF]/30 text-[#00A8FF] font-black text-[10px] uppercase tracking-widest hover:bg-[#00A8FF]/20 transition-all"
+                             >
+                                <Sparkles className="w-4 h-4" /> Globalize All Folders
+                             </button>
+                             <span className="bg-devotion-gold/10 text-devotion-gold px-6 py-2 rounded-full font-black text-[10px] uppercase tracking-widest border border-devotion-gold/30">Total: {data.stories.length} Folders</span>
+                          </div>
+                       </div>
 
-                  {data.stories.length === 0 ? (
-                    <p className="text-gray-500 text-center py-12">No stories uploaded yet.</p>
-                  ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-                      {data.stories.map((story) => (
-                        <div key={story._id || story.id} className="p-6 rounded-2xl border border-white/10 bg-white/5 group relative overflow-hidden">
-                          {story.thumbnail && (
-                            <div className="mb-4 aspect-video rounded-xl overflow-hidden border border-white/10">
-                              <img src={story.thumbnail} alt="" loading="lazy" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
+                      {data.stories.length === 0 ? (
+                        <p className="text-gray-500 text-center py-12">No folders uploaded yet.</p>
+                      ) : (
+                        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                          {data.stories.map((story) => (
+                            <div key={story._id || story.id} className="p-6 rounded-3xl border border-white/10 bg-white/5 group relative overflow-hidden flex flex-col justify-between pt-10">
+                              {/* Stylized Folder Badge */}
+                              <div className="absolute top-0 left-0 w-28 h-6 bg-devotion-gold/20 rounded-tr-lg border-r border-t border-white/10 flex items-center px-3">
+                                <Folder className="w-3 h-3 text-devotion-gold mr-1" />
+                                <span className="text-[8px] font-black uppercase tracking-wider text-devotion-gold">Folder</span>
+                              </div>
+
+                              <div>
+                                {story.thumbnail && (
+                                  <div className="mb-4 aspect-video rounded-xl overflow-hidden border border-white/10">
+                                    <img src={story.thumbnail} alt="" loading="lazy" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
+                                  </div>
+                                )}
+                                <div className="flex justify-between items-start mb-2">
+                                   <h4 className="text-white font-bold text-lg">{story.title}</h4>
+                                   <span className={`px-2 py-1 rounded-md text-[8px] font-black uppercase tracking-widest ${story.status === 'published' ? 'bg-green-500/20 text-green-400 border border-green-500/30' : 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30'}`}>
+                                      {story.status || 'Draft'}
+                                   </span>
+                                </div>
+                                <p className="text-xs text-devotion-gold mb-3 font-black uppercase tracking-widest">
+                                  {story.category || 'General'} • {story.chapters?.length || 0} Chapters
+                                </p>
+                                <p className="text-sm text-gray-300 line-clamp-2 mb-6">{story.description || 'No description provided.'}</p>
+                              </div>
+                              
+                              <div className="space-y-4 mt-auto">
+                                <button
+                                  onClick={() => setSelectedStoryForChapters(story)}
+                                  className="w-full inline-flex items-center justify-center gap-2 px-4 py-3 rounded-2xl bg-devotion-gold text-devotion-darkBlue font-black text-xs uppercase tracking-widest hover:bg-yellow-400 transition-all shadow-[0_0_15px_rgba(255,215,0,0.2)]"
+                                >
+                                  <BookOpen className="w-4 h-4" /> Manage Chapters
+                                </button>
+
+                                <div className="space-y-2">
+                                  <div className="flex flex-wrap gap-2">
+                                     <button
+                                       onClick={() => handleAIProcess(story._id || story.id, 'Story', 'chaptering')}
+                                       className="flex-1 inline-flex items-center justify-center gap-1.5 px-2 py-2 rounded-xl border border-orange-500/30 text-orange-400 hover:bg-orange-500/10 transition-all text-[8px] font-black uppercase tracking-widest"
+                                     >
+                                        <BookOpen className="w-2.5 h-2.5" /> Gen Chapters
+                                     </button>
+                                     <button
+                                       onClick={() => handleAIProcess(story._id || story.id, 'Story', 'translation')}
+                                       className="flex-1 inline-flex items-center justify-center gap-1.5 px-2 py-2 rounded-xl border border-[#00A8FF]/30 text-[#00A8FF] hover:bg-[#00A8FF]/10 transition-all text-[8px] font-black uppercase tracking-widest"
+                                     >
+                                        <Sparkles className="w-2.5 h-2.5" /> Globalize
+                                     </button>
+                                     <button
+                                       onClick={() => handleAIProcess(story._id || story.id, 'Story', 'quiz')}
+                                       className="flex-1 inline-flex items-center justify-center gap-1.5 px-2 py-2 rounded-xl border border-green-500/30 text-green-400 hover:bg-green-500/10 transition-all text-[8px] font-black uppercase tracking-widest"
+                                     >
+                                        <Check className="w-2.5 h-2.5" /> Gen Quiz
+                                     </button>
+                                  </div>
+                                  <div className="flex flex-wrap gap-2">
+                                    <button
+                                      onClick={() => handleEditStory(story)}
+                                      className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl border border-devotion-gold/30 text-devotion-gold hover:text-white hover:bg-devotion-gold/10 transition-all text-[10px] font-black uppercase tracking-widest"
+                                    >
+                                      <Pencil className="w-3.5 h-3.5" /> Edit Folder
+                                    </button>
+                                    <button
+                                      onClick={() => handleDeleteContent('stories', story._id || story.id, story.title || 'Untitled')}
+                                      className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl border border-red-500/30 text-red-300 hover:text-red-200 hover:bg-red-500/10 transition-all text-[10px] font-black uppercase tracking-widest"
+                                    >
+                                      <Trash2 className="w-3.5 h-3.5" /> Delete Folder
+                                    </button>
+                                  </div>
+                                </div>
+                              </div>
                             </div>
-                          )}
-                          <div className="flex justify-between items-start mb-2">
-                             <h4 className="text-white font-bold text-lg">{story.title}</h4>
-                             <span className={`px-2 py-1 rounded-md text-[8px] font-black uppercase tracking-widest ${story.status === 'published' ? 'bg-green-500/20 text-green-400 border border-green-500/30' : 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30'}`}>
-                                {story.status || 'Draft'}
-                             </span>
-                          </div>
-                          <p className="text-xs text-devotion-gold mb-3 font-black uppercase tracking-widest">
-                            {story.category || 'General'} • {story.chapters?.length || 0} Chapters
-                          </p>
-                          <p className="text-sm text-gray-300 line-clamp-2 mb-6">{story.description || 'No description provided.'}</p>
-                          
-                          <div className="mt-auto space-y-2">
-                            <div className="flex flex-wrap gap-2">
-                               <button
-                                 onClick={() => handleAIProcess(story._id || story.id, 'Story', 'chaptering')}
-                                 className="flex-1 inline-flex items-center justify-center gap-2 px-3 py-2 rounded-xl border border-orange-500/30 text-orange-400 hover:bg-orange-500/10 transition-all text-[8px] font-black uppercase tracking-widest"
-                               >
-                                  <BookOpen className="w-3 h-3" /> Gen Chapters
-                               </button>
-                               <button
-                                 onClick={() => handleAIProcess(story._id || story.id, 'Story', 'translation')}
-                                 className="flex-1 inline-flex items-center justify-center gap-2 px-3 py-2 rounded-xl border border-[#00A8FF]/30 text-[#00A8FF] hover:bg-[#00A8FF]/10 transition-all text-[8px] font-black uppercase tracking-widest"
-                               >
-                                  <Sparkles className="w-3 h-3" /> Globalize
-                               </button>
-                               <button
-                                 onClick={() => handleAIProcess(story._id || story.id, 'Story', 'quiz')}
-                                 className="flex-1 inline-flex items-center justify-center gap-2 px-3 py-2 rounded-xl border border-green-500/30 text-green-400 hover:bg-green-500/10 transition-all text-[8px] font-black uppercase tracking-widest"
-                               >
-                                  <Check className="w-3 h-3" /> Gen Quiz
-                               </button>
-                               {story.status !== 'published' && (
-                                 <button
-                                   onClick={() => handlePublishStory(story._id || story.id)}
-                                   className="flex-1 inline-flex items-center justify-center gap-2 px-3 py-2 rounded-xl bg-devotion-gold text-devotion-darkBlue hover:bg-white transition-all text-[8px] font-black uppercase tracking-widest shadow-[0_0_15px_rgba(255,215,0,0.3)]"
-                                 >
-                                    <Zap className="w-3 h-3" /> Publish Now
-                                 </button>
-                               )}
-                            </div>
-                            <div className="flex flex-wrap gap-2">
-                              <button
-                                onClick={() => handleEditStory(story)}
-                                className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl border border-devotion-gold/30 text-devotion-gold hover:text-white hover:bg-devotion-gold/10 transition-all text-[10px] font-black uppercase tracking-widest"
-                              >
-                                <Pencil className="w-4 h-4" /> Edit
-                              </button>
-                              <button
-                                onClick={() => handleDeleteContent('stories', story._id || story.id, story.title || 'Untitled')}
-                                className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl border border-red-500/30 text-red-300 hover:text-red-200 hover:bg-red-500/10 transition-all text-[10px] font-black uppercase tracking-widest"
-                              >
-                                <Trash2 className="w-4 h-4" /> Delete
-                              </button>
-                            </div>
-                          </div>
+                          ))}
                         </div>
-                      ))}
+                      )}
+                    </>
+                  ) : (
+                    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-5 duration-350">
+                       {/* BACK BUTTON & HEADER */}
+                       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-6 border-b border-white/10">
+                          <div className="flex items-center gap-4">
+                             <button
+                               onClick={() => {
+                                 setSelectedStoryForChapters(null);
+                                 setChapterEditIndex(-1);
+                               }}
+                               className="p-3 bg-white/5 border border-white/10 hover:border-devotion-gold/50 rounded-2xl text-devotion-gold hover:text-white transition-all"
+                             >
+                                <ArrowLeft className="w-5 h-5" />
+                             </button>
+                             <div>
+                                <h3 className="text-2xl font-bold text-white flex items-center gap-2">
+                                   <Folder className="w-6 h-6 text-devotion-gold" /> {selectedStoryForChapters.title}
+                                </h3>
+                                <span className="text-[10px] font-black uppercase tracking-widest text-gray-500">
+                                   Folder Category: {selectedStoryForChapters.category || 'General'} • {selectedStoryForChapters.chapters?.length || 0} Chapters
+                                </span>
+                             </div>
+                          </div>
+                          <div className="flex gap-2">
+                             <button
+                               onClick={() => setShowMultiUpload(prev => !prev)}
+                               className="px-5 py-3 rounded-2xl border border-devotion-gold/30 text-devotion-gold hover:bg-devotion-gold/10 font-black text-[10px] uppercase tracking-widest transition-all"
+                             >
+                                {showMultiUpload ? 'Hide Multi Upload' : 'Upload Multiple Chapters'}
+                             </button>
+                          </div>
+                       </div>
+
+                       {/* SPLIT LAYOUT FOR CHAPTER MANAGEMENT */}
+                       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                          {/* Left Column: Create Chapter / Multi Upload */}
+                          <div className="lg:col-span-5 space-y-6">
+                             {showMultiUpload ? (
+                               <div className="bg-[#0B1F3A]/40 border border-white/10 p-6 rounded-3xl space-y-4">
+                                  <div className="flex flex-col">
+                                     <h4 className="text-white font-bold text-sm uppercase tracking-wider">Upload Multiple Chapters</h4>
+                                     <span className="text-[9px] text-gray-400">Paste your structured text below. Support JSON array or text split by "===" delimiter.</span>
+                                  </div>
+                                  <div className="space-y-1.5">
+                                     <label className="text-[9px] font-black uppercase tracking-widest text-devotion-gold">Select Target Folder/Story</label>
+                                     <select
+                                       className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-xs text-white focus:border-devotion-gold outline-none"
+                                       value={newChapterTargetFolderId || (selectedStoryForChapters._id || selectedStoryForChapters.id)}
+                                       onChange={e => setNewChapterTargetFolderId(e.target.value)}
+                                     >
+                                       {data.stories.map(s => (
+                                         <option key={s._id || s.id} value={s._id || s.id} className="bg-[#0B1F3A] text-white">
+                                           {s.title}
+                                         </option>
+                                       ))}
+                                     </select>
+                                  </div>
+                                  
+                                  <textarea
+                                    rows="14"
+                                    className="w-full bg-black/40 border border-white/10 rounded-2xl px-4 py-4 text-xs text-white placeholder-gray-600 focus:border-devotion-gold outline-none"
+                                    placeholder={`Example delimiters:\n=== Chapter 1 – Title\nContent goes here...\n\nExample JSON:\n[\n  {"title": "Chapter 1", "content": "..."}\n]`}
+                                    value={multiChaptersText}
+                                    onChange={e => setMultiChaptersText(e.target.value)}
+                                  />
+
+                                  <button
+                                    onClick={() => {
+                                      const targetFolderId = newChapterTargetFolderId || (selectedStoryForChapters._id || selectedStoryForChapters.id);
+                                      handleImportMultipleChapters(targetFolderId, multiChaptersText);
+                                    }}
+                                    className="w-full py-4 bg-devotion-gold hover:bg-yellow-400 text-devotion-darkBlue font-black text-xs uppercase tracking-widest rounded-2xl transition-all shadow-[0_0_15px_rgba(255,215,0,0.2)]"
+                                  >
+                                     Import Chapters
+                                  </button>
+                               </div>
+                             ) : (
+                               <div className="bg-[#0B1F3A]/40 border border-white/10 p-6 rounded-3xl space-y-4">
+                                  <h4 className="text-white font-bold text-sm uppercase tracking-wider">Add Single Chapter</h4>
+                                  
+                                  <div className="space-y-1.5">
+                                     <label className="text-[9px] font-black uppercase tracking-widest text-devotion-gold">Select Target Folder/Story</label>
+                                     <select
+                                       className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-xs text-white focus:border-devotion-gold outline-none"
+                                       value={newChapterTargetFolderId || (selectedStoryForChapters._id || selectedStoryForChapters.id)}
+                                       onChange={e => setNewChapterTargetFolderId(e.target.value)}
+                                     >
+                                       {data.stories.map(s => (
+                                         <option key={s._id || s.id} value={s._id || s.id} className="bg-[#0B1F3A] text-white">
+                                           {s.title}
+                                         </option>
+                                       ))}
+                                     </select>
+                                  </div>
+                                  
+                                  <div className="space-y-3">
+                                     <div className="space-y-1.5">
+                                        <label className="text-[9px] font-black uppercase tracking-widest text-devotion-gold">Chapter Title *</label>
+                                        <input
+                                          placeholder="Chapter 1 – The Beginning"
+                                          className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-xs text-white placeholder-gray-500 focus:border-devotion-gold outline-none"
+                                          value={newChapterForm.title}
+                                          onChange={e => setNewChapterForm(f => ({ ...f, title: e.target.value }))}
+                                        />
+                                     </div>
+                                     <div className="space-y-1.5">
+                                        <label className="text-[9px] font-black uppercase tracking-widest text-devotion-gold">Spiritual Summary</label>
+                                        <input
+                                          placeholder="A brief spiritual overview..."
+                                          className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-xs text-white placeholder-gray-500 focus:border-devotion-gold outline-none"
+                                          value={newChapterForm.summary}
+                                          onChange={e => setNewChapterForm(f => ({ ...f, summary: e.target.value }))}
+                                        />
+                                     </div>
+                                     <div className="space-y-1.5">
+                                        <label className="text-[9px] font-black uppercase tracking-widest text-devotion-gold">Spiritual Takeaways (comma separated)</label>
+                                        <input
+                                          placeholder="Faith, Devotion, Service"
+                                          className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-xs text-white placeholder-gray-500 focus:border-devotion-gold outline-none"
+                                          value={newChapterForm.takeaways}
+                                          onChange={e => setNewChapterForm(f => ({ ...f, takeaways: e.target.value }))}
+                                        />
+                                     </div>
+                                     <div className="space-y-1.5">
+                                        <label className="text-[9px] font-black uppercase tracking-widest text-devotion-gold">Chapter Content</label>
+                                        <textarea
+                                          rows="6"
+                                          placeholder="Full scripture or chapter description..."
+                                          className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-xs text-white placeholder-gray-500 focus:border-devotion-gold outline-none"
+                                          value={newChapterForm.content}
+                                          onChange={e => setNewChapterForm(f => ({ ...f, content: e.target.value }))}
+                                        />
+                                     </div>
+
+                                     <button
+                                       onClick={() => {
+                                         const title = newChapterForm.title.trim();
+                                         if (!title) {
+                                           alert('Please enter a chapter title.');
+                                           return;
+                                         }
+
+                                         const targetFolderId = newChapterTargetFolderId || (selectedStoryForChapters._id || selectedStoryForChapters.id);
+                                         const targetStory = data.stories.find(s => String(s._id || s.id) === String(targetFolderId)) || selectedStoryForChapters;
+                                         
+                                         const isDuplicate = (targetStory.chapters || []).some(
+                                           c => (c.title || '').toLowerCase() === title.toLowerCase()
+                                         );
+                                         if (isDuplicate) {
+                                           alert(`A chapter with the title "${title}" already exists in this folder.`);
+                                           return;
+                                         }
+
+                                         const newCh = {
+                                           title,
+                                           content: newChapterForm.content.trim(),
+                                           summary: newChapterForm.summary.trim(),
+                                           takeaways: newChapterForm.takeaways.split(',').map(s => s.trim()).filter(Boolean),
+                                           sequence: (targetStory.chapters?.length || 0) + 1,
+                                           folderId: targetStory._id || targetStory.id,
+                                           parentFolder: targetStory.title
+                                         };
+
+                                         const updated = [...(targetStory.chapters || []), newCh];
+                                         handleSaveStoryChapters(targetFolderId, updated);
+                                         
+                                         setNewChapterForm({ title: '', summary: '', takeaways: '', content: '' });
+                                       }}
+                                       className="w-full py-4 bg-devotion-gold hover:bg-yellow-400 text-devotion-darkBlue font-black text-xs uppercase tracking-widest rounded-2xl transition-all shadow-[0_0_15px_rgba(255,215,0,0.2)]"
+                                     >
+                                        + Add Chapter
+                                     </button>
+                                  </div>
+                               </div>
+                             )}
+                          </div>
+
+                          {/* Right Column: Draggable Chapters List */}
+                          <div className="lg:col-span-7 space-y-4">
+                             <div className="flex justify-between items-center bg-white/5 border border-white/10 px-6 py-4 rounded-2xl">
+                                <span className="text-[10px] font-black uppercase tracking-wider text-devotion-gold">Drag cards to reorder</span>
+                                <span className="text-[10px] font-black uppercase tracking-wider text-gray-500">{selectedStoryForChapters.chapters?.length || 0} Total</span>
+                             </div>
+
+                             {(!selectedStoryForChapters.chapters || selectedStoryForChapters.chapters.length === 0) ? (
+                               <div className="text-center py-20 bg-white/5 border-2 border-dashed border-white/10 rounded-3xl text-gray-500">
+                                  No chapters inside this folder yet.
+                               </div>
+                             ) : (
+                               <div className="space-y-3">
+                                  {selectedStoryForChapters.chapters.map((chapter, idx) => (
+                                    <div
+                                      key={chapter._id || idx}
+                                      draggable={chapterEditIndex !== idx}
+                                      onDragStart={(e) => handleDragStart(e, idx)}
+                                      onDragOver={(e) => handleDragOver(e, idx)}
+                                      onDrop={(e) => handleDrop(e, idx)}
+                                      className={`p-5 rounded-3xl border transition-all bg-[#0B1F3A]/30 flex flex-col gap-4 ${draggedChapterIndex === idx ? 'border-dashed border-devotion-gold bg-[#0B1F3A]/70 opacity-50' : 'border-white/10 hover:border-white/20'}`}
+                                    >
+                                       <div className="flex items-center justify-between border-b border-white/5 pb-3">
+                                          <div className="flex items-center gap-3">
+                                             <div className="cursor-grab hover:text-devotion-gold text-gray-500">
+                                                <GripVertical className="w-4 h-4" />
+                                             </div>
+                                             <span className="w-6 h-6 rounded-full bg-devotion-gold/10 text-devotion-gold border border-devotion-gold/20 flex items-center justify-center text-[10px] font-black">
+                                                {idx + 1}
+                                             </span>
+                                             <span className="font-bold text-white text-sm">{chapter.title}</span>
+                                          </div>
+                                          
+                                          {chapterEditIndex !== idx && (
+                                            <div className="flex items-center gap-2">
+                                               <div className="flex items-center gap-1.5 bg-black/40 border border-white/10 px-2 py-1.5 rounded-xl">
+                                                 <span className="text-[8px] font-black uppercase text-gray-400 tracking-wider">Move:</span>
+                                                 <select
+                                                   value=""
+                                                   onChange={(e) => {
+                                                     const targetId = e.target.value;
+                                                     if (targetId) {
+                                                       handleMoveChapter(selectedStoryForChapters._id || selectedStoryForChapters.id, idx, targetId);
+                                                     }
+                                                   }}
+                                                   className="bg-transparent text-[8px] font-black uppercase tracking-wider text-devotion-gold outline-none border-none cursor-pointer max-w-[80px]"
+                                                 >
+                                                    <option value="" className="bg-[#0B1F3A] text-gray-400">Select Folder</option>
+                                                    {data.stories
+                                                      .filter(s => String(s._id || s.id) !== String(selectedStoryForChapters._id || selectedStoryForChapters.id))
+                                                      .map(s => <option key={s._id || s.id} value={s._id || s.id} className="bg-[#0B1F3A] text-white">{s.title}</option>)
+                                                    }
+                                                 </select>
+                                               </div>
+
+                                               <button
+                                                 onClick={() => {
+                                                   setChapterEditIndex(idx);
+                                                   setChapterEditForm({
+                                                     title: chapter.title || '',
+                                                     content: chapter.content || '',
+                                                     summary: chapter.summary || '',
+                                                     takeaways: chapter.takeaways ? chapter.takeaways.join(', ') : '',
+                                                     sequence: chapter.sequence || idx + 1
+                                                   });
+                                                 }}
+                                                 className="p-2 hover:bg-white/5 rounded-lg text-devotion-gold hover:text-white"
+                                               >
+                                                  <Pencil className="w-3.5 h-3.5" />
+                                               </button>
+                                               <button
+                                                 onClick={() => {
+                                                   if (window.confirm(`Delete chapter "${chapter.title}"?`)) {
+                                                     const updated = [...selectedStoryForChapters.chapters];
+                                                     updated.splice(idx, 1);
+                                                     handleSaveStoryChapters(selectedStoryForChapters._id || selectedStoryForChapters.id, updated);
+                                                   }
+                                                 }}
+                                                 className="p-2 hover:bg-white/5 rounded-lg text-red-400 hover:text-red-300"
+                                               >
+                                                  <Trash2 className="w-3.5 h-3.5" />
+                                               </button>
+                                            </div>
+                                          )}
+                                       </div>
+
+                                       {chapterEditIndex === idx ? (
+                                         <div className="space-y-4 pt-2">
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                               <div className="space-y-1">
+                                                 <label className="text-[8px] font-black uppercase text-devotion-gold tracking-widest">Edit Title</label>
+                                                 <input
+                                                   className="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-xs text-white outline-none focus:border-devotion-gold"
+                                                   value={chapterEditForm.title}
+                                                   onChange={e => setChapterEditForm({...chapterEditForm, title: e.target.value})}
+                                                 />
+                                               </div>
+                                               <div className="space-y-1">
+                                                 <label className="text-[8px] font-black uppercase text-devotion-gold tracking-widest">Edit Takeaways</label>
+                                                 <input
+                                                   className="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-xs text-white outline-none focus:border-devotion-gold"
+                                                   value={chapterEditForm.takeaways}
+                                                   onChange={e => setChapterEditForm({...chapterEditForm, takeaways: e.target.value})}
+                                                 />
+                                               </div>
+                                            </div>
+
+                                            <div className="space-y-1">
+                                              <label className="text-[8px] font-black uppercase text-devotion-gold tracking-widest">Edit Summary</label>
+                                              <input
+                                                className="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-xs text-white outline-none focus:border-devotion-gold"
+                                                value={chapterEditForm.summary}
+                                                onChange={e => setChapterEditForm({...chapterEditForm, summary: e.target.value})}
+                                              />
+                                            </div>
+
+                                            <div className="space-y-1">
+                                              <label className="text-[8px] font-black uppercase text-devotion-gold tracking-widest">Edit Content</label>
+                                              <textarea
+                                                rows="5"
+                                                className="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-xs text-white outline-none focus:border-devotion-gold"
+                                                value={chapterEditForm.content}
+                                                onChange={e => setChapterEditForm({...chapterEditForm, content: e.target.value})}
+                                              />
+                                            </div>
+
+                                            <div className="flex gap-2 justify-end">
+                                               <button
+                                                 onClick={() => {
+                                                   if (chapterEditForm.title.trim().toLowerCase() !== chapter.title.toLowerCase()) {
+                                                     const isDuplicate = selectedStoryForChapters.chapters.some(
+                                                       (c, cIdx) => cIdx !== idx && c.title.toLowerCase() === chapterEditForm.title.trim().toLowerCase()
+                                                     );
+                                                     if (isDuplicate) {
+                                                       alert(`A chapter with the title "${chapterEditForm.title.trim()}" already exists in this folder.`);
+                                                       return;
+                                                     }
+                                                   }
+
+                                                   const updated = [...selectedStoryForChapters.chapters];
+                                                   updated[idx] = {
+                                                     ...chapter,
+                                                     title: chapterEditForm.title.trim(),
+                                                     content: chapterEditForm.content.trim(),
+                                                     summary: chapterEditForm.summary.trim(),
+                                                     takeaways: chapterEditForm.takeaways.split(',').map(s => s.trim()).filter(Boolean),
+                                                     sequence: chapterEditForm.sequence
+                                                   };
+                                                   handleSaveStoryChapters(selectedStoryForChapters._id || selectedStoryForChapters.id, updated);
+                                                   setChapterEditIndex(-1);
+                                                 }}
+                                                 className="px-4 py-2 bg-devotion-gold text-devotion-darkBlue text-[9px] font-black uppercase tracking-wider rounded-xl hover:bg-yellow-400"
+                                               >
+                                                  Save
+                                               </button>
+                                               <button
+                                                 onClick={() => setChapterEditIndex(-1)}
+                                                 className="px-4 py-2 bg-white/5 border border-white/10 text-white text-[9px] font-black uppercase tracking-wider rounded-xl hover:bg-white/10"
+                                               >
+                                                  Cancel
+                                               </button>
+                                            </div>
+                                         </div>
+                                       ) : (
+                                         <div className="space-y-2">
+                                            {chapter.summary && (
+                                              <p className="text-[11px] text-devotion-gold italic font-serif leading-relaxed">"{chapter.summary}"</p>
+                                            )}
+                                            <p className="text-xs text-gray-400 line-clamp-3 leading-relaxed">{chapter.content}</p>
+                                         </div>
+                                       )}
+                                    </div>
+                                  ))}
+                               </div>
+                             )}
+                          </div>
+                       </div>
                     </div>
                   )}
                </div>
@@ -2015,6 +2694,18 @@ function AdminDashboardContent() {
                            <input required className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-5 text-white focus:border-devotion-gold outline-none" placeholder="The Legend of Hanuman" value={storyForm.title} onChange={e => setStoryForm({...storyForm, title: e.target.value})} />
                          </div>
                          <LanguageSelector value={storyForm.language} onChange={val => setStoryForm({...storyForm, language: val})} />
+                         <div className="space-y-4">
+                            <label className="text-[10px] font-black uppercase tracking-widest text-devotion-gold ml-2">Library Folder / Parent Collection</label>
+                            <select className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-5 text-white focus:border-devotion-gold outline-none" value={storyForm.parentFolderId} onChange={e => setStoryForm({...storyForm, parentFolderId: e.target.value})}>
+                              <option value="" className="bg-[#0B1F3A]">None (Root Folder / Main Category)</option>
+                              <option value="Ramayanam" className="bg-[#0B1F3A]">Ramayanam</option>
+                              <option value="Mahabharatam" className="bg-[#0B1F3A]">Mahabharatam</option>
+                              <option value="Bhagavad Gita" className="bg-[#0B1F3A]">Bhagavad Gita</option>
+                              <option value="Krishna Leela" className="bg-[#0B1F3A]">Krishna Leela</option>
+                              <option value="Hanuman Charitra" className="bg-[#0B1F3A]">Hanuman Charitra</option>
+                              <option value="Shiva Purana" className="bg-[#0B1F3A]">Shiva Purana</option>
+                            </select>
+                         </div>
                          <div className="space-y-4">
                             <label className="text-[10px] font-black uppercase tracking-widest text-devotion-gold ml-2">Category / Series</label>
                             <select className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-5 text-white focus:border-devotion-gold outline-none" value={storyForm.category} onChange={e => setStoryForm({...storyForm, category: e.target.value})}>

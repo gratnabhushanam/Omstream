@@ -78,6 +78,7 @@ exports.generateTTS = async (req, res) => {
       ram: 'vrS1hXXx23eNIVpG9wX4', // Example majestic voice
       hanuman: 'r1U8z5x5xO2mN4mR7wG4', // Example powerful voice 
       arjuna: 'Z9kP5jMwXqQ7m8nY4vB1',
+      saikumar: 'pNInz6obpgq5paNs9W5y', // Booming Tollywood voice ID (Adam)
       narrator: 'ErXwobaYiN019PkySvjV', // Example calm narrator (Antoni)
     };
 
