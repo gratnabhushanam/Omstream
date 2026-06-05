@@ -198,7 +198,7 @@ exports.addSloka = async (req, res) => {
 
 exports.getDailyHistory = async (req, res) => {
   try {
-    const history = await Sloka.find({ dailyKey: { $ne: null } }).sort({ dailyKey: -1 });
+    const history = await Sloka.find({ dailyKey: { $ne: null } }).lean().sort({ dailyKey: -1 });
     return res.json({ items: history.map(mapSloka) });
   } catch (error) {
     console.error('getDailyHistory Error:', error);

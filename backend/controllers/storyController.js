@@ -9,7 +9,7 @@ const { mapStory } = require('../utils/responseMappers');
 exports.getStories = async (req, res) => {
   try {
     if (req.query.parentFolderId) {
-      const stories = await Story.find({ parentFolderId: req.query.parentFolderId, status: 'published' }).sort({ createdAt: -1 });
+      const stories = await Story.find({ parentFolderId: req.query.parentFolderId, status: 'published' }).lean().sort({ createdAt: -1 });
       return res.json(stories.map(mapStory));
     }
 
@@ -18,7 +18,7 @@ exports.getStories = async (req, res) => {
     const folders = await Story.find(filter).sort({ createdAt: -1 });
 
     const foldersWithChapters = await Promise.all(folders.map(async (story) => {
-      const subStories = await Story.find({ parentFolderId: story.title, status: 'published' }).sort({ sequence: 1, createdAt: 1 });
+      const subStories = await Story.find({ parentFolderId: story.title, status: 'published' }).lean().sort({ sequence: 1, createdAt: 1 });
       
       const chaptersList = subStories.map(sub => ({
         _id: sub._id,
@@ -60,10 +60,10 @@ exports.getKidsStories = async (req, res) => {
         { tags: { $regex: 'kids', $options: 'i' } },
         { category: { $regex: 'kids', $options: 'i' } }
       ]
-    }).sort({ viewCount: -1 });
+    }).lean().sort({ viewCount: -1 });
 
     const foldersWithChapters = await Promise.all(folders.map(async (story) => {
-      const subStories = await Story.find({ parentFolderId: story.title, status: 'published' }).sort({ sequence: 1, createdAt: 1 });
+      const subStories = await Story.find({ parentFolderId: story.title, status: 'published' }).lean().sort({ sequence: 1, createdAt: 1 });
       
       const chaptersList = subStories.map(sub => ({
         _id: sub._id,
@@ -105,7 +105,7 @@ exports.getStoryById = async (req, res) => {
     if (!story) return res.status(404).json({ message: 'Story not found' });
 
     if (story.isFolder) {
-      const subStories = await Story.find({ parentFolderId: story.title, status: 'published' }).sort({ sequence: 1, createdAt: 1 });
+      const subStories = await Story.find({ parentFolderId: story.title, status: 'published' }).lean().sort({ sequence: 1, createdAt: 1 });
       const chaptersList = subStories.map(sub => ({
         _id: sub._id,
         id: sub._id,
@@ -227,7 +227,7 @@ exports.updateStory = async (req, res) => {
     }
 
     // Re-fetch the synced sub-chapters so the response matches what getStories returns
-    const subStories = await Story.find({ parentFolderId: story.title }).sort({ sequence: 1, createdAt: 1 });
+    const subStories = await Story.find({ parentFolderId: story.title }).lean().sort({ sequence: 1, createdAt: 1 });
     const chaptersList = subStories.map(sub => ({
       _id: sub._id,
       id: sub._id,
