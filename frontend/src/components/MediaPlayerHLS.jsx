@@ -327,7 +327,7 @@ export default function MediaPlayer({
     if (loop && videoId && !params.has('playlist')) params.set('playlist', videoId);
     
     if (effectiveShouldPlay) params.set('autoplay', '1');
-    if (muted || (effectiveShouldPlay && instagramMode)) params.set('mute', '1');
+    if (muted) params.set('mute', '1');
     params.set('playsinline', '1');
     params.set('controls', controls ? '1' : '0');
 
