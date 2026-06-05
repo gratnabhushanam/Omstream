@@ -4,25 +4,41 @@ const resolveEmailProvider = () => {
   return String(process.env.EMAIL_PROVIDER || 'smtp').toLowerCase();
 };
 
+let cachedTransporter = null;
+
+const getTransporter = () => {
+  if (cachedTransporter) return cachedTransporter;
+
+  const host = process.env.SMTP_HOST || process.env.SMTP_HOSTNAME || 'smtp.gmail.com';
+  const port = Number(process.env.SMTP_PORT || process.env.SMTP_PORT_NUMBER || 465);
+  const user = process.env.EMAIL_USER;
+  const pass = process.env.EMAIL_PASS;
+
+  if (!user || !pass) return null;
+
+  cachedTransporter = nodemailer.createTransport({
+    host,
+    port,
+    secure: port === 465,
+    pool: true, // Reuse connections
+    maxConnections: 5,
+    maxMessages: 100,
+    auth: { user, pass },
+  });
+
+  return cachedTransporter;
+};
+
 const sendViaSmtp = async ({ email, name, otp }) => {
   try {
-    const host = process.env.SMTP_HOST || process.env.SMTP_HOSTNAME || 'smtp.gmail.com';
-    const port = Number(process.env.SMTP_PORT || process.env.SMTP_PORT_NUMBER || 465);
-    const user = process.env.EMAIL_USER;
-    const pass = process.env.EMAIL_PASS;
-    const fromName = process.env.EMAIL_FROM_NAME || 'Gita Wisdom';
-    const fromAddress = process.env.EMAIL_FROM || user;
-
-    if (!user || !pass) {
+    const transporter = getTransporter();
+    if (!transporter) {
       return { delivered: false, error: 'SMTP credentials not configured' };
     }
 
-    const transporter = nodemailer.createTransport({
-      host,
-      port,
-      secure: port === 465,
-      auth: { user, pass },
-    });
+    const user = process.env.EMAIL_USER;
+    const fromName = process.env.EMAIL_FROM_NAME || 'Gita Wisdom';
+    const fromAddress = process.env.EMAIL_FROM || user;
 
     const subject = 'Your Gita Wisdom OTP';
     const text = `Hello ${name || ''},\n\nYour verification code is: ${otp}\n\nThis code expires shortly.`;
