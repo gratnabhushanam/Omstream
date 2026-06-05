@@ -18,6 +18,10 @@ const getKidsContentThumbnail = (item) => {
   if (!item) return 'https://images.unsplash.com/photo-1614850523459-c2f4c699c52e?q=80&w=600&auto=format&fit=crop';
   
   if (item.thumbnail && !item.thumbnail.includes('logo-om') && !item.thumbnail.includes('scene-krishna')) {
+    const baseUrl = import.meta.env.VITE_API_BASE_URL || '';
+    if (item.thumbnail.startsWith('/')) {
+      return `${baseUrl}${item.thumbnail}`;
+    }
     return item.thumbnail;
   }
   
@@ -191,20 +195,6 @@ export default function KidsMode() {
       <nav className="fixed top-0 w-full z-50 px-8 py-8 flex items-center justify-between bg-gradient-to-b from-[#0F172A] to-transparent pointer-events-none">
         <div className="flex items-center gap-8 pointer-events-auto">
           <div className="relative group">
-             <img 
-               src="/kids_mascot_1778310861074.png" 
-               loading="lazy"
-               className="absolute -top-16 -left-20 w-40 h-40 object-contain animate-float drop-shadow-[0_20px_60px_rgba(255,122,0,0.5)] z-10 cursor-pointer hover:scale-125 transition-transform" 
-               alt="Mascot"
-               onClick={() => {
-                 confetti({
-                   particleCount: 100,
-                   spread: 120,
-                   origin: { x: 0.1, y: 0.1 },
-                   colors: ['#FF7A00', '#F5C542', '#FFD700']
-                 });
-               }}
-             />
              <button 
                onClick={() => navigate('/home')} 
                className="w-16 h-16 bg-[#0F172A]/60 backdrop-blur-3xl border border-white/10 rounded-[1.5rem] flex items-center justify-center text-white hover:bg-[#FF7A00] hover:text-navy-deep transition-all shadow-2xl relative z-0"
