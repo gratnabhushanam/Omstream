@@ -201,6 +201,14 @@ const initializeApp = async () => {
 // DIRECT ROUTE FOR TRANSLATION (To bypass any potential routing issues)
 app.post('/api/stories/:id/translate', require('./controllers/storyController').translateStory);
 
+// Vercel Cache Bug Fix: Catch requests with double /api/api and rewrite them to /api
+app.use((req, res, next) => {
+  if (req.url.startsWith('/api/api/')) {
+    req.url = req.url.replace('/api/api/', '/api/');
+  }
+  next();
+});
+
 // API Routes
 app.use('/api/auth', require('./routes/authRoutes'));
 app.use('/api/payments', require('./routes/payments'));
