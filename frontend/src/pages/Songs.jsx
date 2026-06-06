@@ -17,13 +17,15 @@ export default function Songs() {
   const [currentTime, setCurrentTime] = useState('0:00');
   const [duration, setDuration] = useState('0:00');
   const [searchQuery, setSearchQuery] = useState('');
+  const [loading, setLoading] = useState(true);
   
   const playerRef = useRef(null);
 
   useEffect(() => {
     const fetchSongs = async () => {
       try {
-        const { data } = await axios.get(`/api/songs?language=${language || 'telugu'}`);
+        setLoading(true);
+        const { data } = await axios.get('/api/songs');
         if (data && data.length > 0) {
           setSongs(data);
           setCurrentSongIndex(0);
@@ -32,10 +34,12 @@ export default function Songs() {
         }
       } catch (error) {
         console.error('Error fetching songs:', error);
+      } finally {
+        setLoading(false);
       }
     };
     fetchSongs();
-  }, [language]);
+  }, []);
 
 
   const handleLike = async (e, songId) => {
@@ -203,7 +207,7 @@ export default function Songs() {
             ) : (
               <div className="text-gray-400 py-10 flex flex-col items-center">
                 <Music className="w-10 h-10 mb-4 opacity-50" />
-                <p>Loading divine songs...</p>
+                <p>{loading ? 'Loading divine songs...' : 'No songs available in the database.'}</p>
               </div>
             )}
           </div>
