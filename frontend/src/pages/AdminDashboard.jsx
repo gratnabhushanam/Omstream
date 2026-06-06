@@ -199,12 +199,13 @@ function AdminDashboardContent() {
     setProgress(0);
     try {
       const token = localStorage.getItem('token');
-      const currentTitle = isTrailer ? `${movieForm.title} Trailer` : (activeTab === 'movies' ? movieForm.title : videoForm.title);
+      const isSong = activeTab === 'songs';
+      const currentTitle = isTrailer ? `${movieForm.title} Trailer` : (isSong ? songForm.title : (activeTab === 'movies' ? movieForm.title : videoForm.title));
       const currentDesc = isTrailer ? `Trailer for ${movieForm.title}` : (activeTab === 'movies' ? movieForm.description : videoForm.description);
       const currentTags = activeTab === 'movies' ? movieForm.tags : videoForm.tags;
       const currentKids = activeTab === 'movies' ? 'false' : (videoForm.isKids ? 'true' : 'false');
-      const currentCategory = isTrailer ? 'trailer' : (activeTab === 'movies' ? 'movie' : videoForm.category);
-      const currentCollection = activeTab === 'movies' ? 'Movie Library' : videoForm.collectionTitle;
+      const currentCategory = isTrailer ? 'trailer' : (isSong ? 'song' : (activeTab === 'movies' ? 'movie' : videoForm.category));
+      const currentCollection = isSong ? 'Songs' : (activeTab === 'movies' ? 'Movie Library' : videoForm.collectionTitle);
       const contentType = activeTab === 'movies' ? 'long' : 'long'; 
 
       const headers = {
@@ -217,7 +218,7 @@ function AdminDashboardContent() {
         'video-category': encodeURIComponent(currentCategory || ''),
         'video-content-type': contentType,
         'video-source': 'admin',
-        'video-only-upload': isTrailer ? 'true' : 'false',
+        'video-only-upload': (isTrailer || isSong) ? 'true' : 'false',
       };
       
       const result = await resumableUpload({
@@ -232,6 +233,12 @@ function AdminDashboardContent() {
           setMovieForm((prev) => ({ ...prev, trailerUrl: result.videoUrl }));
         } else if (result && result.fileName) {
           setMovieForm((prev) => ({ ...prev, trailerUrl: `/uploads/reels/${result.fileName}` }));
+        }
+      } else if (isSong) {
+        if (result && result.videoUrl) {
+          setSongForm((prev) => ({ ...prev, url: result.videoUrl }));
+        } else if (result && result.fileName) {
+          setSongForm((prev) => ({ ...prev, url: `/uploads/reels/${result.fileName}` }));
         }
       } else if (activeTab === 'movies') {
         if (result && result.videoUrl) {
@@ -458,8 +465,10 @@ function AdminDashboardContent() {
             videoQuizDraft: videoQuizDraft && videoQuizDraft.questionText ? videoQuizDraft : null,
           };
         }
+      } else if (activeTab === 'songs') {
+        endpoint = '/api/songs';
+        payload = songForm;
       }
-
 
       if (activeTab === 'stories' && editingStoryId) {
         const { data: updatedStory } = await axios.patch(endpoint, payload, {
@@ -2599,9 +2608,22 @@ function AdminDashboardContent() {
                       <label className="text-[10px] font-black uppercase tracking-widest text-devotion-gold ml-2">Artist / Singer</label>
                       <input type="text" className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-5 text-white focus:border-devotion-gold outline-none" value={songForm.artist} onChange={e => setSongForm({...songForm, artist: e.target.value})} placeholder="Srila Prabhupada" required />
                     </div>
-                    <div>
-                      <label className="text-[10px] font-black uppercase tracking-widest text-devotion-gold ml-2">Audio/YouTube URL</label>
-                      <input type="url" className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-5 text-white focus:border-devotion-gold outline-none" value={songForm.url} onChange={e => setSongForm({...songForm, url: e.target.value})} placeholder="https://youtube.com/..." required />
+                    <div className="space-y-4">
+                       <label className="text-[10px] font-black uppercase tracking-widest text-devotion-gold ml-2">Audio/YouTube URL or Direct File Upload</label>
+                       <div className="flex flex-col gap-3">
+                         <div className="flex gap-2">
+                           <input type="url" className="flex-1 bg-white/5 border border-white/10 rounded-2xl px-6 py-5 text-white focus:border-devotion-gold outline-none" value={songForm.url} onChange={e => setSongForm({...songForm, url: e.target.value})} placeholder="https://youtube.com/... or upload file ->" required />
+                           <label className="cursor-pointer bg-devotion-gold/10 border border-devotion-gold/30 text-devotion-gold px-6 py-5 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-devotion-gold/20 transition-all flex items-center gap-2 flex-shrink-0">
+                             <Upload className="w-4 h-4" /> Upload
+                             <input type="file" accept="audio/*,video/mp4" className="hidden" onChange={e => handleVideoFileChange(e, false)} />
+                           </label>
+                         </div>
+                         {videoUploadProgress > 0 && (
+                           <div className="w-full bg-white/10 rounded-full h-2 mt-2">
+                             <div className="bg-devotion-gold h-2 rounded-full transition-all" style={{ width: `${videoUploadProgress}%` }}></div>
+                           </div>
+                         )}
+                       </div>
                     </div>
                     <div>
                       <label className="text-[10px] font-black uppercase tracking-widest text-devotion-gold ml-2">Cover Image URL</label>
