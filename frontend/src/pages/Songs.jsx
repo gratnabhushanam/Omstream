@@ -184,10 +184,60 @@ export default function Songs() {
             {currentSong ? (
               <>
                 <div className={`relative w-48 h-48 sm:w-64 sm:h-64 rounded-full border-4 border-devotion-gold/30 shadow-[0_0_40px_rgba(255,215,0,0.2)] overflow-hidden mb-8 transition-all duration-700 ${isPlaying ? 'scale-105 shadow-[0_0_60px_rgba(255,215,0,0.4)]' : ''}`}>
+                  
+                  {/* Hidden Media Players (Rendered behind the cover image to bypass browser auto-play blocks) */}
+                  <div className="absolute inset-0 pointer-events-none overflow-hidden z-0 opacity-1">
+                    {isYouTube ? (
+                      <ReactPlayer
+                        ref={playerRef}
+                        src={currentSong.url?.trim()}
+                        playing={isPlaying}
+                        muted={isMuted}
+                        onProgress={handleProgress}
+                        onDuration={handleDuration}
+                        onEnded={handleNext}
+                        onError={(e) => console.error('ReactPlayer Error:', e)}
+                        onReady={() => console.log('ReactPlayer Ready')}
+                        width="200%"
+                        height="200%"
+                        style={{ position: 'absolute', top: '-50%', left: '-50%' }}
+                        progressInterval={1000}
+                        config={{
+                          youtube: {
+                            playerVars: {
+                              autoplay: 1,
+                              controls: 0,
+                              modestbranding: 1,
+                              playsinline: 1,
+                              origin: window.location.origin
+                            }
+                          }
+                        }}
+                      />
+                    ) : (
+                      <video
+                        ref={audioRef}
+                        src={currentSong.url}
+                        onTimeUpdate={(e) => {
+                          const curr = e.target.currentTime;
+                          const dur = e.target.duration || 0;
+                          setProgress((dur > 0) ? (curr / dur) * 100 : 0);
+                          const mins = Math.floor(curr / 60);
+                          const secs = Math.floor(curr % 60);
+                          setCurrentTime(`${mins}:${secs < 10 ? '0' : ''}${secs}`);
+                        }}
+                        onLoadedMetadata={(e) => handleDuration(e.target.duration)}
+                        onEnded={handleNext}
+                        playsInline
+                        className="w-full h-full object-cover"
+                      />
+                    )}
+                  </div>
+
                   <img 
                     src={currentSong.cover} 
                     alt={currentSong.title} 
-                    className={`w-full h-full object-cover ${isPlaying ? 'animate-[spin_20s_linear_infinite] scale-125' : 'scale-100'}`} 
+                    className={`relative z-10 w-full h-full object-cover ${isPlaying ? 'animate-[spin_20s_linear_infinite] scale-125' : 'scale-100'}`} 
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
 
@@ -243,52 +293,6 @@ export default function Songs() {
                   <button tabIndex="0" onClick={toggleMute} className="tv-focusable focus:ring-2 focus:ring-devotion-gold rounded-full text-gray-400 hover:text-white transition-colors p-2 active:scale-90 hidden sm:block">
                     {isMuted ? <VolumeX className="w-5 h-5" /> : <Volume2 className="w-5 h-5" />}
                   </button>
-                </div>
-
-                <div className="fixed -bottom-40 -right-40 overflow-hidden pointer-events-none -z-50" style={{ width: '100px', height: '100px', opacity: 0.1 }}>
-                  {isYouTube ? (
-                    <ReactPlayer
-                      ref={playerRef}
-                      url={currentSong.url}
-                      playing={isPlaying}
-                      muted={isMuted}
-                      onProgress={handleProgress}
-                      onDuration={handleDuration}
-                      onEnded={handleNext}
-                      onError={(e) => console.error('ReactPlayer Error:', e)}
-                      width="100%"
-                      height="100%"
-                      playsinline
-                      progressInterval={1000}
-                      config={{
-                        youtube: {
-                          playerVars: {
-                            autoplay: 1,
-                            controls: 0,
-                            modestbranding: 1,
-                            playsinline: 1,
-                            origin: window.location.origin
-                          }
-                        }
-                      }}
-                    />
-                  ) : (
-                    <audio
-                      ref={audioRef}
-                      src={currentSong.url}
-                      onTimeUpdate={(e) => {
-                        const curr = e.target.currentTime;
-                        const dur = e.target.duration || 0;
-                        setProgress((curr / dur) * 100);
-                        const mins = Math.floor(curr / 60);
-                        const secs = Math.floor(curr % 60);
-                        setCurrentTime(`${mins}:${secs < 10 ? '0' : ''}${secs}`);
-                      }}
-                      onLoadedMetadata={(e) => handleDuration(e.target.duration)}
-                      onEnded={handleNext}
-                      playsInline
-                    />
-                  )}
                 </div>
               </>
             ) : (
