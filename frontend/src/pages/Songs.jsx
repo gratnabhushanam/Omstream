@@ -213,16 +213,16 @@ export default function Songs() {
 
   const handleProgress = (state) => {
     setProgress(state.played * 100);
-    const played = state.playedSeconds || 0;
-    const mins = Math.floor(played / 60) || 0;
-    const secs = Math.floor(played % 60) || 0;
+    const played = Number(state.playedSeconds) || 0;
+    const mins = isNaN(played) ? 0 : Math.floor(played / 60);
+    const secs = isNaN(played) ? 0 : Math.floor(played % 60);
     setCurrentTime(`${mins}:${secs < 10 ? '0' : ''}${secs}`);
   };
 
   const handleDuration = (dur) => {
-    const validDur = dur || 0;
-    const mins = Math.floor(validDur / 60) || 0;
-    const secs = Math.floor(validDur % 60) || 0;
+    const validDur = Number(dur) || 0;
+    const mins = isNaN(validDur) ? 0 : Math.floor(validDur / 60);
+    const secs = isNaN(validDur) ? 0 : Math.floor(validDur % 60);
     setDuration(`${mins}:${secs < 10 ? '0' : ''}${secs}`);
   };
 
@@ -243,14 +243,14 @@ export default function Songs() {
   };
 
   return (
-    <div className="min-h-screen pt-24 pb-20 px-4 sm:px-6 lg:px-8 relative bg-[#06101E] overflow-hidden flex flex-col items-center">
+    <div className="min-h-screen pt-[calc(env(safe-area-inset-top)+6rem)] pb-[calc(env(safe-area-inset-bottom)+8rem)] px-4 sm:px-6 lg:px-8 relative bg-[#06101E] overflow-hidden flex flex-col items-center w-full">
       <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(circle_at_center,rgba(255,215,0,0.05),transparent_60%)]"></div>
       
-      <div className="w-full max-w-5xl mx-auto relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12">
+      <div className="w-full max-w-5xl mx-auto relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 mt-4 sm:mt-0">
         
         {/* Left Side: Music Player */}
-        <div className="lg:col-span-5 flex flex-col items-center order-2 lg:order-1">
-          <div className="w-full bg-glass-premium backdrop-blur-3xl rounded-[2.5rem] border border-devotion-gold/20 p-6 sm:p-8 shadow-2xl flex flex-col items-center animate-slide-up">
+        <div className="lg:col-span-5 flex flex-col items-center order-2 lg:order-1 w-full max-w-md mx-auto">
+          <div className="w-full bg-glass-premium backdrop-blur-3xl rounded-[2.5rem] border border-devotion-gold/20 p-6 sm:p-8 shadow-2xl flex flex-col items-center animate-slide-up relative z-20">
             <h1 className="text-2xl font-serif font-black uppercase tracking-widest text-devotion-gold mb-6 text-center">
               Divine Player
             </h1>
@@ -293,11 +293,11 @@ export default function Songs() {
                         ref={audioRef}
                         src={currentSong.url}
                         onTimeUpdate={(e) => {
-                          const curr = e.target.currentTime || 0;
-                          const dur = e.target.duration || 0;
-                          setProgress((dur > 0) ? (curr / dur) * 100 : 0);
-                          const mins = Math.floor(curr / 60) || 0;
-                          const secs = Math.floor(curr % 60) || 0;
+                          const curr = Number(e.target.currentTime) || 0;
+                          const dur = Number(e.target.duration) || 0;
+                          setProgress((dur > 0 && !isNaN(dur)) ? (curr / dur) * 100 : 0);
+                          const mins = isNaN(curr) ? 0 : Math.floor(curr / 60);
+                          const secs = isNaN(curr) ? 0 : Math.floor(curr % 60);
                           setCurrentTime(`${mins}:${secs < 10 ? '0' : ''}${secs}`);
                         }}
                         onLoadedMetadata={(e) => handleDuration(e.target.duration)}
@@ -379,9 +379,9 @@ export default function Songs() {
         </div>
 
         {/* Right Side: Playlist */}
-        <div className="lg:col-span-7 flex flex-col order-1 lg:order-2">
+        <div className="lg:col-span-7 flex flex-col order-1 lg:order-2 w-full mt-4 lg:mt-0">
           <div className="mb-6 flex flex-col sm:flex-row items-start sm:items-end justify-between gap-4">
-            <div>
+            <div className="pt-2">
               <h2 className="text-3xl font-serif font-black uppercase tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-white to-gray-400">
                 Devotional Playlist
               </h2>
