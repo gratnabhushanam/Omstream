@@ -254,13 +254,13 @@ export default function Songs() {
     <div 
       className="min-h-screen px-4 sm:px-6 lg:px-8 relative bg-[#06101E] overflow-x-hidden flex flex-col items-center w-full"
       style={{ 
-        paddingTop: 'max(1.5rem, env(safe-area-inset-top))',
+        paddingTop: '1rem',
         paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 5.5rem)' 
       }}
     >
       <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(circle_at_center,rgba(255,215,0,0.05),transparent_60%)]"></div>
       
-      <div className="w-full max-w-5xl mx-auto relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 mt-4 sm:mt-0">
+      <div className="w-full max-w-5xl mx-auto relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-4 lg:gap-12">
         
         {/* Left Side: Music Player */}
         <div className="lg:col-span-5 flex flex-col items-center order-2 lg:order-1 w-full max-w-md mx-auto">
@@ -398,13 +398,13 @@ export default function Songs() {
         </div>
 
         {/* Right Side: Playlist */}
-        <div className="lg:col-span-7 flex flex-col order-1 lg:order-2 w-full mt-4 lg:mt-0">
-          <div className="mb-6 flex flex-col sm:flex-row items-start sm:items-end justify-between gap-4">
-            <div className="pt-2">
-              <h2 className="text-3xl font-serif font-black uppercase tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-white to-gray-400">
+        <div className="lg:col-span-7 flex flex-col order-1 lg:order-2 w-full">
+          <div className="mb-3 flex flex-col sm:flex-row items-start sm:items-end justify-between gap-3">
+            <div>
+              <h2 className="text-xl sm:text-3xl font-serif font-black uppercase tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-white to-gray-400">
                 Devotional Playlist
               </h2>
-              <span className="text-devotion-gold text-sm font-bold tracking-widest uppercase">{songs.length} Tracks</span>
+              <span className="text-devotion-gold text-xs sm:text-sm font-bold tracking-widest uppercase">{songs.length} Tracks</span>
             </div>
             
             <div className="relative w-full sm:w-64">
@@ -419,7 +419,7 @@ export default function Songs() {
             </div>
           </div>
 
-          <div className="flex flex-col gap-3 h-[500px] overflow-y-auto custom-scrollbar pr-2 pb-10">
+          <div className="flex flex-col gap-2 sm:gap-3 max-h-[35vh] sm:max-h-none sm:h-[500px] overflow-y-auto custom-scrollbar pr-1 sm:pr-2 pb-4">
             {songs.filter(s => s.title.toLowerCase().includes(searchQuery.toLowerCase()) || s.artist.toLowerCase().includes(searchQuery.toLowerCase())).map((song) => {
               const actualIndex = songs.findIndex(s => s._id === song._id);
               const isSelected = currentSongIndex === actualIndex;
