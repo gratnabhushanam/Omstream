@@ -47,6 +47,7 @@ router.post('/register/verify-otp', authLimiter, verifyRegistrationOtp);
 router.post('/register/resend-otp', otpLimiter, resendRegistrationOtp);
 
 // Unified OTP Auth Endpoints
+router.post('/check-phone', require('../controllers/otpController').checkIdentifierExists);
 router.post('/send-otp', otpLimiter, require('../controllers/otpController').sendOtp);
 router.post('/verify-otp', authLimiter, require('../controllers/otpController').verifyOtp);
 

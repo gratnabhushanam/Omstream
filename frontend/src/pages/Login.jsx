@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { ArrowRight, Sparkles, Shield, Heart, Eye, EyeOff, Mail, Phone, RotateCcw, KeyRound } from 'lucide-react';
 import PhoneInput from '../components/PhoneInput';
 import { useAuth } from '../context/AuthContext';
+import axios from 'axios';
 import DeviceLimitResolver from '../components/DeviceLimitResolver';
 import heroImage from '../assets/hero.png';
 import '../styles/auth.css';
@@ -24,9 +25,15 @@ export default function Login() {
   const [previewCode, setPreviewCode] = useState('');
   const [pendingRequestId, setPendingRequestId] = useState(null);
   const [otpResendCooldown, setOtpResendCooldown] = useState(0);
+  const [checkResult, setCheckResult] = useState(null);
+  const [checkingPhone, setCheckingPhone] = useState(false);
 
   const { login, sendOtpLogin, verifyOtpLogin } = useAuth();
   const navigate = useNavigate();
+
+  React.useEffect(() => {
+    setCheckResult(null);
+  }, [phoneVal, formData.email, otpTarget]);
 
   React.useEffect(() => {
     if (otpResendCooldown <= 0) return undefined;
@@ -35,6 +42,38 @@ export default function Login() {
     }, 1000);
     return () => clearInterval(timer);
   }, [otpResendCooldown]);
+
+  const handleCheckIdentifier = async (e) => {
+    if (e) e.preventDefault();
+    setError('');
+    setCheckingPhone(true);
+    try {
+      let payload = {};
+      if (otpTarget === 'phone') {
+        if (!phoneVal || phoneVal.trim().length < 4) {
+          setError('Please enter a valid Phone Number');
+          setCheckingPhone(false);
+          return;
+        }
+        const fullPhone = selectedCountry ? selectedCountry.dial + phoneVal.replace(/\D/g, '') : phoneVal.replace(/\D/g, '');
+        payload = { phone: fullPhone };
+      } else {
+        if (!formData.email) {
+          setError('Please enter your Email Address');
+          setCheckingPhone(false);
+          return;
+        }
+        payload = { email: formData.email.toLowerCase().trim() };
+      }
+
+      const { data } = await axios.post('/api/auth/check-phone', payload);
+      setCheckResult(data);
+    } catch (err) {
+      setError(err.response?.data?.message || err.message || 'Failed to check database.');
+    } finally {
+      setCheckingPhone(false);
+    }
+  };
 
   const handleLogin = async (event) => {
     event.preventDefault();
@@ -346,7 +385,7 @@ export default function Login() {
                 {loginType === 'otp' && (
                   <div>
                     {!otpSent ? (
-                      <form onSubmit={handleSendOtp} className="space-y-4">
+                      <form onSubmit={checkResult ? handleSendOtp : handleCheckIdentifier} className="space-y-4">
                         {/* Sub-selector for target type */}
                         <div className="flex gap-4 items-center bg-white/5 p-1 rounded-xl w-fit mb-2">
                           <button
@@ -395,8 +434,16 @@ export default function Login() {
                           </div>
                         )}
 
-                        <button type="submit" disabled={loading} className="auth-button mt-4 w-full px-5 py-3.5">
-                          {loading ? 'Please wait...' : 'Send OTP'}
+                        {checkResult && (
+                          <div className={`text-sm font-semibold rounded-2xl border p-4 ${checkResult.exists ? 'text-emerald-400 border-emerald-500/25 bg-emerald-500/10' : 'text-[#f7d77d] border-[#f7d77d]/20 bg-[#f7d77d]/8'}`}>
+                            {checkResult.exists ? 'Welcome back! Login using OTP.' : 'Welcome! Create your account using OTP.'}
+                          </div>
+                        )}
+
+                        <button type="submit" disabled={loading || checkingPhone} className="auth-button mt-4 w-full px-5 py-3.5">
+                          {loading || checkingPhone ? 'Please wait...' : (
+                            !checkResult ? 'Continue' : (checkResult.exists ? 'Login' : 'Create Account')
+                          )}
                         </button>
                       </form>
                     ) : (

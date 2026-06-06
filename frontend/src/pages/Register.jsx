@@ -102,7 +102,13 @@ export default function Register() {
         },
       });
     } catch (err) {
-      setError(err.response?.data?.message || 'Registration failed. Please try again.');
+      const errMsg = err.response?.data?.message || 'Registration failed. Please try again.';
+      setError(errMsg);
+      if (err.response?.data?.redirect) {
+        setTimeout(() => {
+          navigate(err.response.data.redirect);
+        }, 2500);
+      }
     } finally {
       setLoading(false);
     }

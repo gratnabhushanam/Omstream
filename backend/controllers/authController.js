@@ -81,6 +81,17 @@ exports.registerUser = async (req, res) => {
       return res.status(400).json({ message: 'User already exists' });
     }
 
+    if (phoneNumber) {
+      const existingPhoneUser = await User.findOne({ phone: phoneNumber.trim() });
+      if (existingPhoneUser) {
+        console.warn(`[AUTH] Registration failed: Phone already registered ${phoneNumber}`);
+        return res.status(400).json({ 
+          message: 'This mobile number is already registered.',
+          redirect: '/login' 
+        });
+      }
+    }
+
     const hashedPassword = await bcrypt.hash(password, 8);
     const otp = createOtp();
     pendingRegistrations.set(safeEmail, { name, email: safeEmail, phoneNumber, password: hashedPassword, otp, expiresAt: getOtpExpiryTime(), attempts: 0 });

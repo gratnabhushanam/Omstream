@@ -137,3 +137,27 @@ exports.verifyOtp = async (req, res) => {
         res.status(500).json({ message: error.message }); 
     }
 };
+
+exports.checkIdentifierExists = async (req, res) => {
+    try {
+        const { phone, email } = req.body;
+        let query = {};
+        if (phone) {
+            query = { phone: phone.trim() };
+        } else if (email) {
+            query = { email: email.toLowerCase().trim() };
+        } else {
+            return res.status(400).json({ message: 'Email or Phone Number is required' });
+        }
+
+        const user = await User.findOne(query);
+        if (user) {
+            return res.json({ exists: true, message: 'Welcome back! Login using OTP.' });
+        } else {
+            return res.json({ exists: false, message: 'Welcome! Create your account using OTP.' });
+        }
+    } catch (error) {
+        console.error('[OTP] checkIdentifierExists error:', error);
+        res.status(500).json({ message: error.message });
+    }
+};
