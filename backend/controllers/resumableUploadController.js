@@ -20,40 +20,44 @@ async function handleResumableUpload(req, res) {
     try { rawTags = decodeURIComponent(rawTags); } catch (e) { }
     const tags = rawTags.split(',').map(t => t.trim()).filter(Boolean);
     
-    const duration = await getVideoDurationSeconds(filePath).catch(() => 0);
-
-    // HLS transcoding
-    const hlsOutputDir = path.join(__dirname, '..', 'uploads', 'hls', path.parse(fileName).name);
-    await new Promise((resolve) => {
-      transcodeToHLS(filePath, hlsOutputDir, 'playlist', () => resolve());
-    });
+    const isVideoFile = fileName.match(/\.(mp4|mov|avi|mkv|webm)$/i);
+    const duration = isVideoFile ? await getVideoDurationSeconds(filePath).catch(() => 0) : 0;
 
     const backendUrl = `${req.secure || req.headers['x-forwarded-proto'] === 'https' ? 'https' : 'http'}://${req.get('host')}`;
-    let masterPlaylistUrl = `${backendUrl}/uploads/hls/${path.parse(fileName).name}/${path.parse(fileName).name}_master.m3u8`;
+    let masterPlaylistUrl = '';
     let videoUrl = `${backendUrl}/uploads/reels/${fileName}`;
+    const hlsOutputDir = path.join(__dirname, '..', 'uploads', 'hls', path.parse(fileName).name);
+
+    if (isVideoFile) {
+      // HLS transcoding only for videos
+      await new Promise((resolve) => {
+        transcodeToHLS(filePath, hlsOutputDir, 'playlist', () => resolve());
+      });
+      masterPlaylistUrl = `${backendUrl}/uploads/hls/${path.parse(fileName).name}/${path.parse(fileName).name}_master.m3u8`;
+    }
 
     if (process.env.BLOB_READ_WRITE_TOKEN) {
       try {
-        const hlsFiles = fs.readdirSync(hlsOutputDir);
-        
-        // Upload in batches of 10 to prevent hitting Vercel Blob rate limits while remaining extremely fast
-        const batchSize = 10;
-        for (let i = 0; i < hlsFiles.length; i += batchSize) {
-          const batch = hlsFiles.slice(i, i + batchSize);
-          await Promise.all(batch.map(async (f) => {
-            const cdnUrl = await uploadToVercelBlob(path.join(hlsOutputDir, f), `videos/${path.parse(fileName).name}/${f}`);
-            if (f.endsWith('_master.m3u8')) masterPlaylistUrl = cdnUrl;
-          }));
+        if (isVideoFile && fs.existsSync(hlsOutputDir)) {
+          const hlsFiles = fs.readdirSync(hlsOutputDir);
+          
+          // Upload in batches of 10 to prevent hitting Vercel Blob rate limits while remaining extremely fast
+          const batchSize = 10;
+          for (let i = 0; i < hlsFiles.length; i += batchSize) {
+            const batch = hlsFiles.slice(i, i + batchSize);
+            await Promise.all(batch.map(async (f) => {
+              const cdnUrl = await uploadToVercelBlob(path.join(hlsOutputDir, f), `videos/${path.parse(fileName).name}/${f}`);
+              if (f.endsWith('_master.m3u8')) masterPlaylistUrl = cdnUrl;
+            }));
+          }
         }
         
-        videoUrl = await uploadToVercelBlob(filePath, `videos/${fileName}`);
+        videoUrl = await uploadToVercelBlob(filePath, `media/${fileName}`);
         
         // CRITICAL DISK CLEANUP for millions of users
         try {
-          fs.rmSync(hlsOutputDir, { recursive: true, force: true });
-          if (fs.existsSync(filePath)) {
-            fs.unlinkSync(filePath);
-          }
+          if (fs.existsSync(hlsOutputDir)) fs.rmSync(hlsOutputDir, { recursive: true, force: true });
+          if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
           console.log(`[CLEANUP] Freed local disk space for ${fileName}`);
         } catch (cleanupErr) {
           console.error('[CLEANUP ERROR]', cleanupErr);
