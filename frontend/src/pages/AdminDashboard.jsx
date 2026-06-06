@@ -110,7 +110,7 @@ function AdminDashboardContent() {
   const [showMultiUpload, setShowMultiUpload] = useState(false);
   const [multiChaptersText, setMultiChaptersText] = useState('');
   const [selectedTargetStoryId, setSelectedTargetStoryId] = useState('');
-  const [songForm, setSongForm] = useState({ title: '', artist: '', url: '', cover: '', duration: '' });
+  const [songForm, setSongForm] = useState({ title: '', artist: '', url: '', cover: '', duration: '', language: 'telugu' });
   const [videoForm, setVideoForm] = useState({ title: '', description: '', videoUrl: '', trailerUrl: '', category: 'reels', collectionTitle: 'Bhagavad Gita', isKids: false, isComingSoon: false, tags: '', quizSetId: '', views: 0 });
   // Quiz builder state for video upload
   const [videoQuizList, setVideoQuizList] = useState([]);
@@ -803,7 +803,7 @@ function AdminDashboardContent() {
   };
 
   const resetForms = () => {
-    setSongForm({ title: '', artist: '', url: '', cover: '', duration: '' });
+    setSongForm({ title: '', artist: '', url: '', cover: '', duration: '', language: 'telugu' });
     setMovieForm({ title: '', description: '', videoUrl: '', hlsUrl: '', trailerUrl: '', thumbnail: '', releaseYear: 2025, ownerHistory: '', tags: '', views: 0, isComingSoon: false, isKids: false, genre: 'Divine', duration: 0, originalLanguage: 'en' });
     setStoryForm({
       title: '',
@@ -1345,6 +1345,7 @@ function AdminDashboardContent() {
                         <tr className="border-b border-white/10 text-xs uppercase tracking-widest text-gray-400">
                           <th className="pb-4 pr-4 font-black">Song</th>
                           <th className="pb-4 pr-4 font-black">Artist</th>
+                          <th className="pb-4 pr-4 font-black">Language</th>
                           <th className="pb-4 pr-4 font-black">Duration</th>
                           <th className="pb-4 font-black text-right">Actions</th>
                         </tr>
@@ -1362,6 +1363,7 @@ function AdminDashboardContent() {
                               </div>
                             </td>
                             <td className="py-4 pr-4 text-gray-300 font-medium">{song.artist}</td>
+                            <td className="py-4 pr-4 text-gray-400 capitalize">{song.language || 'telugu'}</td>
                             <td className="py-4 pr-4 text-gray-300">{song.duration}</td>
                             <td className="py-4 text-right">
                               <button onClick={() => handleDeleteContent('songs', song._id, song.title)} className="text-red-400 hover:text-red-300 p-2 rounded-xl hover:bg-red-400/10 transition-colors">
@@ -2607,6 +2609,14 @@ function AdminDashboardContent() {
                     <div>
                       <label className="text-[10px] font-black uppercase tracking-widest text-devotion-gold ml-2">Duration (e.g. 5:30)</label>
                       <input type="text" className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-5 text-white focus:border-devotion-gold outline-none" value={songForm.duration} onChange={e => setSongForm({...songForm, duration: e.target.value})} placeholder="5:30" />
+                    </div>
+                    <div>
+                      <label className="text-[10px] font-black uppercase tracking-widest text-devotion-gold ml-2">Language</label>
+                      <select className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-5 text-white focus:border-devotion-gold outline-none" value={songForm.language} onChange={e => setSongForm({...songForm, language: e.target.value})}>
+                        <option value="telugu" className="bg-[#06101E]">Telugu</option>
+                        <option value="hindi" className="bg-[#06101E]">Hindi</option>
+                        <option value="english" className="bg-[#06101E]">English</option>
+                      </select>
                     </div>
                   </div>
                 )}

@@ -3,7 +3,10 @@ import { Play, Pause, SkipForward, SkipBack, Volume2, VolumeX, Music } from 'luc
 import ReactPlayer from 'react-player';
 import axios from 'axios';
 
+import { useLanguage } from '../context/LanguageContext';
+
 export default function Songs() {
+  const { language } = useLanguage();
   const [songs, setSongs] = useState([]);
   const [currentSongIndex, setCurrentSongIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -17,16 +20,19 @@ export default function Songs() {
   useEffect(() => {
     const fetchSongs = async () => {
       try {
-        const { data } = await axios.get('/api/songs');
+        const { data } = await axios.get(`/api/songs?language=${language || 'telugu'}`);
         if (data && data.length > 0) {
           setSongs(data);
+          setCurrentSongIndex(0);
+        } else {
+          setSongs([]);
         }
       } catch (error) {
         console.error('Error fetching songs:', error);
       }
     };
     fetchSongs();
-  }, []);
+  }, [language]);
 
   const currentSong = songs[currentSongIndex] || null;
 

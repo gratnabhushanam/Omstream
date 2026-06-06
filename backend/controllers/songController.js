@@ -2,7 +2,11 @@ const { Song } = require('../models');
 
 exports.getAllSongs = async (req, res) => {
   try {
-    const songs = await Song.find({ status: 'published' }).sort({ createdAt: -1 });
+    const filter = { status: 'published' };
+    if (req.query.language) {
+      filter.language = req.query.language;
+    }
+    const songs = await Song.find(filter).sort({ createdAt: -1 });
     res.json(songs);
   } catch (error) {
     res.status(500).json({ message: error.message });
