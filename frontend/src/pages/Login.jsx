@@ -1,531 +1,712 @@
-import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { ArrowRight, Sparkles, Shield, Heart, Eye, EyeOff, Mail, Phone, RotateCcw, KeyRound } from 'lucide-react';
-import PhoneInput from '../components/PhoneInput';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import axios from 'axios';
 import DeviceLimitResolver from '../components/DeviceLimitResolver';
-import heroImage from '../assets/hero.png';
-import '../styles/auth.css';
 
+// ─── Country data ────────────────────────────────────────────────────────────
+const COUNTRIES = [
+  { name: 'India',          dial: '+91', flag: '🇮🇳', code: 'IN' },
+  { name: 'United States',  dial: '+1',  flag: '🇺🇸', code: 'US' },
+  { name: 'United Kingdom', dial: '+44', flag: '🇬🇧', code: 'GB' },
+  { name: 'UAE',            dial: '+971',flag: '🇦🇪', code: 'AE' },
+  { name: 'Saudi Arabia',   dial: '+966',flag: '🇸🇦', code: 'SA' },
+  { name: 'Canada',         dial: '+1',  flag: '🇨🇦', code: 'CA' },
+  { name: 'Australia',      dial: '+61', flag: '🇦🇺', code: 'AU' },
+  { name: 'Singapore',      dial: '+65', flag: '🇸🇬', code: 'SG' },
+  { name: 'Germany',        dial: '+49', flag: '🇩🇪', code: 'DE' },
+  { name: 'Malaysia',       dial: '+60', flag: '🇲🇾', code: 'MY' },
+];
+
+const LANGUAGES = [
+  { code: 'te', name: 'Telugu',    native: 'తెలుగు' },
+  { code: 'hi', name: 'Hindi',     native: 'हिन्दी' },
+  { code: 'en', name: 'English',   native: 'English' },
+  { code: 'ta', name: 'Tamil',     native: 'தமிழ்' },
+  { code: 'kn', name: 'Kannada',   native: 'ಕನ್ನಡ' },
+  { code: 'ml', name: 'Malayalam', native: 'മലയാളം' },
+  { code: 'bn', name: 'Bengali',   native: 'বাংলা' },
+  { code: 'mr', name: 'Marathi',   native: 'मराठी' },
+];
+
+const INTERESTS = [
+  { id: 'gita',      label: '📖 Bhagavad Gita' },
+  { id: 'ramayana',  label: '🏹 Ramayana' },
+  { id: 'krishna',   label: '🪈 Krishna Stories' },
+  { id: 'shiva',     label: '🔱 Shiva Purana' },
+  { id: 'yoga',      label: '🧘 Yoga & Meditation' },
+  { id: 'music',     label: '🎵 Devotional Music' },
+  { id: 'kids',      label: '🌟 Kids Stories' },
+  { id: 'mahabharata',label: '⚔️ Mahabharata' },
+];
+
+const STEPS = { WELCOME: 0, PHONE: 1, DETECTED: 2, OTP: 3, ONBOARDING: 4 };
+
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+const maskPhone = (dial, phone) => {
+  const d = phone.replace(/\D/g, '');
+  if (d.length <= 4) return `${dial} ${d}`;
+  return `${dial} ${'•'.repeat(d.length - 4)}${d.slice(-4)}`;
+};
+
+// ─── OTP Box ─────────────────────────────────────────────────────────────────
+function OtpBoxes({ value, onChange, onKeyDown, refs, loading }) {
+  return (
+    <div className="flex gap-2 sm:gap-3 justify-center">
+      {value.map((digit, i) => (
+        <input
+          key={i}
+          ref={el => refs.current[i] = el}
+          type="text"
+          inputMode="numeric"
+          maxLength={1}
+          value={digit}
+          onChange={e => onChange(i, e.target.value)}
+          onKeyDown={e => onKeyDown(i, e)}
+          onFocus={e => e.target.select()}
+          disabled={loading}
+          className={`
+            w-11 h-14 sm:w-13 sm:h-16 rounded-2xl text-center text-2xl font-black
+            border-2 outline-none transition-all duration-200
+            bg-white/5 text-white caret-transparent
+            ${digit
+              ? 'border-amber-400 bg-amber-400/10 shadow-[0_0_16px_rgba(251,191,36,0.35)]'
+              : 'border-white/15 focus:border-amber-400/60 focus:bg-white/8'}
+            ${loading ? 'opacity-50' : ''}
+          `}
+          style={{ fontSize: digit ? '1.5rem' : '1rem' }}
+        />
+      ))}
+    </div>
+  );
+}
+
+// ─── Main Component ───────────────────────────────────────────────────────────
 export default function Login() {
-  const [loginType, setLoginType] = useState('email'); // 'email', 'phone', 'otp'
-  const [formData, setFormData] = useState({ email: '', password: '' });
-  const [selectedCountry, setSelectedCountry] = useState(null);
-  const [phoneVal, setPhoneVal] = useState('');
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [focusedField, setFocusedField] = useState(null);
-  const [showPassword, setShowPassword] = useState(false);
-
-  // OTP Login specific states
-  const [otpSent, setOtpSent] = useState(false);
-  const [otpVal, setOtpVal] = useState('');
-  const [otpTarget, setOtpTarget] = useState('phone'); // 'phone' or 'email'
-  const [previewCode, setPreviewCode] = useState('');
+  const [step, setStep]                   = useState(STEPS.WELCOME);
+  const [direction, setDirection]         = useState(1); // 1=forward, -1=back
+  const [country, setCountry]             = useState(COUNTRIES[0]);
+  const [showCountryPicker, setShowCountryPicker] = useState(false);
+  const [phone, setPhone]                 = useState('');
+  const [userExists, setUserExists]       = useState(null);
+  const [otp, setOtp]                     = useState(['', '', '', '', '', '']);
+  const [previewCode, setPreviewCode]     = useState('');
+  const [resendCooldown, setResendCooldown] = useState(0);
+  const [loading, setLoading]             = useState(false);
+  const [error, setError]                 = useState('');
   const [pendingRequestId, setPendingRequestId] = useState(null);
-  const [otpResendCooldown, setOtpResendCooldown] = useState(0);
-  const [checkResult, setCheckResult] = useState(null);
-  const [checkingPhone, setCheckingPhone] = useState(false);
+  const [onboarding, setOnboarding]       = useState({ name: '', language: 'te', interests: [] });
+  const [animating, setAnimating]         = useState(false);
 
-  const { login, sendOtpLogin, verifyOtpLogin } = useAuth();
-  const navigate = useNavigate();
+  const otpRefs    = useRef([]);
+  const phoneRef   = useRef(null);
+  const navigate   = useNavigate();
+  const { sendOtpLogin, verifyOtpLogin } = useAuth();
 
-  React.useEffect(() => {
-    setCheckResult(null);
-  }, [phoneVal, formData.email, otpTarget]);
+  const fullPhone = country.dial + phone.replace(/\D/g, '');
 
-  React.useEffect(() => {
-    if (otpResendCooldown <= 0) return undefined;
-    const timer = setInterval(() => {
-      setOtpResendCooldown((prev) => (prev <= 1 ? 0 : prev - 1));
-    }, 1000);
-    return () => clearInterval(timer);
-  }, [otpResendCooldown]);
+  // Cooldown timer
+  useEffect(() => {
+    if (resendCooldown <= 0) return;
+    const t = setInterval(() => setResendCooldown(p => (p <= 1 ? 0 : p - 1)), 1000);
+    return () => clearInterval(t);
+  }, [resendCooldown]);
 
-  const handleCheckIdentifier = async (e) => {
-    if (e) e.preventDefault();
+  // Auto focus phone on step 1
+  useEffect(() => {
+    if (step === STEPS.PHONE) setTimeout(() => phoneRef.current?.focus(), 350);
+  }, [step]);
+
+  // Auto focus otp[0] on step 3
+  useEffect(() => {
+    if (step === STEPS.OTP) setTimeout(() => otpRefs.current[0]?.focus(), 350);
+  }, [step]);
+
+  const goTo = useCallback((next, dir = 1) => {
+    setDirection(dir);
+    setAnimating(true);
     setError('');
-    setCheckingPhone(true);
-    try {
-      let payload = {};
-      if (otpTarget === 'phone') {
-        if (!phoneVal || phoneVal.trim().length < 4) {
-          setError('Please enter a valid Phone Number');
-          setCheckingPhone(false);
-          return;
-        }
-        const fullPhone = selectedCountry ? selectedCountry.dial + phoneVal.replace(/\D/g, '') : phoneVal.replace(/\D/g, '');
-        payload = { phone: fullPhone };
-      } else {
-        if (!formData.email) {
-          setError('Please enter your Email Address');
-          setCheckingPhone(false);
-          return;
-        }
-        payload = { email: formData.email.toLowerCase().trim() };
-      }
+    setTimeout(() => {
+      setStep(next);
+      setAnimating(false);
+    }, 200);
+  }, []);
 
-      const { data } = await axios.post('/api/auth/check-phone', payload);
-      setCheckResult(data);
-    } catch (err) {
-      setError(err.response?.data?.message || err.message || 'Failed to check database.');
-    } finally {
-      setCheckingPhone(false);
-    }
-  };
-
-  const handleLogin = async (event) => {
-    event.preventDefault();
+  // ── Step handlers ──────────────────────────────────────────────────────────
+  const handlePhoneContinue = async () => {
+    const digits = phone.replace(/\D/g, '');
+    if (digits.length < 7) { setError('Please enter a valid mobile number'); return; }
     setError('');
-
-    let loginIdentifier = formData.email;
-    if (loginType === 'phone') {
-      if (!phoneVal) {
-        setError('Please enter your Phone Number');
-        return;
-      }
-      loginIdentifier = selectedCountry ? selectedCountry.dial + phoneVal.replace(/\D/g, '') : phoneVal.replace(/\D/g, '');
-    } else {
-      if (!formData.email) {
-        setError('Please enter your Email Address');
-        return;
-      }
-    }
-
-    if (!formData.password) {
-      setError('Please enter your Password');
-      return;
-    }
-
     setLoading(true);
     try {
-      await login(loginIdentifier, formData.password);
-      navigate('/home', { replace: true });
+      const { data } = await axios.post('/api/auth/check-phone', { phone: fullPhone });
+      setUserExists(data.exists);
+      goTo(STEPS.DETECTED);
     } catch (err) {
-      if (err.response?.data?.status === 'device_limit_reached') {
-        setPendingRequestId(err.response.data.deviceRequestId);
-      } else {
-        const errorMessage = err.response?.data?.message || err.message || 'Invalid credentials.';
-        setError(errorMessage);
-      }
+      setError(err.response?.data?.message || 'Network error. Please try again.');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleSendOtp = async (e) => {
-    e.preventDefault();
+  const handleSendOtp = async () => {
     setError('');
-    setPreviewCode('');
     setLoading(true);
-
     try {
-      let payload = {};
-      if (otpTarget === 'phone') {
-        if (!phoneVal) {
-          setError('Please enter your Phone Number');
-          setLoading(false);
-          return;
-        }
-        const fullPhone = selectedCountry ? selectedCountry.dial + phoneVal.replace(/\D/g, '') : phoneVal.replace(/\D/g, '');
-        payload = { phone: fullPhone };
-      } else {
-        if (!formData.email) {
-          setError('Please enter your Email Address');
-          setLoading(false);
-          return;
-        }
-        payload = { email: formData.email.toLowerCase().trim() };
-      }
-
-      const res = await sendOtpLogin(payload);
-      setOtpSent(true);
-      setOtpResendCooldown(30);
+      const res = await sendOtpLogin({ phone: fullPhone });
+      setPreviewCode(res.previewCode || '');
       if (res.previewCode) {
-        setPreviewCode(res.previewCode);
-        setOtpVal(res.previewCode); // Auto-fill OTP for testing
+        const digits = res.previewCode.toString().split('');
+        setOtp(digits.length === 6 ? digits : ['', '', '', '', '', '']);
+      } else {
+        setOtp(['', '', '', '', '', '']);
       }
+      setResendCooldown(30);
+      goTo(STEPS.OTP);
     } catch (err) {
-      setError(err.response?.data?.message || err.message || 'Failed to send OTP.');
+      setError(err.response?.data?.message || 'Failed to send OTP. Try again.');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleVerifyOtp = async (e) => {
-    e.preventDefault();
+  const handleResendOtp = async () => {
+    if (resendCooldown > 0) return;
     setError('');
-    if (!otpVal || otpVal.trim().length < 4) {
-      setError('Please enter a valid OTP code');
-      return;
-    }
     setLoading(true);
-
     try {
-      let payload = { otp: otpVal.trim() };
-      if (otpTarget === 'phone') {
-        const fullPhone = selectedCountry ? selectedCountry.dial + phoneVal.replace(/\D/g, '') : phoneVal.replace(/\D/g, '');
-        payload.phone = fullPhone;
+      const res = await sendOtpLogin({ phone: fullPhone });
+      setPreviewCode(res.previewCode || '');
+      if (res.previewCode) {
+        const digits = res.previewCode.toString().split('');
+        setOtp(digits.length === 6 ? digits : ['', '', '', '', '', '']);
       } else {
-        payload.email = formData.email.toLowerCase().trim();
+        setOtp(['', '', '', '', '', '']);
+        setTimeout(() => otpRefs.current[0]?.focus(), 100);
       }
+      setResendCooldown(30);
+    } catch (err) {
+      setError(err.response?.data?.message || 'Failed to resend OTP.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
-      await verifyOtpLogin(payload);
-      navigate('/home', { replace: true });
+  const handleOtpChange = useCallback((index, raw) => {
+    if (!/^\d*$/.test(raw)) return;
+    setOtp(prev => {
+      const next = [...prev];
+      next[index] = raw.slice(-1);
+      // Auto-advance
+      if (raw && index < 5) setTimeout(() => otpRefs.current[index + 1]?.focus(), 0);
+      // Auto-submit
+      if (next.every(d => d) && next.join('').length === 6) {
+        setTimeout(() => submitOtp(next.join('')), 120);
+      }
+      return next;
+    });
+  }, []); // eslint-disable-line
+
+  const handleOtpKeyDown = useCallback((index, e) => {
+    if (e.key === 'Backspace' && !otp[index] && index > 0) {
+      otpRefs.current[index - 1]?.focus();
+    }
+  }, [otp]);
+
+  const submitOtp = async (code) => {
+    if (code.length < 6 || loading) return;
+    setError('');
+    setLoading(true);
+    try {
+      const result = await verifyOtpLogin({ phone: fullPhone, otp: code });
+      const isNewUser = result.isNew || !result.user?.name || (result.user?.name || '').startsWith('Member ');
+      if (isNewUser) {
+        goTo(STEPS.ONBOARDING);
+      } else {
+        navigate('/home', { replace: true });
+      }
     } catch (err) {
       if (err.response?.data?.status === 'device_limit_reached') {
         setPendingRequestId(err.response.data.deviceRequestId);
       } else {
-        setError(err.response?.data?.message || err.message || 'OTP verification failed.');
+        setError(err.response?.data?.message || 'Invalid or expired OTP. Try again.');
+        setOtp(['', '', '', '', '', '']);
+        setTimeout(() => otpRefs.current[0]?.focus(), 100);
       }
     } finally {
       setLoading(false);
     }
   };
 
-  const resetOtpFlow = () => {
-    setOtpSent(false);
-    setOtpVal('');
-    setPreviewCode('');
-    setError('');
+  const handleVerifyOtp = (e) => {
+    e.preventDefault();
+    submitOtp(otp.join(''));
   };
 
+  const handleOnboardingComplete = async () => {
+    if (!onboarding.name.trim()) { setError('Please enter your full name'); return; }
+    setError('');
+    setLoading(true);
+    try {
+      const token = localStorage.getItem('token');
+      if (token) {
+        await axios.put('/api/auth/profile', {
+          name: onboarding.name.trim(),
+          settings: { interests: onboarding.interests, preferredLanguage: onboarding.language }
+        }, { headers: { Authorization: `Bearer ${token}` } });
+      }
+    } catch (_) { /* non-critical, continue */ }
+    finally {
+      setLoading(false);
+      navigate('/home', { replace: true });
+    }
+  };
+
+  const toggleInterest = (id) => {
+    setOnboarding(prev => ({
+      ...prev,
+      interests: prev.interests.includes(id)
+        ? prev.interests.filter(i => i !== id)
+        : [...prev.interests, id]
+    }));
+  };
+
+  // ── Device limit screen ────────────────────────────────────────────────────
   if (pendingRequestId) {
     return (
-      <div className="auth-page flex min-h-screen items-center justify-center px-4 py-8 sm:px-6 lg:px-8 bg-[#06101E]">
-        <DeviceLimitResolver 
+      <div className="min-h-screen flex items-center justify-center px-4 bg-[#060e1c]">
+        <DeviceLimitResolver
           deviceRequestId={pendingRequestId}
-          onSuccess={() => {
-            navigate('/home', { replace: true });
-            window.location.reload();
-          }}
+          onSuccess={() => { navigate('/home', { replace: true }); window.location.reload(); }}
           onCancel={() => setPendingRequestId(null)}
         />
       </div>
     );
   }
 
-  return (
-    <div className="auth-page flex min-h-screen items-center px-4 py-8 sm:px-6 lg:px-8 tv:px-24">
-      <div className="auth-stage mx-auto grid w-full max-w-6xl tv:max-w-[1400px] gap-6 lg:grid-cols-[1.1fr_0.9fr] lg:gap-8 tv:gap-16">
-        
-        {/* Left Visual Stage */}
-        <section className="auth-hero rounded-[2rem] p-6 sm:p-8 lg:p-10">
-          <div className="relative z-10 flex h-full flex-col gap-8">
-            <div className="space-y-6">
-              <div className="auth-badge w-fit">
-                <Sparkles className="h-3.5 w-3.5" />
-                Krishna Flow
-              </div>
+  // ── Shared wrappers ────────────────────────────────────────────────────────
+  const slideClass = `transition-all duration-300 ${animating
+    ? direction > 0 ? 'opacity-0 translate-x-8' : 'opacity-0 -translate-x-8'
+    : 'opacity-100 translate-x-0'}`;
 
-              <div className="max-w-2xl space-y-5">
-                <h1 className="text-4xl sm:text-5xl tv:text-7xl font-serif font-black uppercase leading-none tracking-tight text-[#f7d77d]">
-                  Gita Wisdom
-                </h1>
-                <p className="auth-quote max-w-xl text-lg leading-relaxed sm:text-xl">
-                  Enter securely with your registered account or use simple phone/email OTP. Quick access to your spiritual path.
+  return (
+    <div className="min-h-screen flex flex-col items-center justify-center bg-[#060e1c] relative overflow-hidden px-4 py-8">
+
+      {/* ── Ambient background ── */}
+      <div className="pointer-events-none fixed inset-0 z-0">
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[400px] rounded-full opacity-30"
+          style={{ background: 'radial-gradient(ellipse, rgba(251,191,36,0.18) 0%, transparent 70%)' }} />
+        <div className="absolute bottom-0 right-0 w-80 h-80 rounded-full opacity-20"
+          style={{ background: 'radial-gradient(circle, rgba(139,92,246,0.25) 0%, transparent 70%)' }} />
+        <div className="absolute top-1/3 left-0 w-64 h-64 rounded-full opacity-15"
+          style={{ background: 'radial-gradient(circle, rgba(251,146,60,0.2) 0%, transparent 70%)' }} />
+        {/* Floating orbs */}
+        {[...Array(6)].map((_, i) => (
+          <div key={i} className="absolute rounded-full opacity-10 animate-pulse"
+            style={{
+              width: `${40 + i * 20}px`, height: `${40 + i * 20}px`,
+              left: `${10 + i * 15}%`, top: `${20 + (i % 3) * 25}%`,
+              background: i % 2 === 0 ? 'rgba(251,191,36,0.3)' : 'rgba(139,92,246,0.2)',
+              animationDelay: `${i * 0.7}s`, animationDuration: `${3 + i}s`
+            }} />
+        ))}
+      </div>
+
+      {/* ── Logo / Brand ── */}
+      <div className="relative z-10 flex flex-col items-center mb-6 sm:mb-8">
+        <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-3xl flex items-center justify-center mb-3 shadow-[0_0_40px_rgba(251,191,36,0.4)]"
+          style={{ background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 50%, #92400e 100%)' }}>
+          <span className="text-3xl sm:text-4xl">🪈</span>
+        </div>
+        <h1 className="text-xl sm:text-2xl font-black uppercase tracking-[0.2em] text-amber-400">
+          Gita Wisdom
+        </h1>
+        <p className="text-xs text-white/40 tracking-widest uppercase mt-0.5">Divine Content Platform</p>
+      </div>
+
+      {/* ── Card ── */}
+      <div className="relative z-10 w-full max-w-sm">
+        <div className="rounded-3xl border border-white/10 shadow-2xl overflow-hidden"
+          style={{ background: 'rgba(10,18,35,0.85)', backdropFilter: 'blur(24px)' }}>
+
+          {/* Step progress dots */}
+          {step > STEPS.WELCOME && (
+            <div className="flex justify-center gap-2 pt-5 pb-0">
+              {[STEPS.PHONE, STEPS.DETECTED, STEPS.OTP, STEPS.ONBOARDING].map(s => (
+                <div key={s} className={`h-1 rounded-full transition-all duration-500 ${
+                  step === s ? 'w-6 bg-amber-400' :
+                  step > s  ? 'w-3 bg-amber-400/50' : 'w-3 bg-white/15'
+                }`} />
+              ))}
+            </div>
+          )}
+
+          <div className="p-6 sm:p-8">
+
+            {/* ════════════════════════════════════════════════
+                STEP 0 — WELCOME
+            ════════════════════════════════════════════════ */}
+            {step === STEPS.WELCOME && (
+              <div className={`${slideClass} flex flex-col items-center text-center gap-6`}>
+                <div>
+                  <h2 className="text-2xl sm:text-3xl font-black text-white leading-tight mb-3">
+                    Watch, Listen & Learn<br/>
+                    <span className="text-transparent bg-clip-text"
+                      style={{ backgroundImage: 'linear-gradient(90deg, #fbbf24, #f59e0b, #d97706)' }}>
+                      Divine Content
+                    </span>
+                  </h2>
+                  <p className="text-sm text-white/55 leading-relaxed max-w-xs mx-auto">
+                    Experience Bhagavad Gita, devotional music, spiritual stories and timeless wisdom — all in one place.
+                  </p>
+                </div>
+
+                {/* Feature pills */}
+                <div className="flex flex-wrap justify-center gap-2">
+                  {['🎵 Music', '📖 Stories', '🧘 Yoga', '🎬 Videos'].map(f => (
+                    <span key={f} className="text-xs font-semibold text-white/70 bg-white/5 border border-white/10 px-3 py-1 rounded-full">
+                      {f}
+                    </span>
+                  ))}
+                </div>
+
+                <button
+                  onClick={() => goTo(STEPS.PHONE)}
+                  className="w-full py-4 rounded-2xl text-base font-black uppercase tracking-widest text-[#0d1520] transition-all duration-200 active:scale-95 hover:shadow-[0_0_30px_rgba(251,191,36,0.5)]"
+                  style={{ background: 'linear-gradient(135deg, #fbbf24 0%, #f59e0b 50%, #d97706 100%)' }}
+                >
+                  Continue with Mobile Number
+                </button>
+
+                <p className="text-xs text-white/30">
+                  By continuing, you agree to our Terms & Privacy Policy
                 </p>
               </div>
-
-              <div className="grid gap-3 sm:grid-cols-3">
-                <div className="rounded-2xl border border-white/10 bg-white/5 p-4 backdrop-blur-md">
-                  <Shield className="mb-3 h-5 w-5 text-[#f7d77d]" />
-                  <p className="text-sm font-semibold uppercase tracking-[0.18em] text-white/90">Highly Secure</p>
-                  <p className="mt-1 text-xs text-white/70">Using natively secured hash encryption.</p>
-                </div>
-                <div className="rounded-2xl border border-white/10 bg-white/5 p-4 backdrop-blur-md">
-                  <Heart className="mb-3 h-5 w-5 text-[#f7d77d]" />
-                  <p className="text-sm font-semibold uppercase tracking-[0.18em] text-white/90">Easy Entry</p>
-                  <p className="mt-1 text-xs text-white/70">One tap access to your saved resources.</p>
-                </div>
-              </div>
-            </div>
-
-            <div className="relative overflow-hidden rounded-[1.75rem] border border-white/10 bg-black/20 p-4 shadow-[0_24px_70px_rgba(0,0,0,0.32)] sm:p-6 mt-auto">
-              <div className="absolute inset-0 bg-gradient-to-t from-[#06101e]/90 via-transparent to-transparent"></div>
-              <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(255,215,0,0.18),transparent_30%),radial-gradient(circle_at_70%_70%,rgba(255,164,54,0.12),transparent_24%)]"></div>
-              <img src={heroImage} alt="Krishna theme" className="auth-floating-image relative z-10 w-full rounded-[1.4rem] object-cover shadow-[0_20px_50px_rgba(0,0,0,0.35)]" />
-            </div>
-          </div>
-        </section>
-
-        {/* Right Auth Card */}
-        <section className="auth-card rounded-[2rem] p-6 sm:p-8 flex flex-col justify-center relative">
-          <div className="relative z-10">
-            
-            <div className="mb-8 flex items-center justify-between gap-4">
-              <div>
-                <p className="text-[0.7rem] font-bold uppercase tracking-[0.32em] text-[#f7d77d]/85">Secure Portal</p>
-                <h2 className="mt-2 text-2xl sm:text-3xl tv:text-5xl font-serif font-black uppercase tracking-tight text-white">Sign In</h2>
-              </div>
-              <Link to="/home" className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs font-bold uppercase tracking-[0.18em] text-white/80 transition-colors hover:text-[#f7d77d]">
-                Home
-                <ArrowRight className="h-4 w-4" />
-              </Link>
-            </div>
-
-            <div className="mb-5 rounded-2xl border border-[#f7d77d]/20 bg-[#f7d77d]/8 p-4 text-sm text-white/80">
-              Don't have an account?{' '}
-              <Link to="/register" className="font-semibold text-[#f7d77d] underline decoration-[#f7d77d]/40 underline-offset-4">
-                Sign up here
-              </Link>
-            </div>
-
-            {error && (
-              <div className="mb-5 rounded-2xl border border-red-400/25 bg-red-500/10 p-4 text-sm text-red-200">
-                {error}
-              </div>
             )}
 
-            {previewCode && (
-              <div className="mb-5 rounded-2xl border border-[#f7d77d]/30 bg-[#f7d77d]/10 p-4 text-sm text-[#ffe3a3] flex items-center gap-3 animate-pulse">
-                <KeyRound className="h-5 w-5 text-[#f7d77d] shrink-0" />
-                <div>
-                  <span className="font-bold">Testing/Fallback Mode:</span> Use code <span className="font-mono font-black text-white text-base bg-black/40 px-2 py-0.5 rounded border border-[#f7d77d]/35">{previewCode}</span> to verify.
-                </div>
-              </div>
-            )}
+            {/* ════════════════════════════════════════════════
+                STEP 1 — PHONE NUMBER
+            ════════════════════════════════════════════════ */}
+            {step === STEPS.PHONE && (
+              <div className={`${slideClass}`}>
+                <button onClick={() => goTo(STEPS.WELCOME, -1)}
+                  className="text-white/40 hover:text-white text-xs uppercase tracking-wider font-semibold flex items-center gap-1 mb-5 transition-colors">
+                  ← Back
+                </button>
 
-             <div className="animate-fade-in-up">
-                {/* Tabs to toggle login type */}
-                <div className="flex gap-4 mb-6 border-b border-white/10 pb-3 overflow-x-auto">
-                  <button
-                    type="button"
-                    onClick={() => { setLoginType('email'); setError(''); }}
-                    className={`text-xs font-bold uppercase tracking-wider pb-1 shrink-0 transition-all ${loginType === 'email' ? 'text-[#f7d77d] border-b-2 border-[#f7d77d]' : 'text-white/50 hover:text-white'}`}
-                  >
-                    Email Login
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => { setLoginType('phone'); setError(''); }}
-                    className={`text-xs font-bold uppercase tracking-wider pb-1 shrink-0 transition-all ${loginType === 'phone' ? 'text-[#f7d77d] border-b-2 border-[#f7d77d]' : 'text-white/50 hover:text-white'}`}
-                  >
-                    Phone Login
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => { setLoginType('otp'); setError(''); }}
-                    className={`text-xs font-bold uppercase tracking-wider pb-1 shrink-0 transition-all ${loginType === 'otp' ? 'text-[#f7d77d] border-b-2 border-[#f7d77d]' : 'text-white/50 hover:text-white'}`}
-                  >
-                    OTP Login (JioHotstar)
-                  </button>
-                </div>
+                <h2 className="text-xl sm:text-2xl font-black text-white mb-1">Enter Mobile Number</h2>
+                <p className="text-sm text-white/45 mb-6">We'll send an OTP to verify your number</p>
 
-                {/* Password-based Login Form */}
-                {loginType !== 'otp' && (
-                  <form onSubmit={handleLogin} className="space-y-4">
-                      {loginType === 'email' ? (
-                        <div>
-                            <label className="mb-2 block text-xs font-bold uppercase tracking-[0.2em] text-white/80">
-                                Email Address
-                            </label>
-                            <input
-                                type="email"
-                                required
-                                value={formData.email}
-                                onChange={(event) => setFormData(c => ({...c, email: event.target.value}))}
-                                onFocus={() => setFocusedField('id')}
-                                onBlur={() => setFocusedField(null)}
-                                placeholder="arjuna@example.com"
-                                className={`auth-input ${focusedField === 'id' ? 'shadow-[0_0_0_4px_rgba(255,215,0,0.12)]' : ''}`}
-                            />
-                        </div>
-                      ) : (
-                        <div>
-                            <label className="mb-2 block text-xs font-bold uppercase tracking-[0.2em] text-white/80">
-                                Phone Number
-                            </label>
-                            <PhoneInput
-                              value={phoneVal}
-                              onChange={setPhoneVal}
-                              selectedCountry={selectedCountry}
-                              setSelectedCountry={setSelectedCountry}
-                            />
-                        </div>
-                      )}
-                      <div>
-                          <label className="mb-2 block text-xs font-bold uppercase tracking-[0.2em] text-white/80">
-                            Password
-                          </label>
-                          <div className="relative">
-                            <input
-                              type={showPassword ? 'text' : 'password'}
-                              required
-                              value={formData.password}
-                              onChange={(event) => setFormData(c => ({...c, password: event.target.value}))}
-                              onFocus={() => setFocusedField('password')}
-                              onBlur={() => setFocusedField(null)}
-                              placeholder="••••••••"
-                              className={`auth-input pr-12 ${focusedField === 'password' ? 'shadow-[0_0_0_4px_rgba(255,215,0,0.12)]' : ''}`}
-                            />
-                            <button
-                              type="button"
-                              onClick={() => setShowPassword((value) => !value)}
-                              className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full p-2 text-white/55 transition-colors hover:text-[#f7d77d]"
-                            >
-                              {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                            </button>
-                          </div>
-                      </div>
-
-                      <div className="text-right mt-1">
-                        <Link to="/forgot-password" className="text-[10px] uppercase font-semibold text-gray-400 hover:text-white transition-colors">
-                          Forgot Password?
-                        </Link>
-                      </div>
-
-                      <button type="submit" disabled={loading} className="auth-button mt-4 w-full px-5 py-3.5 tv:py-5 tv:text-xl">
-                          {loading ? 'Please wait...' : 'Sign In'}
-                      </button>
-                  </form>
-                )}
-
-                {/* OTP Login Form (JioHotstar-style) */}
-                {loginType === 'otp' && (
-                  <div>
-                    {!otpSent ? (
-                      <form onSubmit={checkResult ? handleSendOtp : handleCheckIdentifier} className="space-y-4">
-                        {/* Sub-selector for target type */}
-                        <div className="flex gap-4 items-center bg-white/5 p-1 rounded-xl w-fit mb-2">
-                          <button
-                            type="button"
-                            onClick={() => { setOtpTarget('phone'); setError(''); }}
-                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold uppercase tracking-wider transition-colors ${otpTarget === 'phone' ? 'bg-[#f7d77d] text-[#0d1520]' : 'text-white/60 hover:text-white'}`}
-                          >
-                            <Phone className="h-3.5 w-3.5" />
-                            Phone
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => { setOtpTarget('email'); setError(''); }}
-                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold uppercase tracking-wider transition-colors ${otpTarget === 'email' ? 'bg-[#f7d77d] text-[#0d1520]' : 'text-white/60 hover:text-white'}`}
-                          >
-                            <Mail className="h-3.5 w-3.5" />
-                            Email
-                          </button>
-                        </div>
-
-                        {otpTarget === 'phone' ? (
-                          <div>
-                            <label className="mb-2 block text-xs font-bold uppercase tracking-[0.2em] text-white/80">
-                              Mobile Number
-                            </label>
-                            <PhoneInput
-                              value={phoneVal}
-                              onChange={setPhoneVal}
-                              selectedCountry={selectedCountry}
-                              setSelectedCountry={setSelectedCountry}
-                            />
-                          </div>
-                        ) : (
-                          <div>
-                            <label className="mb-2 block text-xs font-bold uppercase tracking-[0.2em] text-white/80">
-                              Email Address
-                            </label>
-                            <input
-                              type="email"
-                              required
-                              value={formData.email}
-                              onChange={(event) => setFormData(c => ({...c, email: event.target.value}))}
-                              placeholder="arjuna@example.com"
-                              className="auth-input"
-                            />
-                          </div>
-                        )}
-
-                        {checkResult && (
-                          <div className={`text-sm font-semibold rounded-2xl border p-4 ${checkResult.exists ? 'text-emerald-400 border-emerald-500/25 bg-emerald-500/10' : 'text-[#f7d77d] border-[#f7d77d]/20 bg-[#f7d77d]/8'}`}>
-                            {checkResult.exists ? 'Welcome back! Login using OTP.' : 'Welcome! Create your account using OTP.'}
-                          </div>
-                        )}
-
-                        <button type="submit" disabled={loading || checkingPhone} className="auth-button mt-4 w-full px-5 py-3.5">
-                          {loading || checkingPhone ? 'Please wait...' : (
-                            !checkResult ? 'Continue' : (checkResult.exists ? 'Login' : 'Create Account')
-                          )}
-                        </button>
-                      </form>
-                    ) : (
-                      <form onSubmit={handleVerifyOtp} className="space-y-4">
-                        <div className="bg-white/5 border border-white/10 p-4 rounded-2xl flex items-center justify-between gap-4">
-                          <div>
-                            <span className="text-xs uppercase tracking-wider text-white/50">Sending OTP to</span>
-                            <p className="font-semibold text-white truncate max-w-[180px] sm:max-w-xs">
-                              {otpTarget === 'phone' 
-                                ? (selectedCountry ? selectedCountry.dial + ' ' + phoneVal : phoneVal) 
-                                : formData.email
-                              }
-                            </p>
-                          </div>
-                          <button
-                            type="button"
-                            onClick={resetOtpFlow}
-                            className="inline-flex items-center gap-1.5 text-xs text-[#f7d77d] hover:underline uppercase font-semibold tracking-wider"
-                          >
-                            <RotateCcw className="h-3.5 w-3.5" /> Change
-                          </button>
-                        </div>
-
-                        {previewCode && (
-                          <div className="rounded-2xl border-2 border-amber-400/60 bg-amber-500/10 p-4">
-                            <p className="text-xs font-bold uppercase tracking-[0.2em] text-amber-400/80 mb-1">⚠️ Dev Preview — SMS Not Configured</p>
-                            <p className="text-xs text-amber-200/70 mb-3">Your OTP code (auto-filled below). Add SMS credentials to send real SMS.</p>
-                            <div className="flex items-center justify-between gap-3">
-                              <span className="text-3xl font-black tracking-[0.5em] text-amber-400 font-mono">{previewCode}</span>
-                              <button type="button" onClick={() => setOtpVal(previewCode)} className="text-xs bg-amber-400/20 hover:bg-amber-400/30 text-amber-300 px-3 py-1.5 rounded-lg font-semibold transition-colors">Use Code</button>
-                            </div>
-                          </div>
-                        )}
-
-                        <div>
-                          <label className="mb-2 block text-xs font-bold uppercase tracking-[0.2em] text-white/80">
-                            Verification OTP Code
-                          </label>
-                          <input
-                            type="text"
-                            inputMode="numeric"
-                            maxLength={6}
-                            required
-                            value={otpVal}
-                            onChange={(e) => setOtpVal(e.target.value.replace(/\D/g, ''))}
-                            placeholder="6-digit OTP code"
-                            className="auth-input text-center text-lg tracking-[0.4em]"
-                            autoFocus
-                          />
-                        </div>
-
-                        <div className="flex justify-between items-center text-xs mt-1">
-                          <span className="text-white/40">Code expires in 5 minutes</span>
-                          {otpResendCooldown > 0 ? (
-                            <span className="text-white/40 uppercase font-bold tracking-wider">
-                              Resend in {otpResendCooldown}s
-                            </span>
-                          ) : (
-                            <button
-                              type="button"
-                              onClick={handleSendOtp}
-                              disabled={loading}
-                              className="text-[#f7d77d] hover:underline uppercase font-bold tracking-wider"
-                            >
-                              Resend Code
-                            </button>
-                          )}
-                        </div>
-
-                        <button type="submit" disabled={loading} className="auth-button mt-4 w-full px-5 py-3.5">
-                          {loading ? 'Please wait...' : 'Verify & Sign In'}
-                        </button>
-                      </form>
-                    )}
+                {error && (
+                  <div className="mb-4 bg-red-500/10 border border-red-400/25 rounded-2xl px-4 py-3 text-sm text-red-300">
+                    {error}
                   </div>
                 )}
-             </div>
+
+                {/* Phone input with country picker */}
+                <div className="flex gap-2 mb-5">
+                  {/* Country button */}
+                  <div className="relative">
+                    <button
+                      type="button"
+                      onClick={() => setShowCountryPicker(p => !p)}
+                      className="h-14 px-3 rounded-2xl border border-white/15 bg-white/5 flex items-center gap-2 text-white hover:border-amber-400/40 transition-colors whitespace-nowrap"
+                    >
+                      <span className="text-xl">{country.flag}</span>
+                      <span className="text-sm font-bold">{country.dial}</span>
+                      <span className="text-white/40 text-xs">▾</span>
+                    </button>
+
+                    {showCountryPicker && (
+                      <div className="absolute top-16 left-0 z-50 w-56 rounded-2xl border border-white/15 shadow-2xl overflow-y-auto max-h-56"
+                        style={{ background: 'rgba(10,18,35,0.97)', backdropFilter: 'blur(20px)' }}>
+                        {COUNTRIES.map(c => (
+                          <button key={c.code} type="button"
+                            onClick={() => { setCountry(c); setShowCountryPicker(false); }}
+                            className={`w-full flex items-center gap-3 px-4 py-3 text-sm text-left hover:bg-white/8 transition-colors ${c.code === country.code ? 'text-amber-400' : 'text-white/80'}`}>
+                            <span className="text-lg">{c.flag}</span>
+                            <span className="flex-1">{c.name}</span>
+                            <span className="text-white/40 font-mono text-xs">{c.dial}</span>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Number input */}
+                  <input
+                    ref={phoneRef}
+                    type="tel"
+                    value={phone}
+                    onChange={e => { setPhone(e.target.value.replace(/\D/g, '')); setError(''); }}
+                    onKeyDown={e => e.key === 'Enter' && handlePhoneContinue()}
+                    placeholder="Mobile Number"
+                    maxLength={12}
+                    className="flex-1 h-14 rounded-2xl border border-white/15 bg-white/5 px-4 text-white text-base font-semibold outline-none focus:border-amber-400/60 transition-colors placeholder-white/25"
+                  />
+                </div>
+
+                <p className="text-xs text-white/35 mb-5 text-center">
+                  {country.flag} {country.name} • OTP via SMS
+                </p>
+
+                <button
+                  onClick={handlePhoneContinue}
+                  disabled={loading || phone.replace(/\D/g,'').length < 7}
+                  className="w-full py-4 rounded-2xl text-base font-black uppercase tracking-widest text-[#0d1520] transition-all duration-200 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                  style={{ background: 'linear-gradient(135deg, #fbbf24 0%, #f59e0b 50%, #d97706 100%)' }}
+                >
+                  {loading ? (
+                    <span className="flex items-center justify-center gap-2">
+                      <svg className="animate-spin w-5 h-5" viewBox="0 0 24 24" fill="none">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4l3-3-3-3v4a8 8 0 00-8 8h4z"/>
+                      </svg>
+                      Checking...
+                    </span>
+                  ) : 'Continue'}
+                </button>
+              </div>
+            )}
+
+            {/* ════════════════════════════════════════════════
+                STEP 2 — SMART DETECTION
+            ════════════════════════════════════════════════ */}
+            {step === STEPS.DETECTED && (
+              <div className={`${slideClass}`}>
+                <button onClick={() => goTo(STEPS.PHONE, -1)}
+                  className="text-white/40 hover:text-white text-xs uppercase tracking-wider font-semibold flex items-center gap-1 mb-5 transition-colors">
+                  ← Change Number
+                </button>
+
+                {/* Phone display */}
+                <div className="flex items-center gap-3 bg-white/5 border border-white/10 rounded-2xl px-4 py-3 mb-6">
+                  <span className="text-xl">{country.flag}</span>
+                  <div>
+                    <p className="text-[10px] uppercase tracking-widest text-white/40 font-semibold">Mobile Number</p>
+                    <p className="text-base font-black text-white">{maskPhone(country.dial, phone)}</p>
+                  </div>
+                  <button onClick={() => goTo(STEPS.PHONE, -1)} className="ml-auto text-amber-400 text-xs font-bold uppercase tracking-wider hover:underline">
+                    Edit
+                  </button>
+                </div>
+
+                {/* Result card */}
+                <div className={`rounded-2xl p-5 mb-6 border text-center ${
+                  userExists
+                    ? 'bg-emerald-500/8 border-emerald-500/25'
+                    : 'bg-amber-500/8 border-amber-400/25'
+                }`}>
+                  <div className="text-3xl mb-2">{userExists ? '👋' : '🌟'}</div>
+                  <h3 className={`text-lg font-black mb-1 ${userExists ? 'text-emerald-400' : 'text-amber-400'}`}>
+                    {userExists ? 'Welcome Back!' : 'New Here?'}
+                  </h3>
+                  <p className="text-sm text-white/60">
+                    {userExists
+                      ? 'We found your account. Verify with OTP to continue.'
+                      : 'Create your account in seconds — just verify your number.'}
+                  </p>
+                </div>
+
+                {error && (
+                  <div className="mb-4 bg-red-500/10 border border-red-400/25 rounded-2xl px-4 py-3 text-sm text-red-300">
+                    {error}
+                  </div>
+                )}
+
+                <button
+                  onClick={handleSendOtp}
+                  disabled={loading}
+                  className="w-full py-4 rounded-2xl text-base font-black uppercase tracking-widest text-[#0d1520] transition-all duration-200 active:scale-95 disabled:opacity-50"
+                  style={{ background: 'linear-gradient(135deg, #fbbf24 0%, #f59e0b 50%, #d97706 100%)' }}
+                >
+                  {loading ? 'Sending OTP...' : userExists ? '🔐 Login with OTP' : '✨ Create Account'}
+                </button>
+
+                <p className="text-xs text-white/35 text-center mt-4">
+                  OTP will be sent to your mobile number via SMS
+                </p>
+              </div>
+            )}
+
+            {/* ════════════════════════════════════════════════
+                STEP 3 — OTP VERIFICATION
+            ════════════════════════════════════════════════ */}
+            {step === STEPS.OTP && (
+              <div className={`${slideClass}`}>
+                <button onClick={() => { goTo(STEPS.DETECTED, -1); setOtp(['','','','','','']); }}
+                  className="text-white/40 hover:text-white text-xs uppercase tracking-wider font-semibold flex items-center gap-1 mb-5 transition-colors">
+                  ← Back
+                </button>
+
+                <h2 className="text-xl sm:text-2xl font-black text-white mb-1">Verify OTP</h2>
+                <p className="text-sm text-white/45 mb-1">OTP sent to</p>
+                <p className="text-base font-bold text-amber-400 mb-6">{maskPhone(country.dial, phone)}</p>
+
+                {/* Dev preview code */}
+                {previewCode && (
+                  <div className="mb-5 rounded-2xl border-2 border-amber-400/40 bg-amber-500/8 px-4 py-3 flex items-center justify-between gap-3">
+                    <div>
+                      <p className="text-[10px] uppercase tracking-widest text-amber-400/70 font-bold mb-0.5">⚠️ Dev Mode — SMS not configured</p>
+                      <p className="text-2xl font-black text-amber-400 tracking-[0.4em] font-mono">{previewCode}</p>
+                    </div>
+                    <button onClick={() => {
+                      const d = previewCode.toString().split('');
+                      setOtp(d.length === 6 ? d : ['','','','','','']);
+                    }} className="text-xs bg-amber-400/15 hover:bg-amber-400/25 text-amber-300 px-3 py-2 rounded-xl font-bold transition-colors shrink-0">
+                      Use Code
+                    </button>
+                  </div>
+                )}
+
+                {error && (
+                  <div className="mb-4 bg-red-500/10 border border-red-400/25 rounded-2xl px-4 py-3 text-sm text-red-300">
+                    {error}
+                  </div>
+                )}
+
+                <form onSubmit={handleVerifyOtp}>
+                  <div className="mb-6">
+                    <OtpBoxes
+                      value={otp}
+                      onChange={handleOtpChange}
+                      onKeyDown={handleOtpKeyDown}
+                      refs={otpRefs}
+                      loading={loading}
+                    />
+                  </div>
+
+                  {/* Resend */}
+                  <div className="flex items-center justify-between text-xs mb-5">
+                    <span className="text-white/35">Expires in 5 minutes</span>
+                    {resendCooldown > 0 ? (
+                      <span className="text-white/35 font-bold">Resend in {resendCooldown}s</span>
+                    ) : (
+                      <button type="button" onClick={handleResendOtp} disabled={loading}
+                        className="text-amber-400 font-bold hover:underline disabled:opacity-50 uppercase tracking-wider">
+                        Resend OTP
+                      </button>
+                    )}
+                  </div>
+
+                  <button type="submit" disabled={loading || otp.join('').length < 6}
+                    className="w-full py-4 rounded-2xl text-base font-black uppercase tracking-widest text-[#0d1520] transition-all duration-200 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                    style={{ background: 'linear-gradient(135deg, #fbbf24 0%, #f59e0b 50%, #d97706 100%)' }}>
+                    {loading ? (
+                      <span className="flex items-center justify-center gap-2">
+                        <svg className="animate-spin w-5 h-5" viewBox="0 0 24 24" fill="none">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4l3-3-3-3v4a8 8 0 00-8 8h4z"/>
+                        </svg>
+                        Verifying...
+                      </span>
+                    ) : `Verify & ${userExists ? 'Sign In' : 'Create Account'}`}
+                  </button>
+                </form>
+              </div>
+            )}
+
+            {/* ════════════════════════════════════════════════
+                STEP 4 — NEW USER ONBOARDING
+            ════════════════════════════════════════════════ */}
+            {step === STEPS.ONBOARDING && (
+              <div className={`${slideClass}`}>
+                <div className="text-center mb-6">
+                  <div className="text-4xl mb-2">🎉</div>
+                  <h2 className="text-xl sm:text-2xl font-black text-white mb-1">Account Created!</h2>
+                  <p className="text-sm text-white/50">Tell us a bit about yourself</p>
+                </div>
+
+                {error && (
+                  <div className="mb-4 bg-red-500/10 border border-red-400/25 rounded-2xl px-4 py-3 text-sm text-red-300">
+                    {error}
+                  </div>
+                )}
+
+                {/* Name */}
+                <div className="mb-4">
+                  <label className="block text-[10px] uppercase tracking-widest text-white/50 font-bold mb-2">
+                    Full Name *
+                  </label>
+                  <input
+                    type="text"
+                    value={onboarding.name}
+                    onChange={e => { setOnboarding(p => ({ ...p, name: e.target.value })); setError(''); }}
+                    placeholder="Your name"
+                    autoFocus
+                    className="w-full h-13 rounded-2xl border border-white/15 bg-white/5 px-4 text-white text-base font-semibold outline-none focus:border-amber-400/60 transition-colors placeholder-white/25"
+                    style={{ height: '3.25rem' }}
+                  />
+                </div>
+
+                {/* Language */}
+                <div className="mb-4">
+                  <label className="block text-[10px] uppercase tracking-widest text-white/50 font-bold mb-2">
+                    Preferred Language
+                  </label>
+                  <div className="flex flex-wrap gap-2">
+                    {LANGUAGES.map(l => (
+                      <button key={l.code} type="button"
+                        onClick={() => setOnboarding(p => ({ ...p, language: l.code }))}
+                        className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all border ${
+                          onboarding.language === l.code
+                            ? 'bg-amber-400/20 border-amber-400 text-amber-400'
+                            : 'bg-white/5 border-white/10 text-white/60 hover:border-white/25'
+                        }`}>
+                        {l.native}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Interests */}
+                <div className="mb-6">
+                  <label className="block text-[10px] uppercase tracking-widest text-white/50 font-bold mb-2">
+                    Your Interests <span className="text-white/30 normal-case">(optional)</span>
+                  </label>
+                  <div className="flex flex-wrap gap-2">
+                    {INTERESTS.map(interest => (
+                      <button key={interest.id} type="button"
+                        onClick={() => toggleInterest(interest.id)}
+                        className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all border ${
+                          onboarding.interests.includes(interest.id)
+                            ? 'bg-amber-400/20 border-amber-400 text-amber-400'
+                            : 'bg-white/5 border-white/10 text-white/60 hover:border-white/20'
+                        }`}>
+                        {interest.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <button
+                  onClick={handleOnboardingComplete}
+                  disabled={loading || !onboarding.name.trim()}
+                  className="w-full py-4 rounded-2xl text-base font-black uppercase tracking-widest text-[#0d1520] transition-all duration-200 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                  style={{ background: 'linear-gradient(135deg, #fbbf24 0%, #f59e0b 50%, #d97706 100%)' }}>
+                  {loading ? 'Setting Up...' : '🚀 Start My Journey'}
+                </button>
+
+                <button onClick={() => navigate('/home', { replace: true })}
+                  className="w-full mt-3 py-2 text-xs text-white/30 hover:text-white/50 transition-colors">
+                  Skip for now
+                </button>
+              </div>
+            )}
 
           </div>
-        </section>
+        </div>
+
+        {/* Footer */}
+        <p className="text-center text-xs text-white/25 mt-5">
+          🔒 Your data is encrypted and secure
+        </p>
       </div>
+
+      {/* Click outside country picker */}
+      {showCountryPicker && (
+        <div className="fixed inset-0 z-40" onClick={() => setShowCountryPicker(false)} />
+      )}
     </div>
   );
 }

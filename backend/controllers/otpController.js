@@ -119,19 +119,22 @@ exports.verifyOtp = async (req, res) => {
             });
         }
 
+        // Detect new user (auto-created with default name)
+        const isNewUser = !user.name || user.name.startsWith('Member ') || user.name === '';
+
         user.otpHash = undefined;
         user.otpExpiry = undefined;
         await user.save();
 
         const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET || 'secret', { expiresIn: '7d' });
         
-        // Format response similar to register/login controllers
+        // Format response
         const userObj = user.toObject();
         delete userObj.password;
         delete userObj.__v;
         userObj.id = String(userObj._id);
 
-        res.json({ token, user: userObj });
+        res.json({ token, user: userObj, isNew: isNewUser });
     } catch (error) { 
         console.error('[OTP] verifyOtp error:', error);
         res.status(500).json({ message: error.message }); 
