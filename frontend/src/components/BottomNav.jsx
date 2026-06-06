@@ -17,10 +17,10 @@ export default function BottomNav() {
   ];
 
   return (
-    /* Hidden on desktop & TV, shown on mobile/tablet in portrait */
+    /* Hidden on desktop & TV, visible on mobile */
     <nav 
-      className="md:hidden tv:hidden fixed bottom-0 left-0 w-full z-50 bg-[#060F1B]/95 backdrop-blur-xl border-t border-devotion-gold/10 shadow-[0_-8px_30px_rgba(0,0,0,0.5)] landscape:hidden"
-      style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
+      className="md:hidden tv:hidden fixed bottom-0 left-0 w-full z-50 bg-[#060F1B]/95 backdrop-blur-xl border-t border-devotion-gold/10 shadow-[0_-8px_30px_rgba(0,0,0,0.5)]"
+      style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
     >
       <div className="flex justify-around items-center h-[60px] px-1">
         {navItems.map((item) => {
@@ -30,8 +30,9 @@ export default function BottomNav() {
             <NavLink
               key={item.name}
               to={item.path}
-              className={`relative flex flex-col items-center justify-center flex-1 h-full gap-1 transition-all duration-200 ${
-                isActive ? 'text-devotion-gold' : 'text-gray-500 hover:text-white'
+              style={{ minHeight: 0, minWidth: 0 }}
+              className={`relative flex flex-col items-center justify-center flex-1 h-full gap-0.5 transition-all duration-200 ${
+                isActive ? 'text-devotion-gold' : 'text-gray-500'
               }`}
             >
               {/* Active pill indicator */}
@@ -42,10 +43,9 @@ export default function BottomNav() {
                 <Icon
                   className={`w-5 h-5 transition-all duration-200 ${isActive ? 'scale-110' : ''}`}
                   strokeWidth={isActive ? 2.5 : 1.5}
-                  fill={isActive ? 'none' : 'none'}
                 />
               </div>
-              <span className={`text-[9px] font-bold tracking-wider uppercase transition-all ${isActive ? 'opacity-100' : 'opacity-60'}`}>
+              <span className={`text-[9px] font-bold tracking-wider uppercase transition-all leading-none ${isActive ? 'opacity-100' : 'opacity-60'}`}>
                 {item.name}
               </span>
             </NavLink>

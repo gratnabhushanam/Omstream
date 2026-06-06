@@ -72,75 +72,99 @@ export function DesktopNotificationPanel({ notifications, unreadCount, handleMar
 }
 
 export function MobileNotificationSheet({ notifications, unreadCount, handleMarkAsRead, onClose }) {
-  const handleBackdrop = (e) => { if (e.target === e.currentTarget) onClose(); };
   useEffect(() => {
     document.body.style.overflow = 'hidden';
     return () => { document.body.style.overflow = ''; };
   }, []);
 
   return (
-    <div className="fixed inset-0 z-[10000] bg-[#070F1D] flex flex-col overflow-hidden animate-in fade-in duration-300" onClick={handleBackdrop}>
+    <div className="fixed inset-0 z-[10000] flex flex-col overflow-hidden">
+      {/* Full-screen background — tapping this closes the sheet */}
       <div 
-        className="flex-shrink-0 px-6 pb-6 flex justify-between items-center border-b border-white/5 bg-[#0D1424]"
-        style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 4.5rem)' }}
-      >
-        <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-2xl bg-devotion-gold/10 border border-devotion-gold/30 flex items-center justify-center shadow-inner">
-            <Bell className="w-6 h-6 text-devotion-gold" />
-          </div>
-          <div>
-            <p className="text-lg font-black text-white uppercase tracking-[0.2em] leading-tight">Notifications</p>
-            <p className="text-[11px] text-devotion-gold/60 font-black uppercase tracking-widest mt-1">
-              {unreadCount > 0 ? `${unreadCount} DIVINE ALERTS` : 'PEACEFUL HEART'}
-            </p>
-          </div>
-        </div>
-        <div className="flex items-center gap-3">
-          {unreadCount > 0 && (
-            <button onClick={handleMarkAsRead} className="p-3 bg-devotion-gold/10 border border-devotion-gold/30 text-devotion-gold rounded-2xl active:scale-90 transition-all shadow-lg">
-              <CheckCheck className="w-6 h-6" />
-            </button>
-          )}
-          <button onClick={onClose} className="p-3 bg-white/5 border border-white/10 text-white/60 rounded-2xl active:scale-90 transition-all shadow-lg">
-            <X className="w-6 h-6" />
-          </button>
-        </div>
-      </div>
-      
-      <div className="flex-1 min-h-0 overflow-y-auto p-5 pb-28 scrollbar-hide">
-        {notifications.length === 0 ? (
-          <div className="text-center py-32 px-8 flex flex-col items-center justify-center h-full">
-            <div className="w-28 h-28 rounded-[2.5rem] bg-white/[0.03] border border-white/5 flex items-center justify-center mb-10 shadow-2xl">
-              <Bell className="w-12 h-12 text-white/5" />
-            </div>
-            <p className="text-xl font-black text-white/40 uppercase tracking-[0.3em] mb-4">All caught up!</p>
-            <p className="text-base text-white/20 font-serif italic text-center max-w-[240px]">Your spiritual path is clear of any new alerts.</p>
-          </div>
-        ) : (
-          <div className="space-y-4 animate-in slide-in-from-bottom-4 duration-500">
-            {/* Featured Section for high-priority alerts */}
-            {notifications.find(n => !n.read && (n.type === 'promo' || n.type === 'content')) && (
-              <div className="mb-8 p-8 rounded-[2.5rem] bg-gradient-to-br from-devotion-gold/20 to-transparent border border-devotion-gold/30 shadow-2xl relative overflow-hidden group">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-devotion-gold/10 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none" />
-                <p className="text-[10px] font-black text-devotion-gold uppercase tracking-[0.4em] mb-4 flex items-center gap-2">
-                   <Sparkles className="w-3 h-3" /> Featured Wisdom
-                </p>
-                <h4 className="text-2xl font-serif font-black text-white mb-3 uppercase tracking-tight">
-                  {notifications.find(n => !n.read && (n.type === 'promo' || n.type === 'content')).title}
-                </h4>
-                <p className="text-gray-100 text-sm font-medium italic mb-6 leading-relaxed">
-                  {notifications.find(n => !n.read && (n.type === 'promo' || n.type === 'content')).body}
-                </p>
-                <button className="px-6 py-3 bg-devotion-gold text-devotion-darkBlue rounded-xl font-black text-[10px] uppercase tracking-widest active:scale-95 transition-all shadow-xl">
-                  REVEAL NOW
-                </button>
-              </div>
-            )}
+        className="absolute inset-0 bg-[#070F1D] animate-in fade-in duration-300"
+        onClick={onClose}
+      />
 
-            <p className="text-[9px] font-black text-white/35 uppercase tracking-[0.5em] mb-4 px-2">All Divine Notifications</p>
-            {notifications.map(n => <NotificationItem key={n._id || n.id} n={n} />)}
+      {/* Sheet content — sits above backdrop, does NOT propagate clicks up */}
+      <div 
+        className="relative z-10 flex flex-col h-full"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div 
+          className="flex-shrink-0 px-5 pb-5 flex justify-between items-center border-b border-white/10 bg-[#0D1424]"
+          style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 4.5rem)' }}
+        >
+          <div className="flex items-center gap-3">
+            <div className="w-11 h-11 rounded-2xl bg-devotion-gold/10 border border-devotion-gold/30 flex items-center justify-center">
+              <Bell className="w-5 h-5 text-devotion-gold" />
+            </div>
+            <div>
+              <p className="text-base font-black text-white uppercase tracking-[0.2em] leading-tight">Notifications</p>
+              <p className="text-[10px] text-devotion-gold/60 font-black uppercase tracking-widest mt-0.5">
+                {unreadCount > 0 ? `${unreadCount} NEW ALERTS` : 'ALL CLEAR'}
+              </p>
+            </div>
           </div>
-        )}
+          <div className="flex items-center gap-2">
+            {unreadCount > 0 && (
+              <button 
+                onClick={(e) => { e.stopPropagation(); handleMarkAsRead(); }} 
+                className="p-2.5 bg-devotion-gold/10 border border-devotion-gold/30 text-devotion-gold rounded-xl active:scale-90 transition-all"
+              >
+                <CheckCheck className="w-5 h-5" />
+              </button>
+            )}
+            <button 
+              onClick={(e) => { e.stopPropagation(); onClose(); }} 
+              className="p-2.5 bg-white/5 border border-white/10 text-white/60 rounded-xl active:scale-90 transition-all"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+        </div>
+
+        {/* Scrollable content */}
+        <div 
+          className="flex-1 overflow-y-auto overscroll-contain"
+          style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 5rem)' }}
+        >
+          {notifications.length === 0 ? (
+            <div className="flex flex-col items-center justify-center h-full py-20 px-8 text-center">
+              <div className="w-24 h-24 rounded-[2rem] bg-white/[0.03] border border-white/5 flex items-center justify-center mb-8 shadow-xl">
+                <Bell className="w-10 h-10 text-white/10" />
+              </div>
+              <p className="text-lg font-black text-white/40 uppercase tracking-[0.3em] mb-3">All Caught Up!</p>
+              <p className="text-sm text-white/20 font-serif italic max-w-[220px] leading-relaxed">Your spiritual path is clear of any new alerts.</p>
+            </div>
+          ) : (
+            <div className="p-4 space-y-3">
+              {/* Featured high-priority notification */}
+              {notifications.find(n => !n.read && (n.type === 'promo' || n.type === 'content')) && (
+                <div className="p-6 rounded-[2rem] bg-gradient-to-br from-devotion-gold/20 to-transparent border border-devotion-gold/30 shadow-xl relative overflow-hidden mb-2">
+                  <div className="absolute top-0 right-0 w-24 h-24 bg-devotion-gold/10 rounded-full blur-2xl -mr-12 -mt-12 pointer-events-none" />
+                  <p className="text-[9px] font-black text-devotion-gold uppercase tracking-[0.4em] mb-3 flex items-center gap-2">
+                    <Sparkles className="w-3 h-3" /> Featured
+                  </p>
+                  <h4 className="text-xl font-serif font-black text-white mb-2 uppercase tracking-tight">
+                    {notifications.find(n => !n.read && (n.type === 'promo' || n.type === 'content')).title}
+                  </h4>
+                  <p className="text-gray-100 text-sm font-medium italic mb-4 leading-relaxed">
+                    {notifications.find(n => !n.read && (n.type === 'promo' || n.type === 'content')).body}
+                  </p>
+                </div>
+              )}
+              <p className="text-[9px] font-black text-white/30 uppercase tracking-[0.5em] px-1 pb-1">All Notifications</p>
+              {notifications.map(n => (
+                <NotificationItem 
+                  key={n._id || n.id} 
+                  n={n}
+                  onClick={(e) => e.stopPropagation()}
+                />
+              ))}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
