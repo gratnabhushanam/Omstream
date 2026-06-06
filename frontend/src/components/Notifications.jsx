@@ -73,94 +73,97 @@ export function DesktopNotificationPanel({ notifications, unreadCount, handleMar
 
 export function MobileNotificationSheet({ notifications, unreadCount, handleMarkAsRead, onClose }) {
   useEffect(() => {
+    const prev = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
-    return () => { document.body.style.overflow = ''; };
+    return () => { document.body.style.overflow = prev; };
   }, []);
 
   return (
-    <div className="fixed inset-0 z-[10000] flex flex-col overflow-hidden">
-      {/* Full-screen background — tapping this closes the sheet */}
-      <div 
-        className="absolute inset-0 bg-[#070F1D] animate-in fade-in duration-300"
-        onClick={onClose}
-      />
-
-      {/* Sheet content — sits above backdrop, does NOT propagate clicks up */}
-      <div 
-        className="relative z-10 flex flex-col h-full"
+    /* Backdrop — tap anywhere on backdrop to close */
+    <div
+      className="fixed inset-0 z-[10000] bg-black/60 backdrop-blur-sm"
+      onClick={onClose}
+    >
+      {/* Panel — tap inside panel does NOT close */}
+      <div
+        className="absolute inset-x-0 top-0 bottom-0 bg-[#0A1628] flex flex-col shadow-2xl"
+        style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 4rem)' }}
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Header */}
-        <div 
-          className="flex-shrink-0 px-5 pb-5 flex justify-between items-center border-b border-white/10 bg-[#0D1424]"
-          style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 4.5rem)' }}
-        >
+        {/* ── Header ── */}
+        <div className="flex-shrink-0 flex items-center justify-between px-5 py-4 border-b border-white/10 bg-[#0D1830]">
           <div className="flex items-center gap-3">
-            <div className="w-11 h-11 rounded-2xl bg-devotion-gold/10 border border-devotion-gold/30 flex items-center justify-center">
+            <div className="w-10 h-10 rounded-2xl bg-devotion-gold/20 border border-devotion-gold/40 flex items-center justify-center">
               <Bell className="w-5 h-5 text-devotion-gold" />
             </div>
             <div>
-              <p className="text-base font-black text-white uppercase tracking-[0.2em] leading-tight">Notifications</p>
-              <p className="text-[10px] text-devotion-gold/60 font-black uppercase tracking-widest mt-0.5">
-                {unreadCount > 0 ? `${unreadCount} NEW ALERTS` : 'ALL CLEAR'}
+              <p className="text-sm font-black text-white uppercase tracking-widest">Notifications</p>
+              <p className="text-[10px] text-devotion-gold font-bold uppercase tracking-widest mt-0.5">
+                {unreadCount > 0 ? `${unreadCount} new` : 'All clear'}
               </p>
             </div>
           </div>
           <div className="flex items-center gap-2">
             {unreadCount > 0 && (
-              <button 
-                onClick={(e) => { e.stopPropagation(); handleMarkAsRead(); }} 
-                className="p-2.5 bg-devotion-gold/10 border border-devotion-gold/30 text-devotion-gold rounded-xl active:scale-90 transition-all"
+              <button
+                onClick={(e) => { e.stopPropagation(); handleMarkAsRead(); }}
+                className="px-3 py-2 bg-devotion-gold/10 border border-devotion-gold/30 text-devotion-gold rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-1.5 active:scale-95 transition-all"
               >
-                <CheckCheck className="w-5 h-5" />
+                <CheckCheck className="w-4 h-4" /> Read All
               </button>
             )}
-            <button 
-              onClick={(e) => { e.stopPropagation(); onClose(); }} 
-              className="p-2.5 bg-white/5 border border-white/10 text-white/60 rounded-xl active:scale-90 transition-all"
+            <button
+              onClick={(e) => { e.stopPropagation(); onClose(); }}
+              className="w-9 h-9 bg-white/5 border border-white/10 rounded-xl flex items-center justify-center text-white/60 active:scale-90 transition-all active:bg-white/10"
             >
               <X className="w-5 h-5" />
             </button>
           </div>
         </div>
 
-        {/* Scrollable content */}
-        <div 
-          className="flex-1 overflow-y-auto overscroll-contain"
+        {/* ── Swipe hint ── */}
+        <div className="flex-shrink-0 flex justify-center py-2">
+          <div className="w-12 h-1 bg-white/10 rounded-full" />
+        </div>
+
+        {/* ── Scrollable Content ── */}
+        <div
+          className="flex-1 overflow-y-auto overscroll-contain px-4 pb-8"
           style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 5rem)' }}
         >
           {notifications.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-full py-20 px-8 text-center">
-              <div className="w-24 h-24 rounded-[2rem] bg-white/[0.03] border border-white/5 flex items-center justify-center mb-8 shadow-xl">
-                <Bell className="w-10 h-10 text-white/10" />
+            <div className="flex flex-col items-center justify-center min-h-[50vh] text-center px-4">
+              <div className="w-20 h-20 rounded-3xl bg-white/5 border border-white/10 flex items-center justify-center mb-6 shadow-lg">
+                <Bell className="w-9 h-9 text-white/30" />
               </div>
-              <p className="text-lg font-black text-white/40 uppercase tracking-[0.3em] mb-3">All Caught Up!</p>
-              <p className="text-sm text-white/20 font-serif italic max-w-[220px] leading-relaxed">Your spiritual path is clear of any new alerts.</p>
+              <p className="text-base font-black text-white uppercase tracking-widest mb-2">All Caught Up!</p>
+              <p className="text-sm text-gray-400 font-medium italic max-w-[220px] leading-relaxed">No new alerts at this time.</p>
+              <button
+                onClick={(e) => { e.stopPropagation(); onClose(); }}
+                className="mt-8 px-8 py-3 bg-devotion-gold/10 border border-devotion-gold/30 text-devotion-gold rounded-2xl text-xs font-black uppercase tracking-widest active:scale-95 transition-all"
+              >
+                Close
+              </button>
             </div>
           ) : (
-            <div className="p-4 space-y-3">
-              {/* Featured high-priority notification */}
+            <div className="space-y-3 pt-2">
+              {/* Featured notification */}
               {notifications.find(n => !n.read && (n.type === 'promo' || n.type === 'content')) && (
-                <div className="p-6 rounded-[2rem] bg-gradient-to-br from-devotion-gold/20 to-transparent border border-devotion-gold/30 shadow-xl relative overflow-hidden mb-2">
-                  <div className="absolute top-0 right-0 w-24 h-24 bg-devotion-gold/10 rounded-full blur-2xl -mr-12 -mt-12 pointer-events-none" />
-                  <p className="text-[9px] font-black text-devotion-gold uppercase tracking-[0.4em] mb-3 flex items-center gap-2">
+                <div className="p-5 rounded-[1.5rem] bg-gradient-to-br from-devotion-gold/15 to-transparent border border-devotion-gold/25">
+                  <p className="text-[9px] font-black text-devotion-gold uppercase tracking-[0.4em] mb-2 flex items-center gap-1.5">
                     <Sparkles className="w-3 h-3" /> Featured
                   </p>
-                  <h4 className="text-xl font-serif font-black text-white mb-2 uppercase tracking-tight">
+                  <h4 className="text-base font-black text-white mb-1 uppercase tracking-tight">
                     {notifications.find(n => !n.read && (n.type === 'promo' || n.type === 'content')).title}
                   </h4>
-                  <p className="text-gray-100 text-sm font-medium italic mb-4 leading-relaxed">
+                  <p className="text-sm text-gray-300 italic leading-relaxed">
                     {notifications.find(n => !n.read && (n.type === 'promo' || n.type === 'content')).body}
                   </p>
                 </div>
               )}
-              <p className="text-[9px] font-black text-white/30 uppercase tracking-[0.5em] px-1 pb-1">All Notifications</p>
+              <p className="text-[9px] font-black text-white/40 uppercase tracking-[0.4em] px-1 pt-1">All Notifications</p>
               {notifications.map(n => (
-                <NotificationItem 
-                  key={n._id || n.id} 
-                  n={n}
-                  onClick={(e) => e.stopPropagation()}
-                />
+                <NotificationItem key={n._id || n.id} n={n} onClick={(e) => e.stopPropagation()} />
               ))}
             </div>
           )}
