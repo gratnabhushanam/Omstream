@@ -1,5 +1,6 @@
 const cron = require('node-cron');
-const { Sloka } = require('../models');
+const { Sloka, User } = require('../models');
+const { sendEmail } = require('../utils/notificationService');
 
 const mockSlokas = [
   {
@@ -156,18 +157,46 @@ const assignDailySloka = async (dateStr) => {
   }
 };
 
+const processTrialExpirations = async () => {
+  try {
+    const now = new Date();
+    const expiredUsers = await User.find({
+      subscriptionStatus: 'Trial Active',
+      trialEndDate: { $lt: now }
+    });
+
+    for (const user of expiredUsers) {
+      user.subscriptionStatus = 'Trial Expired';
+      await user.save();
+      console.log(`[CRON] Trial expired for user: ${user.email}`);
+      
+      if (user.email) {
+        await sendEmail({
+          to: user.email,
+          subject: 'Gita Wisdom - Your Free Trial Has Expired',
+          html: `<p>Dear ${user.name || 'Seeker'},</p><p>Your 30-day free trial has expired.</p><p>Please subscribe to continue accessing premium spiritual content.</p>`
+        }).catch(err => console.error(`[CRON] Failed to send expiry email to ${user.email}:`, err.message));
+      }
+    }
+  } catch (err) {
+    console.error('[CRON] Error processing trial expirations:', err.message);
+  }
+};
+
 const initializeCronJobs = async () => {
   await seedDatabaseIfEmpty();
 
   // Run immediately on boot to ensure today has a sloka
   const today = new Date().toISOString().split('T')[0];
   await assignDailySloka(today);
+  processTrialExpirations();
 
   // Schedule to run at Midnight every day (00:01)
   cron.schedule('1 0 * * *', async () => {
     const todayStr = new Date().toISOString().split('T')[0];
     console.log(`[CRON] Running daily sloka rotation for ${todayStr}...`);
     await assignDailySloka(todayStr);
+    await processTrialExpirations();
   });
 };
 

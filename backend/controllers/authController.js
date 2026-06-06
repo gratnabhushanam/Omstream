@@ -297,8 +297,9 @@ exports.requestPasswordResetOtp = async (req, res) => {
     const otp = createOtp();
     pendingPasswordResets.set(normalizeEmail(email), { otp, expiresAt: getOtpExpiryTime() });
     
-    const delivery = await sendOtpEmail({ email: user.email, name: user.name, otp });
-    res.json({ message: 'Reset OTP sent', previewCode: delivery.previewCode });
+    sendOtpEmail({ email: user.email, name: user.name, otp }).catch(e => console.error('[AUTH] Async email error:', e));
+    const isPreview = process.env.EMAIL_PROVIDER === 'preview';
+    res.json({ message: 'Reset OTP sent', previewCode: isPreview ? otp : undefined });
   } catch (error) { res.status(500).json({ message: error.message }); }
 };
 

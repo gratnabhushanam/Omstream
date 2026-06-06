@@ -1,18 +1,14 @@
 // backend/utils/notificationService.js
 // Centralized notification utility for email, push, and in-app notifications
 
-const nodemailer = require('nodemailer');
+const { getTransporter } = require('./emailHelpers');
 
 // Email notification (Gmail SMTP, Resend, or Brevo)
 async function sendEmail({ to, subject, html, text }) {
   // TODO: Switch provider based on env
-  const transporter = nodemailer.createTransport({
-    service: 'gmail',
-    auth: {
-      user: process.env.EMAIL_USER,
-      pass: process.env.EMAIL_PASS,
-    },
-  });
+  const transporter = getTransporter();
+  if (!transporter) return;
+  
   await transporter.sendMail({
     from: `${process.env.EMAIL_FROM_NAME || 'Gita Wisdom'} <${process.env.EMAIL_USER}>`,
     to,

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { BookOpen, Book, Menu, X, BrainCircuit, User, Star, Heart, Search, Film, Shield, Users, Bell, Download, CheckCheck, Info, Megaphone, Gift, Sparkles, ChevronRight } from 'lucide-react';
+import { BookOpen, Book, Menu, X, BrainCircuit, User, Star, Heart, Search, Film, Shield, Users, Bell, Download, CheckCheck, Info, Megaphone, Gift, Sparkles, ChevronRight, Music } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useInstallPrompt } from '../hooks/useInstallPrompt';
 import { DesktopNotificationPanel, MobileNotificationSheet } from './Notifications';
@@ -35,6 +35,7 @@ export default function Navbar() {
     { name: 'Mentor', path: '/mentor', icon: <Heart className="w-4 h-4 mr-2" /> },
     { name: 'Kids', path: '/kids', icon: <Star className="w-4 h-4 mr-2" /> },
     { name: 'Movies', path: '/movies', icon: <Film className="w-4 h-4 mr-2" /> },
+    { name: 'Songs', path: '/songs', icon: <Music className="w-4 h-4 mr-2" /> },
     { name: 'Quizzes', path: '/quizzes', icon: <BrainCircuit className="w-4 h-4 mr-2" /> },
     { name: 'Daily Sloka', path: '/daily-sloka', icon: <Star className="w-4 h-4 mr-2" /> },
     { name: 'Library', path: '/stories', icon: <Book className="w-4 h-4 mr-2" /> },

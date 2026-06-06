@@ -40,8 +40,7 @@ const Satsangs = lazy(() => import('./pages/Satsangs'));
 const InstallApp = lazy(() => import('./pages/InstallApp'));
 const Subscription = lazy(() => import('./pages/Subscription'));
 const NotFound = lazy(() => import('./pages/NotFound'));
-
-
+const Songs = lazy(() => import('./pages/Songs'));
 function AppShell() {
   const location = useLocation();
   const { user, loading: authLoading, selectedProfile, selectProfile } = useAuth();
@@ -239,6 +238,7 @@ function AppShell() {
                 <Route path="/movies" element={isSubscribed(user) ? <Movies /> : <Navigate to="/subscription" replace />} />
                 <Route path="/upload-reel" element={isSubscribed(user) ? <UploadReel /> : <Navigate to="/subscription" replace />} />
                 <Route path="/admin" element={user && user.role === 'admin' ? <AdminDashboard /> : <Navigate to="/subscription" replace />} />
+                <Route path="/songs" element={isSubscribed(user) ? <Songs /> : <Navigate to="/subscription" replace />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </Suspense>

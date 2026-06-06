@@ -94,24 +94,6 @@ export default function Subscription() {
         },
         theme: {
           color: '#B66A2A' // devotion-gold
-        },
-        config: {
-          display: {
-            blocks: {
-              upi: {
-                name: 'Pay with UPI / QR',
-                instruments: [
-                  {
-                    method: 'upi'
-                  }
-                ]
-              }
-            },
-            sequence: ['block.upi'],
-            preferences: {
-              show_default_blocks: true, // Shows other methods below UPI
-            }
-          }
         }
       };
 

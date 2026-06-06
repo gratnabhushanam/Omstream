@@ -2,27 +2,19 @@ const bcrypt = require('bcryptjs');
 const mongoose = require('mongoose');
 const jwt = require('jsonwebtoken');
 const { User } = require('../models');
-const nodemailer = require('nodemailer');
-
-const OTP_EXPIRY_MINUTES = 5;
+const { resolveEmailProvider, sendViaResend, sendViaBrevo, sendViaSmtp } = require('../utils/emailHelpers');const OTP_EXPIRY_MINUTES = 5;
 const OTP_MAX_ATTEMPTS = 5;
 
 const sendEmailOtp = async (email, otp) => {
-    const transporter = nodemailer.createTransport({
-        host: process.env.SMTP_HOST || 'smtp.gmail.com',
-        port: process.env.SMTP_PORT || 465,
-        secure: true,
-        auth: {
-            user: process.env.EMAIL_USER,
-            pass: process.env.EMAIL_PASS,
-        }
-    });
-    await transporter.sendMail({
-        from: `"Gita Wisdom" <${process.env.EMAIL_USER}>`,
-        to: email,
-        subject: 'Gita Wisdom - Your Login OTP',
-        html: `<h2>Verification Code: ${otp}</h2>`,
-    });
+    try {
+        const provider = resolveEmailProvider();
+        if (provider === 'preview') return;
+        if (provider === 'resend') return await sendViaResend({ email, name: '', otp });
+        if (provider === 'brevo') return await sendViaBrevo({ email, name: '', otp });
+        return await sendViaSmtp({ email, name: '', otp });
+    } catch (e) {
+        console.error('Error sending OTP:', e);
+    }
 };
 
 exports.sendOtp = async (req, res) => {
@@ -40,7 +32,7 @@ exports.sendOtp = async (req, res) => {
         user.otpExpiry = new Date(Date.now() + OTP_EXPIRY_MINUTES * 60000);
         await user.save();
 
-        await sendEmailOtp(email, otp);
+        sendEmailOtp(email, otp).catch(e => console.error("Error sending OTP:", e));
         res.json({ message: 'OTP sent' });
     } catch (error) { res.status(500).json({ message: error.message }); }
 };

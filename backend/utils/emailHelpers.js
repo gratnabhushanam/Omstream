@@ -69,4 +69,4 @@ const sendViaBrevo = async ({ email, name, otp }) => {
   return { delivered: false, error: 'Brevo provider not implemented in this runtime' };
 };
 
-module.exports = { resolveEmailProvider, sendViaSmtp, sendViaResend, sendViaBrevo };
+module.exports = { resolveEmailProvider, getTransporter, sendViaSmtp, sendViaResend, sendViaBrevo };
