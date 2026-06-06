@@ -465,7 +465,7 @@ export default function Stories() {
 
             {/* Folder & Search controls */}
             <div className="mb-12 flex flex-col md:flex-row gap-6 items-center justify-between bg-[#0B1F3A]/40 backdrop-blur-xl border border-white/10 p-6 rounded-[2.5rem]">
-              <div className="relative w-full md:max-w-md">
+              <div className="relative w-full md:max-w-md flex items-center">
                 <input
                   type="text"
                   placeholder="Search folders or chapters..."
@@ -473,9 +473,9 @@ export default function Stories() {
                   value={searchQuery}
                   onChange={e => setSearchQuery(e.target.value)}
                 />
-                <Search className="w-5 h-5 text-gray-400 absolute left-4 top-4.5" />
+                <Search className="w-5 h-5 text-gray-400 absolute left-4 top-1/2 -translate-y-1/2" />
                 {searchQuery && (
-                  <button onClick={() => setSearchQuery('')} className="absolute right-4 top-4 text-gray-400 hover:text-white text-sm">
+                  <button onClick={() => setSearchQuery('')} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white text-sm">
                     ✕
                   </button>
                 )}
@@ -696,7 +696,7 @@ export default function Stories() {
                          <span className="text-devotion-gold">{activeChapterIndex + 1} / {activeStory.chapters?.length || 1}</span>
                       </h4>
                       {/* Chapter Search */}
-                      <div className="mb-4 relative">
+                      <div className="mb-4 relative flex items-center">
                         <input
                           type="text"
                           placeholder="Search chapters..."
@@ -704,9 +704,9 @@ export default function Stories() {
                           value={chapterSearchQuery}
                           onChange={e => setChapterSearchQuery(e.target.value)}
                         />
-                        <Search className="w-4 h-4 text-gray-500 absolute left-3.5 top-3.5" />
+                        <Search className="w-4 h-4 text-gray-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
                         {chapterSearchQuery && (
-                          <button onClick={() => setChapterSearchQuery('')} className="absolute right-3 top-3.5 text-gray-500 hover:text-white text-[10px]">
+                          <button onClick={() => setChapterSearchQuery('')} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-500 hover:text-white text-[10px]">
                             ✕
                           </button>
                         )}
