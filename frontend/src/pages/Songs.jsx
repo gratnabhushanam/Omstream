@@ -180,8 +180,8 @@ export default function Songs() {
                     onProgress={handleProgress}
                     onDuration={handleDuration}
                     onEnded={handleNext}
-                    width="0"
-                    height="0"
+                    width="64px"
+                    height="64px"
                     playsinline
                   />
                 </div>
