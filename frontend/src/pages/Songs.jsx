@@ -72,8 +72,10 @@ export default function Songs() {
   const [loading, setLoading] = useState(true);
   
   const playerRef = useRef(null);
-
+  const audioRef = useRef(null);
+  
   useEffect(() => {
+
     const fetchSongs = async () => {
       try {
         setLoading(true);
@@ -108,6 +110,18 @@ export default function Songs() {
   };
 
   const currentSong = songs[currentSongIndex] || null;
+  const isYouTube = currentSong?.url?.includes('youtube.com') || currentSong?.url?.includes('youtu.be');
+
+  useEffect(() => {
+    if (audioRef.current && !isYouTube) {
+      if (isPlaying) {
+        audioRef.current.play().catch(e => console.error('Audio play error:', e));
+      } else {
+        audioRef.current.pause();
+      }
+      audioRef.current.muted = isMuted;
+    }
+  }, [isPlaying, currentSong, isYouTube, isMuted]);
 
   const togglePlay = () => {
     setIsPlaying(!isPlaying);
@@ -139,11 +153,15 @@ export default function Songs() {
   };
 
   const handleProgressClick = (e) => {
-    if (!playerRef.current) return;
     const bar = e.currentTarget;
     const clickX = e.clientX - bar.getBoundingClientRect().left;
     const percentage = clickX / bar.offsetWidth;
-    playerRef.current.seekTo(percentage);
+    
+    if (isYouTube && playerRef.current) {
+      playerRef.current.seekTo(percentage);
+    } else if (audioRef.current) {
+      audioRef.current.currentTime = percentage * (audioRef.current.duration || 0);
+    }
   };
 
   const toggleMute = () => {
@@ -165,11 +183,11 @@ export default function Songs() {
             
             {currentSong ? (
               <>
-                <div className={`relative w-48 h-48 sm:w-64 sm:h-64 rounded-2xl border-4 border-devotion-gold/30 shadow-[0_0_40px_rgba(255,215,0,0.2)] overflow-hidden mb-8 transition-all duration-700 ${isPlaying ? 'scale-105 shadow-[0_0_60px_rgba(255,215,0,0.4)]' : ''}`}>
+                <div className={`relative w-48 h-48 sm:w-64 sm:h-64 rounded-full border-4 border-devotion-gold/30 shadow-[0_0_40px_rgba(255,215,0,0.2)] overflow-hidden mb-8 transition-all duration-700 ${isPlaying ? 'scale-105 shadow-[0_0_60px_rgba(255,215,0,0.4)]' : ''}`}>
                   <img 
                     src={currentSong.cover} 
                     alt={currentSong.title} 
-                    className={`w-full h-full object-contain bg-black ${isPlaying ? 'scale-105 transition-transform duration-[20s]' : 'scale-100'}`} 
+                    className={`w-full h-full object-cover ${isPlaying ? 'animate-[spin_20s_linear_infinite] scale-125' : 'scale-100'}`} 
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
 
@@ -227,37 +245,50 @@ export default function Songs() {
                   </button>
                 </div>
 
-                <div className="fixed bottom-0 right-0 overflow-hidden pointer-events-none -z-50" style={{ width: '2px', height: '2px', opacity: 0.01 }}>
-                  <ReactPlayer
-                    ref={playerRef}
-                    url={currentSong.url}
-                    playing={isPlaying}
-                    muted={isMuted}
-                    onProgress={handleProgress}
-                    onDuration={handleDuration}
-                    onEnded={handleNext}
-                    width="100%"
-                    height="100%"
-                    playsinline
-                    progressInterval={1000}
-                    config={{
-                      file: {
-                        forceVideo: true,
-                        attributes: {
-                          controlsList: 'nodownload'
+                <div className="fixed -bottom-40 -right-40 overflow-hidden pointer-events-none -z-50" style={{ width: '100px', height: '100px', opacity: 0.1 }}>
+                  {isYouTube ? (
+                    <ReactPlayer
+                      ref={playerRef}
+                      url={currentSong.url}
+                      playing={isPlaying}
+                      muted={isMuted}
+                      onProgress={handleProgress}
+                      onDuration={handleDuration}
+                      onEnded={handleNext}
+                      onError={(e) => console.error('ReactPlayer Error:', e)}
+                      width="100%"
+                      height="100%"
+                      playsinline
+                      progressInterval={1000}
+                      config={{
+                        youtube: {
+                          playerVars: {
+                            autoplay: 1,
+                            controls: 0,
+                            modestbranding: 1,
+                            playsinline: 1,
+                            origin: window.location.origin
+                          }
                         }
-                      },
-                      youtube: {
-                        playerVars: {
-                          autoplay: 1,
-                          controls: 0,
-                          modestbranding: 1,
-                          playsinline: 1,
-                          origin: window.location.origin
-                        }
-                      }
-                    }}
-                  />
+                      }}
+                    />
+                  ) : (
+                    <audio
+                      ref={audioRef}
+                      src={currentSong.url}
+                      onTimeUpdate={(e) => {
+                        const curr = e.target.currentTime;
+                        const dur = e.target.duration || 0;
+                        setProgress((curr / dur) * 100);
+                        const mins = Math.floor(curr / 60);
+                        const secs = Math.floor(curr % 60);
+                        setCurrentTime(`${mins}:${secs < 10 ? '0' : ''}${secs}`);
+                      }}
+                      onLoadedMetadata={(e) => handleDuration(e.target.duration)}
+                      onEnded={handleNext}
+                      playsInline
+                    />
+                  )}
                 </div>
               </>
             ) : (
