@@ -174,12 +174,15 @@ export default function Songs() {
                   <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
                   <div className="absolute inset-0 flex items-center justify-center">
                     <div className="w-12 h-12 bg-[#06101E]/80 backdrop-blur-sm rounded-full border border-devotion-gold/50 flex items-center justify-center">
-                      <Music className="w-5 h-5 text-devotion-gold" />
+
                     </div>
                   </div>
                 </div>
 
-                <div className="text-center mb-8 w-full">
+                <div className="text-center mb-8 w-full flex flex-col items-center">
+                  <div className="w-8 h-8 bg-white/5 rounded-full flex items-center justify-center mb-3">
+                    <Music className="w-4 h-4 text-devotion-gold" />
+                  </div>
                   <h2 className="text-2xl font-bold text-white mb-2 truncate px-2">{currentSong.title}</h2>
                   <p className="text-devotion-gold/80 text-sm font-medium tracking-wider uppercase">{currentSong.artist}</p>
                 </div>
@@ -242,7 +245,7 @@ export default function Songs() {
                     playsinline
                     progressInterval={1000}
                     config={{
-                      file: { forceAudio: true }, // Skips expensive video decoding for mp4s
+
                       youtube: {
                         playerVars: {
                           autoplay: 1,
