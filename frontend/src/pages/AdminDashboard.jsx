@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ErrorBoundary } from '../components/ErrorBoundary';
 import axios from 'axios';
-import { Database, Upload, Users, BookOpen, Video, LogOut, Settings, Film, Plus, X, Check, AlertCircle, Image as ImageIcon, Link as LinkIcon, FileText, Flame, Trash2, Pencil, Menu, Eye, Sparkles, RefreshCw, Cpu, Bell, BarChart3, Layers, Zap, Folder, FolderPlus, ArrowLeft, GripVertical, Music } from 'lucide-react';
+import { Database, Upload, Users, BookOpen, Video, LogOut, Settings, Film, Plus, X, Check, AlertCircle, Image as ImageIcon, Link as LinkIcon, FileText, Flame, Trash2, Pencil, Menu, Eye, Sparkles, RefreshCw, Cpu, Bell, BarChart3, Layers, Zap, Folder, FolderPlus, ArrowLeft, GripVertical, Music, Edit2 } from 'lucide-react';
 import { resumableUpload } from '../utils/resumableUpload';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
