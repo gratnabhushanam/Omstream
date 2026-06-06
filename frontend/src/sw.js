@@ -4,8 +4,24 @@ import { precacheAndRoute } from 'workbox-precaching';
 precacheAndRoute(self.__WB_MANIFEST || []);
 
 import { registerRoute } from 'workbox-routing';
-import { NetworkFirst, StaleWhileRevalidate } from 'workbox-strategies';
+import { NetworkFirst, StaleWhileRevalidate, CacheFirst } from 'workbox-strategies';
 import { ExpirationPlugin } from 'workbox-expiration';
+import { RangeRequestsPlugin } from 'workbox-range-requests';
+
+// Cache audio/video files for offline support
+registerRoute(
+  ({ request, url }) => request.destination === 'audio' || request.destination === 'video' || url.pathname.match(/\.(mp3|mp4|wav|m4a)$/),
+  new CacheFirst({
+    cacheName: 'media-cache',
+    plugins: [
+      new ExpirationPlugin({
+        maxEntries: 100, // Keep memory bounded
+        maxAgeSeconds: 30 * 24 * 60 * 60, // 30 Days
+      }),
+      new RangeRequestsPlugin(),
+    ],
+  })
+);
 
 // Cache images (thumbnails, UI graphics)
 registerRoute(

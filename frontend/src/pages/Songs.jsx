@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Play, Pause, SkipForward, SkipBack, Volume2, VolumeX, Music, Heart, Search } from 'lucide-react';
+import { Play, Pause, SkipForward, SkipBack, Volume2, VolumeX, Music, Heart, Search, Download } from 'lucide-react';
 import ReactPlayer from 'react-player';
 import axios from 'axios';
 
@@ -46,6 +46,9 @@ const SongItem = React.memo(({ song, isSelected, actualIndex, onPlay, onLike, is
       </div>
 
       <div className="flex-shrink-0 flex items-center gap-4 text-right pr-2">
+        <button onClick={(e) => { e.stopPropagation(); window.open(song.url, '_blank'); }} className="active:scale-90 transition-all text-gray-500 hover:text-devotion-gold opacity-0 group-hover:opacity-100" title="Download for Offline">
+          <Download className="w-4 h-4" />
+        </button>
         <button onClick={(e) => onLike(e, song._id)} className={`active:scale-90 transition-all ${isLiked ? 'text-red-500 hover:text-red-600' : 'text-gray-500 hover:text-red-400 opacity-0 group-hover:opacity-100'}`}>
           <Heart className={`w-4 h-4 ${isLiked ? 'fill-current' : ''}`} />
         </button>
