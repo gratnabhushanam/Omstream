@@ -97,6 +97,13 @@ export default function Songs() {
     fetchSongs();
   }, []);
 
+  // Reset player state whenever song changes
+  useEffect(() => {
+    setCurrentTime('0:00');
+    setDuration('0:00');
+    setProgress(0);
+  }, [currentSongIndex]);
+
 
   const handleLike = async (e, songId) => {
     e.stopPropagation();
@@ -301,12 +308,28 @@ export default function Songs() {
                         onTimeUpdate={(e) => {
                           const curr = Number(e.target.currentTime) || 0;
                           const dur = Number(e.target.duration) || 0;
-                          setProgress((dur > 0 && !isNaN(dur)) ? (curr / dur) * 100 : 0);
+                          if (dur > 0 && !isNaN(dur)) {
+                            setProgress((curr / dur) * 100);
+                            // Update duration on every tick in case onLoadedMetadata missed
+                            const dMins = Math.floor(dur / 60);
+                            const dSecs = Math.floor(dur % 60);
+                            setDuration(`${dMins}:${dSecs < 10 ? '0' : ''}${dSecs}`);
+                          }
                           const mins = isNaN(curr) ? 0 : Math.floor(curr / 60);
                           const secs = isNaN(curr) ? 0 : Math.floor(curr % 60);
                           setCurrentTime(`${mins}:${secs < 10 ? '0' : ''}${secs}`);
                         }}
                         onLoadedMetadata={(e) => handleDuration(e.target.duration)}
+                        onDurationChange={(e) => {
+                          if (e.target.duration && !isNaN(e.target.duration)) {
+                            handleDuration(e.target.duration);
+                          }
+                        }}
+                        onCanPlay={(e) => {
+                          if (e.target.duration && !isNaN(e.target.duration)) {
+                            handleDuration(e.target.duration);
+                          }
+                        }}
                         onEnded={handleEnded}
                         playsInline
                         className="w-full h-full object-cover"
@@ -314,10 +337,10 @@ export default function Songs() {
                     )}
                   </div>
 
-                  <img 
+                <img 
                     src={currentSong.cover} 
                     alt={currentSong.title} 
-                    className={`relative z-10 w-full h-full object-cover ${isPlaying ? 'animate-[spin_20s_linear_infinite] scale-125' : 'scale-100'}`} 
+                    className={`relative z-10 w-full h-full object-cover transition-all duration-700 ${isPlaying ? 'animate-[spin_20s_linear_infinite]' : ''}`}
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
 
