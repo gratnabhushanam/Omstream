@@ -156,7 +156,8 @@ exports.checkIdentifierExists = async (req, res) => {
         }
 
         const user = await User.findOne(query);
-        if (user) {
+        // Treat user as 'new' if they exist but still have the auto-generated name
+        if (user && user.name && !user.name.startsWith('Member ')) {
             return res.json({ exists: true, message: 'Welcome back! Login using OTP.' });
         } else {
             return res.json({ exists: false, message: 'Welcome! Create your account using OTP.' });
