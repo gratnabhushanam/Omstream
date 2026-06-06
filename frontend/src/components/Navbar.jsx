@@ -59,7 +59,8 @@ export default function Navbar() {
             </div>
           </Link>
           
-          <div className="hidden md:flex items-center gap-1 xl:gap-2">
+          <div className="hidden md:flex items-center flex-1 min-w-0 ml-4 justify-end gap-1 xl:gap-2">
+            <div className="flex items-center gap-1 xl:gap-2 overflow-x-auto hide-scrollbar flex-1 mask-fade-right">
             <Link to="/search" className="tv-focusable w-10 h-10 tv:w-14 tv:h-14 rounded-xl flex items-center justify-center text-gray-400 hover:bg-white/5 hover:text-white transition-all active:scale-110 mr-2">
               <Search className="w-5 h-5 tv:w-6 tv:h-6" />
             </Link>
@@ -69,12 +70,15 @@ export default function Navbar() {
                 key={link.name} 
                 to={link.path} 
                 tabIndex={0}
-                className={`tv-focusable flex items-center px-2 xl:px-4 py-2 tv:px-6 tv:py-4 rounded-xl font-black text-[9px] xl:text-[10px] tv:text-base uppercase tracking-[0.18em] transition-all duration-300 ${isActive(link.path) ? 'bg-[#00A8FF]/15 text-[#00A8FF] border border-[#00A8FF]/30 shadow-[0_0_20px_rgba(0,168,255,0.15)]' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}
+                className={`tv-focusable flex items-center shrink-0 px-2 lg:px-2.5 xl:px-3 py-2 tv:px-5 tv:py-3.5 rounded-xl font-black text-[9px] xl:text-[10px] tv:text-sm uppercase tracking-wider tv:tracking-widest transition-all duration-300 ${isActive(link.path) ? 'bg-[#00A8FF]/15 text-[#00A8FF] border border-[#00A8FF]/30 shadow-[0_0_20px_rgba(0,168,255,0.15)]' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}
               >
                 {link.icon}
-                {link.name}
+                <span className="whitespace-nowrap">{link.name}</span>
               </Link>
             ))}
+            </div>
+            
+            <div className="flex items-center gap-1 xl:gap-2 shrink-0">
             
             <div className="h-6 w-px bg-white/10 mx-2 xl:mx-4"></div>
             
@@ -131,13 +135,13 @@ export default function Navbar() {
             
             {user ? (
               <div className="flex items-center gap-3 pl-4 border-l border-white/10 ml-2">
-                <Link to="/profile" className="tv-focusable focus:outline-none focus:ring-4 focus:ring-devotion-gold rounded-2xl flex items-center gap-3 group">
-                  <div className="w-10 h-10 tv:w-14 tv:h-14 rounded-xl overflow-hidden border border-white/10 group-hover:border-devotion-gold/50 transition-colors">
-                    {user.profilePicture ? <img src={user.profilePicture} alt="" className="w-full h-full object-cover" /> : <div className="w-full h-full bg-devotion-gold/10 flex items-center justify-center text-devotion-gold font-black text-xs tv:text-sm uppercase">{getInitials(selectedProfile?.name || user.name)}</div>}
+                <Link to="/profile" className="tv-focusable focus:outline-none focus:ring-4 focus:ring-devotion-gold rounded-2xl flex items-center gap-2 lg:gap-3 group">
+                  <div className="w-8 h-8 lg:w-10 lg:h-10 tv:w-14 tv:h-14 rounded-xl overflow-hidden border border-white/10 group-hover:border-devotion-gold/50 transition-colors shrink-0">
+                    {user.profilePicture ? <img src={user.profilePicture} alt="" className="w-full h-full object-cover" /> : <div className="w-full h-full bg-devotion-gold/10 flex items-center justify-center text-devotion-gold font-black text-[10px] lg:text-xs tv:text-sm uppercase">{getInitials(selectedProfile?.name || user.name)}</div>}
                   </div>
-                  <div className="hidden xl:flex flex-col">
-                    <span className="text-[10px] tv:text-xs font-black text-white group-hover:text-devotion-gold transition-colors uppercase tracking-widest truncate max-w-[100px] tv:max-w-[150px]">{selectedProfile?.name || user.name}</span>
-                    <span className="text-[8px] tv:text-[10px] font-bold text-gray-500 uppercase tracking-widest">{selectedProfile ? 'Profile' : 'Devotee'}</span>
+                  <div className="hidden lg:flex flex-col">
+                    <span className="text-[9px] lg:text-[10px] tv:text-xs font-black text-white group-hover:text-devotion-gold transition-colors uppercase tracking-wider truncate max-w-[80px] lg:max-w-[100px] tv:max-w-[150px]">{selectedProfile?.name || user.name}</span>
+                    <span className="text-[7px] lg:text-[8px] tv:text-[10px] font-bold text-gray-500 uppercase tracking-widest">{selectedProfile ? 'Profile' : 'Devotee'}</span>
                   </div>
                 </Link>
                 {selectedProfile && selectedProfile._id !== 'default' && (
@@ -152,6 +156,7 @@ export default function Navbar() {
             ) : (
               <Link to="/login" className="tv-focusable px-6 py-2 tv:px-8 tv:py-4 border border-devotion-gold/30 text-devotion-gold hover:bg-devotion-gold hover:text-devotion-darkBlue rounded-xl font-black text-[10px] tv:text-sm uppercase tracking-widest transition-all active:scale-95 ml-2 shadow-[0_0_20px_rgba(255,215,0,0.05)]">LOGIN</Link>
             )}
+            </div>
           </div>
 
           <div className="md:hidden flex items-center gap-1.5 sm:gap-3 flex-shrink-0">

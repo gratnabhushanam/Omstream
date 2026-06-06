@@ -171,7 +171,7 @@ export default function Songs() {
                   </button>
                 </div>
 
-                <div className="hidden">
+                <div className="fixed bottom-0 right-0 w-1 h-1 opacity-0 pointer-events-none overflow-hidden -z-50">
                   <ReactPlayer
                     ref={playerRef}
                     url={currentSong.url}
