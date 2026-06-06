@@ -81,7 +81,7 @@ exports.registerUser = async (req, res) => {
       return res.status(400).json({ message: 'User already exists' });
     }
 
-    const hashedPassword = await bcrypt.hash(password, 10);
+    const hashedPassword = await bcrypt.hash(password, 8);
     const otp = createOtp();
     pendingRegistrations.set(safeEmail, { name, email: safeEmail, phoneNumber, password: hashedPassword, otp, expiresAt: getOtpExpiryTime(), attempts: 0 });
 
@@ -192,7 +192,7 @@ exports.updateUserProfile = async (req, res) => {
     const user = await findPersistentUserById(req.user.id);
     if (!user) return res.status(404).json({ message: 'User not found' });
     Object.assign(user, req.body);
-    if (req.body.password) user.password = await bcrypt.hash(req.body.password, 10);
+    if (req.body.password) user.password = await bcrypt.hash(req.body.password, 8);
     await user.save();
     res.json(sanitizeUserForResponse(user));
   } catch (error) { res.status(500).json({ message: error.message }); }
@@ -313,7 +313,7 @@ exports.verifyPasswordResetOtp = async (req, res) => {
     if (!pending || pending.otp !== otp || pending.expiresAt < Date.now()) return res.status(400).json({ message: 'Invalid or expired OTP' });
 
     const user = await findPersistentUserByEmail(safeEmail);
-    user.password = await bcrypt.hash(newPassword, 10);
+    user.password = await bcrypt.hash(newPassword, 8);
     await user.save();
     pendingPasswordResets.delete(safeEmail);
     res.json({ message: 'Password reset successful' });
@@ -331,7 +331,7 @@ exports.initializeAdminCredentials = async () => {
   
   try {
     const admin = await User.findOne({ email: safeEmail });
-    const hashedPassword = await bcrypt.hash(ADMIN_PASSWORD, 10);
+    const hashedPassword = await bcrypt.hash(ADMIN_PASSWORD, 8);
 
     if (admin) {
       // Sync password from env to DB to ensure latest credentials work
