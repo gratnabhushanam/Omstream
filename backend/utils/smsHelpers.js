@@ -125,11 +125,14 @@ const sendViaTwilio = async (phone, otp) => {
  * @param {string} otp - 6-digit OTP
  */
 const sendSmsOtp = async (phone, otp) => {
+  let fast2smsError = null;
+
   // Try Fast2SMS first (best for Indian numbers)
   if (process.env.FAST2SMS_API_KEY) {
     console.log(`[SMS] Attempting Fast2SMS to ${phone}`);
     const result = await sendViaFast2SMS(phone, otp);
     if (result.delivered) return result;
+    fast2smsError = result.error;
     console.warn(`[SMS] Fast2SMS failed: ${result.error}. Trying Twilio...`);
   }
 
@@ -137,6 +140,11 @@ const sendSmsOtp = async (phone, otp) => {
   if (process.env.TWILIO_ACCOUNT_SID) {
     console.log(`[SMS] Attempting Twilio to ${phone}`);
     return await sendViaTwilio(phone, otp);
+  }
+
+  // If Fast2SMS was tried and failed, return its error
+  if (fast2smsError) {
+    return { delivered: false, error: `Fast2SMS Error: ${fast2smsError}` };
   }
 
   // No SMS provider configured
