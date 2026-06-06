@@ -23,19 +23,37 @@ const {
   activateSubscription,
 } = require('../controllers/authController');
 const { protect, admin } = require('../middleware/authMiddleware');
+const rateLimit = require('express-rate-limit');
 
-router.post('/register', registerUser);
-router.post('/register/verify-otp', verifyRegistrationOtp);
-router.post('/register/resend-otp', resendRegistrationOtp);
+// Anti-Hacker Rate Limiters
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 10, // Limit each IP to 10 requests per windowMs for login/register
+  message: { message: 'Too many authentication attempts from this IP, please try again after 15 minutes' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+const otpLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000, // 1 hour
+  max: 5, // Limit each IP to 5 OTP requests per hour to prevent spam costs
+  message: { message: 'Too many OTP requests from this IP, please try again after 1 hour' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+router.post('/register', authLimiter, registerUser);
+router.post('/register/verify-otp', authLimiter, verifyRegistrationOtp);
+router.post('/register/resend-otp', otpLimiter, resendRegistrationOtp);
 
 // Unified OTP Auth Endpoints
-router.post('/send-otp', require('../controllers/otpController').sendOtp);
-router.post('/verify-otp', require('../controllers/otpController').verifyOtp);
+router.post('/send-otp', otpLimiter, require('../controllers/otpController').sendOtp);
+router.post('/verify-otp', authLimiter, require('../controllers/otpController').verifyOtp);
 
-router.post('/forgot-password/request-otp', requestPasswordResetOtp);
-router.post('/forgot-password/verify-otp', verifyPasswordResetOtp);
+router.post('/forgot-password/request-otp', otpLimiter, requestPasswordResetOtp);
+router.post('/forgot-password/verify-otp', authLimiter, verifyPasswordResetOtp);
 router.get('/email-health', getEmailHealth);
-router.post('/login', loginUser);
+router.post('/login', authLimiter, loginUser);
 router.route('/profile').get(protect, getUserProfile).put(protect, updateUserProfile);
 router.get('/community', protect, getCommunityProfiles);
 router.post('/bookmarks', protect, toggleBookmark);

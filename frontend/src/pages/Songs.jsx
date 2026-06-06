@@ -171,7 +171,7 @@ export default function Songs() {
                   </button>
                 </div>
 
-                <div className="fixed bottom-0 right-0 w-1 h-1 opacity-0 pointer-events-none overflow-hidden -z-50">
+                <div className="fixed bottom-0 right-0 overflow-hidden pointer-events-none -z-50" style={{ width: '2px', height: '2px', opacity: 0.01 }}>
                   <ReactPlayer
                     ref={playerRef}
                     url={currentSong.url}
@@ -180,9 +180,22 @@ export default function Songs() {
                     onProgress={handleProgress}
                     onDuration={handleDuration}
                     onEnded={handleNext}
-                    width="64px"
-                    height="64px"
+                    width="100%"
+                    height="100%"
                     playsinline
+                    progressInterval={1000}
+                    config={{
+                      file: { forceAudio: true }, // Skips expensive video decoding for mp4s
+                      youtube: {
+                        playerVars: {
+                          autoplay: 1,
+                          controls: 0,
+                          modestbranding: 1,
+                          playsinline: 1,
+                          origin: window.location.origin
+                        }
+                      }
+                    }}
                   />
                 </div>
               </>
@@ -236,7 +249,7 @@ export default function Songs() {
                   }`}
                 >
                   <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-xl overflow-hidden relative flex-shrink-0">
-                    <img src={song.cover} alt={song.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                    <img src={song.cover} alt={song.title} loading="lazy" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
                     <div className="absolute inset-0 bg-black/40 group-hover:bg-black/20 transition-colors flex items-center justify-center">
                       {isSelected && isPlaying ? (
                         <div className="flex items-end justify-center gap-0.5 h-4">
