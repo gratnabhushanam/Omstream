@@ -165,11 +165,11 @@ export default function Songs() {
             
             {currentSong ? (
               <>
-                <div className={`relative w-48 h-48 sm:w-64 sm:h-64 rounded-full border-4 border-devotion-gold/30 shadow-[0_0_40px_rgba(255,215,0,0.2)] overflow-hidden mb-8 transition-all duration-700 ${isPlaying ? 'scale-105 shadow-[0_0_60px_rgba(255,215,0,0.4)]' : ''}`}>
+                <div className={`relative w-48 h-48 sm:w-64 sm:h-64 rounded-2xl border-4 border-devotion-gold/30 shadow-[0_0_40px_rgba(255,215,0,0.2)] overflow-hidden mb-8 transition-all duration-700 ${isPlaying ? 'scale-105 shadow-[0_0_60px_rgba(255,215,0,0.4)]' : ''}`}>
                   <img 
                     src={currentSong.cover} 
                     alt={currentSong.title} 
-                    className={`w-full h-full object-cover ${isPlaying ? 'animate-[spin_20s_linear_infinite] scale-125' : 'scale-100'}`} 
+                    className={`w-full h-full object-contain bg-black ${isPlaying ? 'scale-105 transition-transform duration-[20s]' : 'scale-100'}`} 
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
 
@@ -241,7 +241,12 @@ export default function Songs() {
                     playsinline
                     progressInterval={1000}
                     config={{
-
+                      file: {
+                        forceVideo: true,
+                        attributes: {
+                          controlsList: 'nodownload'
+                        }
+                      },
                       youtube: {
                         playerVars: {
                           autoplay: 1,
