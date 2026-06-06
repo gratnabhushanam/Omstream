@@ -1,9 +1,19 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { Play, Pause, SkipForward, SkipBack, Volume2, VolumeX, Music, Heart, Search, Download, Shuffle, Repeat, Repeat1 } from 'lucide-react';
+import { Play, Pause, SkipForward, SkipBack, Volume2, VolumeX, Music, Heart, Search, Download, Shuffle, Repeat, Repeat1, AlertCircle } from 'lucide-react';
 import axios from 'axios';
 
 import { useLanguage } from '../context/LanguageContext';
 import { useAuth } from '../context/AuthContext';
+
+// Resolve audio URL: prefix backend origin for relative /uploads/ paths
+const BACKEND_ORIGIN = import.meta.env.VITE_API_BASE_URL || 'https://gitawisdom.onrender.com';
+const resolveAudioUrl = (url) => {
+  if (!url) return '';
+  if (url.startsWith('/uploads/') || url.startsWith('/api/')) {
+    return `${BACKEND_ORIGIN}${url}`;
+  }
+  return url;
+};
 
 const SongItem = React.memo(({ song, isSelected, actualIndex, onPlay, onLike, isLiked }) => {
   return (
@@ -71,6 +81,7 @@ export default function Songs() {
   const [loading, setLoading] = useState(true);
   const [isShuffle, setIsShuffle] = useState(false);
   const [repeatMode, setRepeatMode] = useState('all'); // 'none', 'all', 'one'
+  const [audioError, setAudioError] = useState(false);
   
   // Refs for both audio types
   const audioRef = useRef(null);   // Native <audio> for direct files
@@ -102,6 +113,7 @@ export default function Songs() {
     setCurrentTime('0:00');
     setDuration('0:00');
     setProgress(0);
+    setAudioError(false);
     ytReady.current = false;
   }, [currentSongIndex]);
 
@@ -366,9 +378,8 @@ export default function Songs() {
                   /* Native audio element for MP3 / MP4 / direct URL */
                   <audio
                     ref={audioRef}
-                    src={currentSong.url}
+                    src={resolveAudioUrl(currentSong.url)}
                     preload="metadata"
-                    crossOrigin="anonymous"
                     onTimeUpdate={(e) => {
                       const curr = e.target.currentTime || 0;
                       const dur  = e.target.duration   || 0;
@@ -382,10 +393,15 @@ export default function Songs() {
                       if (dur && !isNaN(dur)) {
                         const fm = (s) => `${Math.floor(s/60)}:${String(Math.floor(s%60)).padStart(2,'0')}`;
                         setDuration(fm(dur));
+                        setAudioError(false);
                       }
                     }}
                     onEnded={handleEnded}
-                    onError={(e) => console.error('Audio error', e.target.error)}
+                    onError={(e) => {
+                      console.error('Audio error:', e.target.error, 'URL:', resolveAudioUrl(currentSong.url));
+                      setAudioError(true);
+                      setIsPlaying(false);
+                    }}
                   />
                 )}
 
@@ -450,6 +466,14 @@ export default function Songs() {
                     {repeatMode === 'one' ? <Repeat1 className="w-5 h-5" /> : <Repeat className="w-5 h-5" />}
                   </button>
                 </div>
+
+                {/* Audio error notice */}
+                {audioError && !isYouTube && (
+                  <div className="mt-3 flex items-center gap-2 text-red-400 text-xs bg-red-500/10 rounded-xl px-4 py-2 border border-red-500/20">
+                    <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                    <span>Audio unavailable. <a href={resolveAudioUrl(currentSong?.url)} target="_blank" rel="noreferrer" className="underline text-devotion-gold">Open directly</a></span>
+                  </div>
+                )}
 
                 {/* Mute button */}
                 <button tabIndex="0" onClick={toggleMute} className="mt-4 tv-focusable focus:ring-2 focus:ring-devotion-gold rounded-full text-gray-400 hover:text-white transition-colors p-2 active:scale-90">

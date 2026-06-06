@@ -72,14 +72,22 @@ const sendViaFast2SMS = async (phone, otp) => {
 
 /**
  * Send OTP via Twilio (international SMS)
+ * Supports both:
+ *   - Classic: TWILIO_ACCOUNT_SID + TWILIO_AUTH_TOKEN
+ *   - API Key:  TWILIO_ACCOUNT_SID + TWILIO_API_KEY_SID + TWILIO_API_KEY_SECRET
  */
 const sendViaTwilio = async (phone, otp) => {
   const accountSid = process.env.TWILIO_ACCOUNT_SID;
-  const authToken = process.env.TWILIO_AUTH_TOKEN;
   const twilioPhone = process.env.TWILIO_PHONE_NUMBER;
+  const apiKeySid = process.env.TWILIO_API_KEY_SID;
+  const apiKeySecret = process.env.TWILIO_API_KEY_SECRET;
+  const authToken = process.env.TWILIO_AUTH_TOKEN;
 
-  if (!accountSid || !authToken || !twilioPhone) {
-    return { delivered: false, error: 'Twilio credentials not configured' };
+  if (!accountSid || !twilioPhone) {
+    return { delivered: false, error: 'TWILIO_ACCOUNT_SID and TWILIO_PHONE_NUMBER are required' };
+  }
+  if (!apiKeySid && !authToken) {
+    return { delivered: false, error: 'Twilio auth credentials not configured (need TWILIO_AUTH_TOKEN or TWILIO_API_KEY_SID+TWILIO_API_KEY_SECRET)' };
   }
 
   try {
@@ -87,9 +95,18 @@ const sendViaTwilio = async (phone, otp) => {
     let formattedPhone = phone.trim();
     if (!formattedPhone.startsWith('+')) formattedPhone = '+' + formattedPhone;
 
-    const client = twilio(accountSid, authToken);
+    // Use API Key auth if available, otherwise fall back to Auth Token
+    let client;
+    if (apiKeySid && apiKeySecret) {
+      console.log('[SMS] Using Twilio API Key authentication');
+      client = twilio(apiKeySid, apiKeySecret, { accountSid });
+    } else {
+      console.log('[SMS] Using Twilio Auth Token authentication');
+      client = twilio(accountSid, authToken);
+    }
+
     const message = await client.messages.create({
-      body: `Your Gita Wisdom verification code is: ${otp}. It expires in 5 minutes.`,
+      body: `Your Gita Wisdom verification code is: ${otp}. It expires in 10 minutes. Do not share it.`,
       from: twilioPhone.trim(),
       to: formattedPhone,
     });
