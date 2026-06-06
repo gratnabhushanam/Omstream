@@ -53,3 +53,21 @@ exports.uploadVideoToCloudinary = async (req, res) => {
     res.status(201).json({ video: newVideo });
   } catch (error) { res.status(500).json({ message: error.message }); }
 };
+exports.clearApiCache = async (req, res) => {
+  try {
+    const apiCache = require('../utils/apiCache');
+    const generalCache = require('../utils/cache');
+    
+    // Clear both caches
+    if (apiCache && typeof apiCache.clearCache === 'function') {
+      apiCache.clearCache();
+    }
+    if (generalCache && typeof generalCache.clearCache === 'function') {
+      generalCache.clearCache();
+    }
+    
+    res.json({ message: 'Global API Cache cleared successfully' });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};

@@ -9,4 +9,7 @@ const upload = multer({ dest: 'uploads/temp/' });
 // POST /api/admin/upload-video
 router.post('/upload-video', protect, admin, upload.single('video'), adminController.uploadVideoToCloudinary);
 
+// POST /api/admin/clear-cache
+router.post('/clear-cache', protect, admin, adminController.clearApiCache);
+
 module.exports = router;
