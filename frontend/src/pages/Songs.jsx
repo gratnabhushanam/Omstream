@@ -162,14 +162,16 @@ export default function Songs() {
 
   const handleProgress = (state) => {
     setProgress(state.played * 100);
-    const mins = Math.floor(state.playedSeconds / 60);
-    const secs = Math.floor(state.playedSeconds % 60);
+    const played = state.playedSeconds || 0;
+    const mins = Math.floor(played / 60) || 0;
+    const secs = Math.floor(played % 60) || 0;
     setCurrentTime(`${mins}:${secs < 10 ? '0' : ''}${secs}`);
   };
 
   const handleDuration = (dur) => {
-    const mins = Math.floor(dur / 60);
-    const secs = Math.floor(dur % 60);
+    const validDur = dur || 0;
+    const mins = Math.floor(validDur / 60) || 0;
+    const secs = Math.floor(validDur % 60) || 0;
     setDuration(`${mins}:${secs < 10 ? '0' : ''}${secs}`);
   };
 
@@ -196,7 +198,7 @@ export default function Songs() {
       <div className="w-full max-w-5xl mx-auto relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12">
         
         {/* Left Side: Music Player */}
-        <div className="lg:col-span-5 flex flex-col items-center">
+        <div className="lg:col-span-5 flex flex-col items-center order-2 lg:order-1">
           <div className="w-full bg-glass-premium backdrop-blur-3xl rounded-[2.5rem] border border-devotion-gold/20 p-6 sm:p-8 shadow-2xl flex flex-col items-center animate-slide-up">
             <h1 className="text-2xl font-serif font-black uppercase tracking-widest text-devotion-gold mb-6 text-center">
               Divine Player
@@ -240,11 +242,11 @@ export default function Songs() {
                         ref={audioRef}
                         src={currentSong.url}
                         onTimeUpdate={(e) => {
-                          const curr = e.target.currentTime;
+                          const curr = e.target.currentTime || 0;
                           const dur = e.target.duration || 0;
                           setProgress((dur > 0) ? (curr / dur) * 100 : 0);
-                          const mins = Math.floor(curr / 60);
-                          const secs = Math.floor(curr % 60);
+                          const mins = Math.floor(curr / 60) || 0;
+                          const secs = Math.floor(curr % 60) || 0;
                           setCurrentTime(`${mins}:${secs < 10 ? '0' : ''}${secs}`);
                         }}
                         onLoadedMetadata={(e) => handleDuration(e.target.duration)}
@@ -326,7 +328,7 @@ export default function Songs() {
         </div>
 
         {/* Right Side: Playlist */}
-        <div className="lg:col-span-7 flex flex-col">
+        <div className="lg:col-span-7 flex flex-col order-1 lg:order-2">
           <div className="mb-6 flex flex-col sm:flex-row items-start sm:items-end justify-between gap-4">
             <div>
               <h2 className="text-3xl font-serif font-black uppercase tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-white to-gray-400">
