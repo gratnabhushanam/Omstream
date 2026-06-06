@@ -238,7 +238,7 @@ function AppShell() {
                 <Route path="/movies" element={isSubscribed(user) ? <Movies /> : <Navigate to="/subscription" replace />} />
                 <Route path="/upload-reel" element={isSubscribed(user) ? <UploadReel /> : <Navigate to="/subscription" replace />} />
                 <Route path="/admin" element={user && user.role === 'admin' ? <AdminDashboard /> : <Navigate to="/subscription" replace />} />
-                <Route path="/songs" element={isSubscribed(user) ? <Songs /> : <Navigate to="/subscription" replace />} />
+                <Route path="/songs" element={<Songs />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </Suspense>
