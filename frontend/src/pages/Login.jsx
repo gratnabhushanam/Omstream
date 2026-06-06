@@ -723,7 +723,7 @@ export default function Login() {
                   ← Back to OTP
                 </button>
 
-                <h2 className="text-xl sm:text-2xl font-black text-white mb-1">Admin Login</h2>
+                <h2 className="text-xl sm:text-2xl font-black text-white mb-1">Email Login</h2>
                 <p className="text-sm text-white/45 mb-6">Login with your email and password</p>
 
                 {error && (
@@ -770,7 +770,7 @@ export default function Login() {
           </p>
           {step !== STEPS.EMAIL_LOGIN && (
             <button onClick={() => goTo(STEPS.EMAIL_LOGIN)} className="text-[10px] uppercase tracking-widest text-white/20 hover:text-white/50 transition-colors font-bold">
-              Admin / Email Login
+              Email Login
             </button>
           )}
         </div>
