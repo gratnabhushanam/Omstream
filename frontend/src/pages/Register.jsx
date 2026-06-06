@@ -75,22 +75,28 @@ export default function Register() {
     setLoading(true);
 
     try {
-      const fullPhone = selectedCountry ? selectedCountry.dial + phoneVal.replace(/\D/g, '') : phoneVal.replace(/\D/g, '');
+      const fullPhone = phoneVal.trim() ? (selectedCountry ? selectedCountry.dial + phoneVal.replace(/\D/g, '') : phoneVal.replace(/\D/g, '')) : '';
       const response = await register(formData.name, formData.email, fullPhone, formData.password);
 
       const pendingRegistration = {
         name: formData.name,
         email: response.email || formData.email,
+        phoneNumber: fullPhone,
         retryAfterSeconds: Number(response.retryAfterSeconds || 60),
         createdAt: Date.now(),
         previewCode: response.previewCode,
       };
       sessionStorage.setItem('pending_registration_v1', JSON.stringify(pendingRegistration));
-      setInfoMessage('OTP sent to your email. Redirecting to verification...');
+      setInfoMessage(
+        fullPhone 
+          ? 'OTP sent to your mobile number. Redirecting to verification...'
+          : 'OTP sent to your email. Redirecting to verification...'
+      );
       navigate('/register/verify-otp', {
         replace: true,
         state: {
           email: pendingRegistration.email,
+          phoneNumber: pendingRegistration.phoneNumber,
           retryAfterSeconds: pendingRegistration.retryAfterSeconds,
           previewCode: pendingRegistration.previewCode,
         },

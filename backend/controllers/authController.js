@@ -85,13 +85,13 @@ exports.registerUser = async (req, res) => {
     const otp = createOtp();
     pendingRegistrations.set(safeEmail, { name, email: safeEmail, phoneNumber, password: hashedPassword, otp, expiresAt: getOtpExpiryTime(), attempts: 0 });
 
-    console.log(`[AUTH] Sending OTP to ${safeEmail}`);
-    sendOtpEmail({ email: safeEmail, name, otp }).catch(e => console.error('[AUTH] Async email error:', e));
-    
     if (phoneNumber) {
-      console.log(`[AUTH] Sending registration OTP to phone: ${phoneNumber}`);
+      console.log(`[AUTH] Sending registration OTP exclusively to phone: ${phoneNumber}`);
       const { sendSmsOtp } = require('../utils/smsHelpers');
       sendSmsOtp(phoneNumber, otp).catch(e => console.error('[AUTH] Async SMS error:', e));
+    } else {
+      console.log(`[AUTH] Sending registration OTP exclusively to email: ${safeEmail}`);
+      sendOtpEmail({ email: safeEmail, name, otp }).catch(e => console.error('[AUTH] Async email error:', e));
     }
     
     const isPreview = process.env.EMAIL_PROVIDER === 'preview' || process.env.ALLOW_OTP_PREVIEW === 'true' || process.env.NODE_ENV === 'development';
@@ -113,12 +113,13 @@ exports.resendRegistrationOtp = async (req, res) => {
     pending.otp = otp;
     pending.expiresAt = getOtpExpiryTime();
     
-    sendOtpEmail({ email: safeEmail, name: pending.name, otp }).catch(e => console.error('[AUTH] Async resend email error:', e));
-    
     if (pending.phoneNumber) {
-      console.log(`[AUTH] Resending registration OTP to phone: ${pending.phoneNumber}`);
+      console.log(`[AUTH] Resending registration OTP exclusively to phone: ${pending.phoneNumber}`);
       const { sendSmsOtp } = require('../utils/smsHelpers');
       sendSmsOtp(pending.phoneNumber, otp).catch(e => console.error('[AUTH] Async SMS error:', e));
+    } else {
+      console.log(`[AUTH] Resending registration OTP exclusively to email: ${safeEmail}`);
+      sendOtpEmail({ email: safeEmail, name: pending.name, otp }).catch(e => console.error('[AUTH] Async resend email error:', e));
     }
 
     const isPreview = process.env.EMAIL_PROVIDER === 'preview' || process.env.ALLOW_OTP_PREVIEW === 'true' || process.env.NODE_ENV === 'development';

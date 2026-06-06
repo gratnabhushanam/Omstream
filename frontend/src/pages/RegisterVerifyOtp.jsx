@@ -22,10 +22,16 @@ export default function RegisterVerifyOtp() {
   }, []);
 
   const initialEmail = String(location.state?.email || sessionPending?.email || '').trim();
+  const initialPhone = String(location.state?.phoneNumber || sessionPending?.phoneNumber || '').trim();
   const [email] = useState(initialEmail);
+  const [phoneNumber] = useState(initialPhone);
   const [otpCode, setOtpCode] = useState('');
   const [error, setError] = useState('');
-  const [infoMessage, setInfoMessage] = useState('Enter the OTP sent to your email to complete account creation.');
+  const [infoMessage, setInfoMessage] = useState(
+    initialPhone 
+      ? 'Enter the OTP sent to your mobile number to complete account creation.'
+      : 'Enter the OTP sent to your email to complete account creation.'
+  );
   const [loading, setLoading] = useState(false);
   const [otpResendCooldown, setOtpResendCooldown] = useState(() => Number(location.state?.retryAfterSeconds || sessionPending?.retryAfterSeconds || 0));
   const [previewCode, setPreviewCode] = useState(() => location.state?.previewCode || sessionPending?.previewCode || '');
@@ -89,7 +95,12 @@ export default function RegisterVerifyOtp() {
       const response = await resendRegisterOtp(email);
       const retryAfterSeconds = Number(response?.retryAfterSeconds || RESEND_COOLDOWN_SECONDS);
       setOtpResendCooldown(retryAfterSeconds);
-      setInfoMessage(response?.message || 'A new OTP has been sent to your email.');
+      setInfoMessage(
+        response?.message || 
+        (phoneNumber 
+          ? 'A new OTP has been sent to your mobile number.' 
+          : 'A new OTP has been sent to your email.')
+      );
       if (response?.previewCode) {
         setPreviewCode(response.previewCode);
       } else {
