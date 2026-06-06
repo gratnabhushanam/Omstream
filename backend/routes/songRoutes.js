@@ -4,6 +4,7 @@ const songController = require('../controllers/songController');
 const { protect, admin } = require('../middleware/authMiddleware');
 
 router.get('/', songController.getAllSongs);
+router.post('/auto-collect', protect, admin, songController.autoCollectSongs);
 router.post('/', protect, admin, songController.addSong);
 router.delete('/:id', protect, admin, songController.deleteSong);
 

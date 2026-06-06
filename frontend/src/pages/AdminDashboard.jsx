@@ -110,6 +110,7 @@ function AdminDashboardContent() {
   const [showMultiUpload, setShowMultiUpload] = useState(false);
   const [multiChaptersText, setMultiChaptersText] = useState('');
   const [selectedTargetStoryId, setSelectedTargetStoryId] = useState('');
+  const [isAutoCollecting, setIsAutoCollecting] = useState(false);
   const [songForm, setSongForm] = useState({ title: '', artist: '', url: '', cover: '', duration: '', language: 'telugu' });
   const [videoForm, setVideoForm] = useState({ title: '', description: '', videoUrl: '', trailerUrl: '', category: 'reels', collectionTitle: 'Bhagavad Gita', isKids: false, isComingSoon: false, tags: '', quizSetId: '', views: 0 });
   // Quiz builder state for video upload
