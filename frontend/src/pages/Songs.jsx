@@ -122,13 +122,14 @@ export default function Songs() {
   const isYouTube = currentSong?.url?.includes('youtube.com') || currentSong?.url?.includes('youtu.be');
 
   useEffect(() => {
-    if (audioRef.current && !isYouTube) {
+    const el = audioRef.current;
+    if (el && !isYouTube) {
+      el.muted = isMuted;
       if (isPlaying) {
-        audioRef.current.play().catch(e => console.error('Audio play error:', e));
+        el.play().catch(e => console.error('Audio play error:', e));
       } else {
-        audioRef.current.pause();
+        el.pause();
       }
-      audioRef.current.muted = isMuted;
     }
   }, [isPlaying, currentSong, isYouTube, isMuted]);
 
@@ -270,80 +271,69 @@ export default function Songs() {
             
             {currentSong ? (
               <>
-                <div className={`relative w-48 h-48 sm:w-64 sm:h-64 rounded-full border-4 border-devotion-gold/30 shadow-[0_0_40px_rgba(255,215,0,0.2)] overflow-hidden mb-8 transition-all duration-700 ${isPlaying ? 'scale-105 shadow-[0_0_60px_rgba(255,215,0,0.4)]' : ''}`}>
-                  
-                  {/* Hidden Media Players (Rendered behind the cover image to bypass browser auto-play blocks) */}
-                  <div className="absolute inset-0 pointer-events-none overflow-hidden z-0 opacity-1">
-                    {isYouTube ? (
-                      <ReactPlayer
-                        ref={playerRef}
-                        src={currentSong.url?.trim()}
-                        playing={isPlaying}
-                        muted={isMuted}
-                        onProgress={handleProgress}
-                        onDuration={handleDuration}
-                        onEnded={handleEnded}
-                        onError={(e) => console.error('ReactPlayer Error:', e)}
-                        onReady={() => console.log('ReactPlayer Ready')}
-                        width="200%"
-                        height="200%"
-                        style={{ position: 'absolute', top: '-50%', left: '-50%' }}
-                        progressInterval={1000}
-                        config={{
-                          youtube: {
-                            playerVars: {
-                              autoplay: 1,
-                              controls: 0,
-                              modestbranding: 1,
-                              playsinline: 1,
-                              origin: window.location.origin
-                            }
+                {/* ── Audio Engine (hidden, outside the visual circle) ── */}
+                {isYouTube ? (
+                  <div className="absolute w-0 h-0 overflow-hidden pointer-events-none" style={{ position: 'fixed', top: '-9999px', left: '-9999px' }}>
+                    <ReactPlayer
+                      ref={playerRef}
+                      url={currentSong.url?.trim()}
+                      playing={isPlaying}
+                      muted={isMuted}
+                      onProgress={handleProgress}
+                      onDuration={handleDuration}
+                      onEnded={handleEnded}
+                      onError={(e) => console.error('ReactPlayer Error:', e)}
+                      width="1px"
+                      height="1px"
+                      progressInterval={1000}
+                      config={{
+                        youtube: {
+                          playerVars: {
+                            autoplay: 1,
+                            controls: 0,
+                            modestbranding: 1,
+                            playsinline: 1,
+                            origin: window.location.origin
                           }
-                        }}
-                      />
-                    ) : (
-                      <video
-                        ref={audioRef}
-                        src={currentSong.url}
-                        onTimeUpdate={(e) => {
-                          const curr = Number(e.target.currentTime) || 0;
-                          const dur = Number(e.target.duration) || 0;
-                          if (dur > 0 && !isNaN(dur)) {
-                            setProgress((curr / dur) * 100);
-                            // Update duration on every tick in case onLoadedMetadata missed
-                            const dMins = Math.floor(dur / 60);
-                            const dSecs = Math.floor(dur % 60);
-                            setDuration(`${dMins}:${dSecs < 10 ? '0' : ''}${dSecs}`);
-                          }
-                          const mins = isNaN(curr) ? 0 : Math.floor(curr / 60);
-                          const secs = isNaN(curr) ? 0 : Math.floor(curr % 60);
-                          setCurrentTime(`${mins}:${secs < 10 ? '0' : ''}${secs}`);
-                        }}
-                        onLoadedMetadata={(e) => handleDuration(e.target.duration)}
-                        onDurationChange={(e) => {
-                          if (e.target.duration && !isNaN(e.target.duration)) {
-                            handleDuration(e.target.duration);
-                          }
-                        }}
-                        onCanPlay={(e) => {
-                          if (e.target.duration && !isNaN(e.target.duration)) {
-                            handleDuration(e.target.duration);
-                          }
-                        }}
-                        onEnded={handleEnded}
-                        playsInline
-                        className="w-full h-full object-cover"
-                      />
-                    )}
+                        }
+                      }}
+                    />
                   </div>
-
-                <img 
-                    src={currentSong.cover} 
-                    alt={currentSong.title} 
-                    className={`relative z-10 w-full h-full object-cover transition-all duration-700 ${isPlaying ? 'animate-[spin_20s_linear_infinite]' : ''}`}
+                ) : (
+                  <audio
+                    ref={audioRef}
+                    src={currentSong.url}
+                    preload="metadata"
+                    playsInline
+                    onTimeUpdate={(e) => {
+                      const curr = Number(e.target.currentTime) || 0;
+                      const dur  = Number(e.target.duration)    || 0;
+                      if (dur > 0 && !isNaN(dur)) {
+                        setProgress((curr / dur) * 100);
+                        const dM = Math.floor(dur / 60);
+                        const dS = Math.floor(dur % 60);
+                        setDuration(`${dM}:${dS < 10 ? '0' : ''}${dS}`);
+                      }
+                      const m = Math.floor(curr / 60);
+                      const s = Math.floor(curr % 60);
+                      setCurrentTime(`${m}:${s < 10 ? '0' : ''}${s}`);
+                    }}
+                    onLoadedMetadata={(e) => handleDuration(e.target.duration)}
+                    onDurationChange={(e) => { if (e.target.duration && !isNaN(e.target.duration)) handleDuration(e.target.duration); }}
+                    onCanPlay={(e)        => { if (e.target.duration && !isNaN(e.target.duration)) handleDuration(e.target.duration); }}
+                    onEnded={handleEnded}
+                    style={{ display: 'none' }}
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
+                )}
 
+                {/* ── Album Art Circle ── */}
+                <div className={`relative w-48 h-48 sm:w-64 sm:h-64 rounded-full border-4 border-devotion-gold/30 shadow-[0_0_40px_rgba(255,215,0,0.2)] overflow-hidden mb-8 flex-shrink-0 transition-all duration-700 ${isPlaying ? 'scale-105 shadow-[0_0_60px_rgba(255,215,0,0.4)]' : ''}`}>
+                  <img
+                    src={currentSong.cover}
+                    alt={currentSong.title}
+                    className={`w-full h-full object-cover transition-all duration-700 ${isPlaying ? 'animate-[spin_20s_linear_infinite]' : ''}`}
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent pointer-events-none" />
                 </div>
 
                 <div className="text-center mb-8 w-full flex flex-col items-center">
