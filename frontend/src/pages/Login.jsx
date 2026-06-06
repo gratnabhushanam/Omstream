@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import axios from 'axios';
 import DeviceLimitResolver from '../components/DeviceLimitResolver';
@@ -101,6 +101,8 @@ export default function Login() {
   const otpRefs    = useRef([]);
   const phoneRef   = useRef(null);
   const navigate   = useNavigate();
+  const location   = useLocation();
+  const returnTo   = location.state?.returnTo || '/home';
   const { sendOtpLogin, verifyOtpLogin } = useAuth();
 
   const fullPhone = country.dial + phone.replace(/\D/g, '');
@@ -223,7 +225,7 @@ export default function Login() {
       if (isNewUser) {
         goTo(STEPS.ONBOARDING);
       } else {
-        navigate('/home', { replace: true });
+        navigate(returnTo, { replace: true });
       }
     } catch (err) {
       if (err.response?.data?.status === 'device_limit_reached') {
@@ -258,7 +260,7 @@ export default function Login() {
     } catch (_) { /* non-critical, continue */ }
     finally {
       setLoading(false);
-      navigate('/home', { replace: true });
+      navigate(returnTo, { replace: true });
     }
   };
 
@@ -687,7 +689,7 @@ export default function Login() {
                   {loading ? 'Setting Up...' : '🚀 Start My Journey'}
                 </button>
 
-                <button onClick={() => navigate('/home', { replace: true })}
+                <button onClick={() => navigate(returnTo, { replace: true })}
                   className="w-full mt-3 py-2 text-xs text-white/30 hover:text-white/50 transition-colors">
                   Skip for now
                 </button>

@@ -65,13 +65,15 @@ exports.sendOtp = async (req, res) => {
         const isPreview = 
             process.env.EMAIL_PROVIDER === 'preview' || 
             process.env.ALLOW_OTP_PREVIEW === 'true' || 
-            process.env.NODE_ENV === 'development' ||
-            !deliveryResult.delivered;
+            process.env.NODE_ENV === 'development';
+
+        if (!deliveryResult.delivered && !isPreview) {
+            return res.status(400).json({ message: deliveryResult.error || 'Failed to send OTP. Please check your number or try again later.' });
+        }
 
         res.json({ 
             message: 'OTP sent successfully', 
-            previewCode: isPreview ? otp : undefined,
-            deliveryError: (!deliveryResult.delivered && isPreview) ? deliveryResult.error : undefined
+            previewCode: isPreview ? otp : undefined
         });
     } catch (error) { 
         console.error('[OTP] sendOtp error:', error);

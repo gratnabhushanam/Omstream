@@ -39,9 +39,9 @@ export default function Subscription() {
   const handleAction = async () => {
     const selectedPlan = PLANS.find(p => p.id === selectedPlanId);
 
-    // If unauthenticated or choosing trial, go to register
+    // If unauthenticated or choosing trial, go to login
     if (!user || selectedPlan.type === 'trial') {
-      navigate('/register', { state: { plan: selectedPlan.id } });
+      navigate('/login', { state: { returnTo: '/subscription' } });
       return;
     }
 
