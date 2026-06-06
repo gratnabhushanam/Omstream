@@ -65,7 +65,7 @@ exports.getReels = async (req, res) => {
       isUserReel: { $ne: true },
       category: 'reels',
       moderationStatus: 'approved',
-    }).lean().sort({ views: -1, createdAt: -1 });
+    }).lean().sort({ views: -1, createdAt: -1 }).limit(500);
     res.json(reels.map(mapVideo));
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -77,7 +77,7 @@ exports.getKidsVideos = async (req, res) => {
     const kidsVideos = await Video.find({
       isKids: true,
       moderationStatus: 'approved',
-    }).lean().sort({ views: -1, createdAt: -1 });
+    }).lean().sort({ views: -1, createdAt: -1 }).limit(500);
     res.json(kidsVideos.map(mapVideo));
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -89,7 +89,7 @@ exports.getVideos = async (req, res) => {
     const videos = await Video.find({
       isUserReel: { $ne: true },
       moderationStatus: 'approved',
-    }).lean().sort({ views: -1, createdAt: -1 });
+    }).lean().sort({ views: -1, createdAt: -1 }).limit(500);
     res.json(videos.map(mapVideo));
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -101,7 +101,7 @@ exports.getMyReels = async (req, res) => {
     const reels = await Video.find({ 
       isUserReel: true, 
       uploadedBy: String(req.user.id) 
-    }).lean().sort({ createdAt: -1 });
+    }).lean().sort({ createdAt: -1 }).limit(500);
     return res.json(reels.map(mapVideo));
   } catch (error) {
     return res.status(500).json({ message: error.message });
@@ -222,7 +222,7 @@ exports.deleteVideo = async (req, res) => {
 
 exports.getUserReels = async (req, res) => {
   try {
-    const reels = await Video.find({ isUserReel: true, moderationStatus: 'approved' }).lean().sort({ createdAt: -1 });
+    const reels = await Video.find({ isUserReel: true, moderationStatus: 'approved' }).lean().sort({ createdAt: -1 }).limit(500);
     res.json(reels.map(mapVideo));
   } catch (error) {
     res.status(500).json({ message: error.message });

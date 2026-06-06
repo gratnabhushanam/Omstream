@@ -57,5 +57,7 @@ VideoSchema.index({ category: 1, createdAt: -1 });
 VideoSchema.index({ tags: 1 });
 VideoSchema.index({ module: 1, isKids: 1 });
 VideoSchema.index({ moderationStatus: 1 });
+VideoSchema.index({ isUserReel: 1, moderationStatus: 1, views: -1, createdAt: -1 });
+VideoSchema.index({ views: -1, createdAt: -1 });
 
 module.exports = mongoose.models.Video || mongoose.model('Video', VideoSchema);

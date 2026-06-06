@@ -147,26 +147,27 @@ export default function Songs() {
                 </div>
 
                 <div className="flex items-center justify-center gap-6 w-full">
-                  <button onClick={(e) => handleLike(e, currentSong._id)} className={`text-gray-400 hover:text-red-500 transition-colors p-2 active:scale-90 ${user?.likedSongs?.includes(currentSong._id) ? 'text-red-500' : ''}`}>
+                  <button tabIndex="0" onClick={(e) => handleLike(e, currentSong._id)} className={`tv-focusable focus:ring-2 focus:ring-devotion-gold rounded-full text-gray-400 hover:text-red-500 transition-colors p-2 active:scale-90 ${user?.likedSongs?.includes(currentSong._id) ? 'text-red-500' : ''}`}>
                     <Heart className={`w-5 h-5 ${user?.likedSongs?.includes(currentSong._id) ? 'fill-current' : ''}`} />
                   </button>
                   
-                  <button onClick={handlePrev} className="w-12 h-12 flex items-center justify-center rounded-full bg-white/5 hover:bg-white/10 text-white transition-all active:scale-95 border border-white/10">
+                  <button tabIndex="0" onClick={handlePrev} className="tv-focusable focus:ring-4 focus:ring-devotion-gold w-12 h-12 flex items-center justify-center rounded-full bg-white/5 hover:bg-white/10 text-white transition-all active:scale-95 border border-white/10">
                     <SkipBack className="w-5 h-5 fill-current" />
                   </button>
                   
                   <button 
+                    tabIndex="0"
                     onClick={togglePlay} 
-                    className="w-16 h-16 flex items-center justify-center rounded-full bg-gradient-to-br from-devotion-gold to-yellow-600 text-[#06101E] shadow-[0_0_20px_rgba(255,215,0,0.3)] hover:shadow-[0_0_30px_rgba(255,215,0,0.5)] hover:scale-105 transition-all active:scale-95"
+                    className="tv-focusable focus:ring-4 focus:ring-devotion-gold w-16 h-16 flex items-center justify-center rounded-full bg-gradient-to-br from-devotion-gold to-yellow-600 text-[#06101E] shadow-[0_0_20px_rgba(255,215,0,0.3)] hover:shadow-[0_0_30px_rgba(255,215,0,0.5)] hover:scale-105 transition-all active:scale-95"
                   >
                     {isPlaying ? <Pause className="w-8 h-8 fill-current" /> : <Play className="w-8 h-8 fill-current translate-x-0.5" />}
                   </button>
                   
-                  <button onClick={handleNext} className="w-12 h-12 flex items-center justify-center rounded-full bg-white/5 hover:bg-white/10 text-white transition-all active:scale-95 border border-white/10">
+                  <button tabIndex="0" onClick={handleNext} className="tv-focusable focus:ring-4 focus:ring-devotion-gold w-12 h-12 flex items-center justify-center rounded-full bg-white/5 hover:bg-white/10 text-white transition-all active:scale-95 border border-white/10">
                     <SkipForward className="w-5 h-5 fill-current" />
                   </button>
 
-                  <button onClick={toggleMute} className="text-gray-400 hover:text-white transition-colors p-2 active:scale-90 hidden sm:block">
+                  <button tabIndex="0" onClick={toggleMute} className="tv-focusable focus:ring-2 focus:ring-devotion-gold rounded-full text-gray-400 hover:text-white transition-colors p-2 active:scale-90 hidden sm:block">
                     {isMuted ? <VolumeX className="w-5 h-5" /> : <Volume2 className="w-5 h-5" />}
                   </button>
                 </div>
@@ -238,11 +239,19 @@ export default function Songs() {
                 return (
                 <div 
                   key={song._id}
+                  tabIndex="0"
                   onClick={() => {
                     setCurrentSongIndex(actualIndex);
                     setIsPlaying(true);
                   }}
-                  className={`group flex items-center gap-4 p-3 sm:p-4 rounded-2xl cursor-pointer transition-all duration-300 border ${
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      setCurrentSongIndex(actualIndex);
+                      setIsPlaying(true);
+                    }
+                  }}
+                  className={`group tv-focusable focus:outline-none focus:ring-4 focus:ring-devotion-gold flex items-center gap-4 p-3 sm:p-4 rounded-2xl cursor-pointer transition-all duration-300 border ${
                     isSelected 
                       ? 'bg-gradient-to-r from-devotion-gold/20 to-transparent border-devotion-gold/40 shadow-[0_0_15px_rgba(255,215,0,0.1)]' 
                       : 'bg-white/5 border-white/5 hover:bg-white/10 hover:border-white/20'

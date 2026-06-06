@@ -25,5 +25,6 @@ const MovieSchema = new mongoose.Schema({
 MovieSchema.index({ genre: 1, releaseDate: -1 });
 MovieSchema.index({ isPremium: 1 });
 MovieSchema.index({ createdAt: -1 });
+MovieSchema.index({ views: -1, releaseYear: -1, createdAt: -1 }); // Prevents in-memory sort crashes
 
 module.exports = mongoose.models.Movie || mongoose.model('Movie', MovieSchema);

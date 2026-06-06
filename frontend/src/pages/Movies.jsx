@@ -255,15 +255,17 @@ export default function Movies() {
                         className="flex flex-wrap items-center gap-6"
                       >
                          <button 
+                           tabIndex="0"
                            onClick={() => setSelectedMovie(featuredMovie)}
-                           className="premium-btn-primary px-8 lg:px-12 py-5 lg:py-6 rounded-[1.5rem] lg:rounded-[2rem] font-black text-lg lg:text-xl uppercase tracking-[0.2em] flex items-center justify-center gap-5 group shadow-2xl relative z-30"
+                           className="tv-focusable premium-btn-primary px-8 lg:px-12 py-5 lg:py-6 rounded-[1.5rem] lg:rounded-[2rem] font-black text-lg lg:text-xl uppercase tracking-[0.2em] flex items-center justify-center gap-5 group shadow-2xl relative z-30"
                          >
                             <Play className="w-6 h-6 lg:w-8 lg:h-8 fill-current" /> 
                             <span className="whitespace-nowrap">Watch Now</span>
                          </button>
                          <button 
+                           tabIndex="0"
                            onClick={() => toggleWatchlist(featuredMovie._id)}
-                           className={`premium-btn-secondary w-16 h-16 lg:w-20 lg:h-20 rounded-[1.5rem] lg:rounded-[2rem] flex items-center justify-center transition-all group border-2 relative z-30 ${watchlist.some(w => (w._id || w) === featuredMovie._id) ? 'bg-devotion-saffron border-devotion-saffron text-navy-deep' : 'border-white/10 text-white hover:border-devotion-saffron/50'}`}
+                           className={`tv-focusable premium-btn-secondary w-16 h-16 lg:w-20 lg:h-20 rounded-[1.5rem] lg:rounded-[2rem] flex items-center justify-center transition-all group border-2 relative z-30 ${watchlist.some(w => (w._id || w) === featuredMovie._id) ? 'bg-devotion-saffron border-devotion-saffron text-navy-deep' : 'border-white/10 text-white hover:border-devotion-saffron/50'}`}
                          >
                             {watchlist.some(w => (w._id || w) === featuredMovie._id) ? <Check className="w-9 h-9" /> : <Plus className="w-9 h-9 group-hover:rotate-90 transition-transform" />}
                          </button>
