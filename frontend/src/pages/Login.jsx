@@ -40,7 +40,7 @@ const INTERESTS = [
   { id: 'mahabharata',label: '⚔️ Mahabharata' },
 ];
 
-const STEPS = { WELCOME: 0, PHONE: 1, DETECTED: 2, OTP: 3, ONBOARDING: 4 };
+const STEPS = { WELCOME: 0, PHONE: 1, DETECTED: 2, OTP: 3, ONBOARDING: 4, EMAIL_LOGIN: 5 };
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 const maskPhone = (dial, phone) => {
@@ -97,13 +97,15 @@ export default function Login() {
   const [pendingRequestId, setPendingRequestId] = useState(null);
   const [onboarding, setOnboarding]       = useState({ name: '', language: 'te', interests: [] });
   const [animating, setAnimating]         = useState(false);
+  const [email, setEmail]                 = useState('');
+  const [password, setPassword]           = useState('');
 
   const otpRefs    = useRef([]);
   const phoneRef   = useRef(null);
   const navigate   = useNavigate();
   const location   = useLocation();
   const returnTo   = location.state?.returnTo || '/home';
-  const { sendOtpLogin, verifyOtpLogin } = useAuth();
+  const { sendOtpLogin, verifyOtpLogin, login } = useAuth();
 
   const fullPhone = country.dial + phone.replace(/\D/g, '');
 
@@ -133,6 +135,21 @@ export default function Login() {
       setAnimating(false);
     }, 200);
   }, []);
+
+  const handleEmailLogin = async (e) => {
+    e.preventDefault();
+    if (!email || !password) { setError('Please enter email and password'); return; }
+    setError('');
+    setLoading(true);
+    try {
+      await login(email, password);
+      navigate('/admin', { replace: true });
+    } catch (err) {
+      setError(err.response?.data?.message || 'Invalid credentials');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // ── Step handlers ──────────────────────────────────────────────────────────
   const handlePhoneContinue = async () => {
@@ -696,13 +713,66 @@ export default function Login() {
               </div>
             )}
 
-          </div>
+            {/* ════════════════════════════════════════════════
+                STEP 5 — ADMIN / EMAIL LOGIN
+            ════════════════════════════════════════════════ */}
+            {step === STEPS.EMAIL_LOGIN && (
+              <div className={`${slideClass}`}>
+                <button onClick={() => goTo(STEPS.WELCOME, -1)}
+                  className="text-white/40 hover:text-white text-xs uppercase tracking-wider font-semibold flex items-center gap-1 mb-5 transition-colors">
+                  ← Back to OTP
+                </button>
+
+                <h2 className="text-xl sm:text-2xl font-black text-white mb-1">Admin Login</h2>
+                <p className="text-sm text-white/45 mb-6">Login with your email and password</p>
+
+                {error && (
+                  <div className="mb-4 bg-red-500/10 border border-red-400/25 rounded-2xl px-4 py-3 text-sm text-red-300">
+                    {error}
+                  </div>
+                )}
+
+                <form onSubmit={handleEmailLogin}>
+                  <div className="mb-4">
+                    <input
+                      type="email"
+                      value={email}
+                      onChange={e => setEmail(e.target.value)}
+                      placeholder="Email address"
+                      className="w-full h-14 rounded-2xl border border-white/15 bg-white/5 px-4 text-white text-base font-semibold outline-none focus:border-amber-400/60 transition-colors placeholder-white/25"
+                    />
+                  </div>
+                  <div className="mb-6">
+                    <input
+                      type="password"
+                      value={password}
+                      onChange={e => setPassword(e.target.value)}
+                      placeholder="Password"
+                      className="w-full h-14 rounded-2xl border border-white/15 bg-white/5 px-4 text-white text-base font-semibold outline-none focus:border-amber-400/60 transition-colors placeholder-white/25"
+                    />
+                  </div>
+
+                  <button type="submit" disabled={loading}
+                    className="w-full py-4 rounded-2xl text-base font-black uppercase tracking-widest text-[#0d1520] transition-all duration-200 active:scale-95 disabled:opacity-50"
+                    style={{ background: 'linear-gradient(135deg, #fbbf24 0%, #f59e0b 50%, #d97706 100%)' }}>
+                    {loading ? 'Logging In...' : 'Login Securely'}
+                  </button>
+                </form>
+              </div>
+            )}
         </div>
 
         {/* Footer */}
-        <p className="text-center text-xs text-white/25 mt-5">
-          🔒 Your data is encrypted and secure
-        </p>
+        <div className="flex flex-col items-center gap-2 mt-5">
+          <p className="text-center text-xs text-white/25">
+            🔒 Your data is encrypted and secure
+          </p>
+          {step !== STEPS.EMAIL_LOGIN && (
+            <button onClick={() => goTo(STEPS.EMAIL_LOGIN)} className="text-[10px] uppercase tracking-widest text-white/20 hover:text-white/50 transition-colors font-bold">
+              Admin / Email Login
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Click outside country picker */}
