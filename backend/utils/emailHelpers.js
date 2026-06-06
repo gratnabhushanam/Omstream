@@ -60,13 +60,63 @@ const sendViaSmtp = async ({ email, name, otp }) => {
 
 // Lightweight stubs for other providers. They return an explanatory error when not configured.
 const sendViaResend = async ({ email, name, otp }) => {
-  if (!process.env.RESEND_API_KEY) return { delivered: false, error: 'Resend API key missing' };
-  return { delivered: false, error: 'Resend provider not implemented in this runtime' };
+  const apiKey = process.env.RESEND_API_KEY;
+  if (!apiKey) return sendViaSmtp({ email, name, otp });
+
+  try {
+    const response = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        from: `${process.env.RESEND_FROM_NAME || 'Gita Wisdom'} <${process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev'}>`,
+        to: [email],
+        subject: 'Your Gita Wisdom OTP',
+        html: `<p>Hello ${name || ''},</p><p>Your verification code is: <strong>${otp}</strong></p><p>This code expires shortly.</p>`
+      })
+    });
+    
+    if (!response.ok) throw new Error(await response.text());
+    const data = await response.json();
+    return { delivered: true, provider: 'resend', messageId: data.id };
+  } catch (err) {
+    console.error('[EMAIL] Resend error, falling back to SMTP:', err);
+    return sendViaSmtp({ email, name, otp });
+  }
 };
 
 const sendViaBrevo = async ({ email, name, otp }) => {
-  if (!process.env.BREVO_API_KEY) return { delivered: false, error: 'Brevo API key missing' };
-  return { delivered: false, error: 'Brevo provider not implemented in this runtime' };
+  const apiKey = process.env.BREVO_API_KEY;
+  if (!apiKey) return sendViaSmtp({ email, name, otp });
+
+  try {
+    const response = await fetch('https://api.brevo.com/v3/smtp/email', {
+      method: 'POST',
+      headers: {
+        'accept': 'application/json',
+        'api-key': apiKey,
+        'content-type': 'application/json'
+      },
+      body: JSON.stringify({
+        sender: { 
+          name: process.env.BREVO_FROM_NAME || 'Gita Wisdom', 
+          email: process.env.BREVO_FROM_EMAIL || 'gitawisdom143@gmail.com' 
+        },
+        to: [{ email: email, name: name || 'User' }],
+        subject: 'Your Gita Wisdom OTP',
+        htmlContent: `<p>Hello ${name || ''},</p><p>Your verification code is: <strong>${otp}</strong></p><p>This code expires shortly.</p>`
+      })
+    });
+
+    if (!response.ok) throw new Error(await response.text());
+    const data = await response.json();
+    return { delivered: true, provider: 'brevo', messageId: data.messageId };
+  } catch (err) {
+    console.error('[EMAIL] Brevo error, falling back to SMTP:', err);
+    return sendViaSmtp({ email, name, otp });
+  }
 };
 
 module.exports = { resolveEmailProvider, getTransporter, sendViaSmtp, sendViaResend, sendViaBrevo };
