@@ -10,11 +10,15 @@ const aiService = require('../utils/aiService');
  * Processes pending translation and media jobs
  */
 async function processJobs() {
-  let job;
   try {
-    job = await Job.findOne({ status: 'pending' }).sort({ createdAt: 1 });
+    // Atomic lock to prevent multiple cluster workers from processing the same job
+    const job = await Job.findOneAndUpdate(
+      { status: 'pending' },
+      { $set: { status: 'processing' } },
+      { new: true, sort: { createdAt: 1 } }
+    );
+    
     if (!job) {
-      // console.log('[Worker] No pending jobs found.');
       return;
     }
 
@@ -29,9 +33,6 @@ async function processJobs() {
     }
 
     console.log(`[Worker] Starting job: ${job._id} (${job.type})`);
-    
-    // Set to processing using updateOne to avoid early validation issues
-    await Job.updateOne({ _id: job._id }, { status: 'processing' });
     // Refresh local object state for logic
     job.status = 'processing';
 

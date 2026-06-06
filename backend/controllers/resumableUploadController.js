@@ -35,12 +35,19 @@ async function handleResumableUpload(req, res) {
     if (process.env.BLOB_READ_WRITE_TOKEN) {
       try {
         const hlsFiles = fs.readdirSync(hlsOutputDir);
-        for (const f of hlsFiles) {
-          const cdnUrl = await uploadToVercelBlob(path.join(hlsOutputDir, f), `videos/${path.parse(fileName).name}/${f}`);
-          if (f.endsWith('_master.m3u8')) masterPlaylistUrl = cdnUrl;
+        
+        // Upload in batches of 10 to prevent hitting Vercel Blob rate limits while remaining extremely fast
+        const batchSize = 10;
+        for (let i = 0; i < hlsFiles.length; i += batchSize) {
+          const batch = hlsFiles.slice(i, i + batchSize);
+          await Promise.all(batch.map(async (f) => {
+            const cdnUrl = await uploadToVercelBlob(path.join(hlsOutputDir, f), `videos/${path.parse(fileName).name}/${f}`);
+            if (f.endsWith('_master.m3u8')) masterPlaylistUrl = cdnUrl;
+          }));
         }
+        
         videoUrl = await uploadToVercelBlob(filePath, `videos/${fileName}`);
-      } catch (e) { console.warn('Blob fallback'); }
+      } catch (e) { console.warn('Blob fallback', e); }
     }
 
     if (req.headers['video-only-upload'] === 'true') {

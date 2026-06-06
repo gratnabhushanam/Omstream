@@ -217,8 +217,12 @@ const initializeApp = async () => {
       console.log('Admin credentials initialized/verified.');
 
       // Start Cron Jobs (Automated Sloka, sloka rotation etc)
-      require('./services/cronJobs').initializeCronJobs();
-      console.log('Cron jobs initialized (Daily Sloka scheduled for 08:00 AM IST).');
+      if (!cluster.isWorker || cluster.worker.id === 1) {
+        require('./services/cronJobs').initializeCronJobs();
+        console.log('[CRON] Jobs initialized by Worker 1 (or Primary).');
+      } else {
+        console.log(`[CRON] Worker ${cluster.worker.id} bypassing cron initialization to prevent duplication.`);
+      }
 
       return true;
     } catch (err) {
