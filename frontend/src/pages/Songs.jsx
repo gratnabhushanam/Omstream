@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { Play, Pause, SkipForward, SkipBack, Volume2, VolumeX, Music, Heart, Search, Download } from 'lucide-react';
+import { Play, Pause, SkipForward, SkipBack, Volume2, VolumeX, Music, Heart, Search, Download, Shuffle, Repeat, Repeat1 } from 'lucide-react';
 import ReactPlayer from 'react-player';
 import axios from 'axios';
 
@@ -70,6 +70,8 @@ export default function Songs() {
   const [duration, setDuration] = useState('0:00');
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(true);
+  const [isShuffle, setIsShuffle] = useState(false);
+  const [repeatMode, setRepeatMode] = useState('all'); // 'none', 'all', 'one'
   
   const playerRef = useRef(null);
   const audioRef = useRef(null);
@@ -129,15 +131,64 @@ export default function Songs() {
 
   const handleNext = useCallback(() => {
     if (songs.length === 0) return;
-    setCurrentSongIndex((prev) => (prev + 1) % songs.length);
+    
+    if (isShuffle) {
+      const nextIdx = Math.floor(Math.random() * songs.length);
+      setCurrentSongIndex(nextIdx);
+    } else {
+      setCurrentSongIndex((prev) => {
+        if (repeatMode === 'none' && prev === songs.length - 1) {
+           setIsPlaying(false);
+           return prev;
+        }
+        return (prev + 1) % songs.length;
+      });
+    }
     setIsPlaying(true);
-  }, [songs.length]);
+  }, [songs.length, isShuffle, repeatMode]);
 
   const handlePrev = useCallback(() => {
     if (songs.length === 0) return;
-    setCurrentSongIndex((prev) => (prev - 1 + songs.length) % songs.length);
+    if (isShuffle) {
+      setCurrentSongIndex(Math.floor(Math.random() * songs.length));
+    } else {
+      setCurrentSongIndex((prev) => (prev - 1 + songs.length) % songs.length);
+    }
     setIsPlaying(true);
+  }, [songs.length, isShuffle]);
+
+  const handleEnded = useCallback(() => {
+    if (repeatMode === 'one') {
+      if (audioRef.current) audioRef.current.currentTime = 0;
+      if (playerRef.current) playerRef.current.seekTo(0);
+      setIsPlaying(true);
+    } else {
+      handleNext();
+    }
+  }, [repeatMode, handleNext]);
+
+  useEffect(() => {
+    if (songs.length > 0) {
+      const savedState = localStorage.getItem('gitaPlayerState');
+      if (savedState) {
+        try {
+          const parsed = JSON.parse(savedState);
+          const idx = songs.findIndex(s => s._id === parsed.songId);
+          if (idx !== -1 && idx !== currentSongIndex) {
+            setCurrentSongIndex(idx);
+          }
+        } catch(e) {}
+      }
+    }
   }, [songs.length]);
+
+  useEffect(() => {
+    if (currentSong) {
+      localStorage.setItem('gitaPlayerState', JSON.stringify({
+        songId: currentSong._id
+      }));
+    }
+  }, [currentSong]);
 
   useEffect(() => {
     if ('mediaSession' in navigator && currentSong) {
@@ -218,7 +269,7 @@ export default function Songs() {
                         muted={isMuted}
                         onProgress={handleProgress}
                         onDuration={handleDuration}
-                        onEnded={handleNext}
+                        onEnded={handleEnded}
                         onError={(e) => console.error('ReactPlayer Error:', e)}
                         onReady={() => console.log('ReactPlayer Ready')}
                         width="200%"
@@ -250,7 +301,7 @@ export default function Songs() {
                           setCurrentTime(`${mins}:${secs < 10 ? '0' : ''}${secs}`);
                         }}
                         onLoadedMetadata={(e) => handleDuration(e.target.duration)}
-                        onEnded={handleNext}
+                        onEnded={handleEnded}
                         playsInline
                         className="w-full h-full object-cover"
                       />
@@ -292,11 +343,11 @@ export default function Songs() {
                   </div>
                 </div>
 
-                <div className="flex items-center justify-center gap-6 w-full">
-                  <button tabIndex="0" onClick={(e) => handleLike(e, currentSong._id)} className={`tv-focusable focus:ring-2 focus:ring-devotion-gold rounded-full text-gray-400 hover:text-red-500 transition-colors p-2 active:scale-90 ${user?.likedSongs?.includes(currentSong._id) ? 'text-red-500' : ''}`}>
-                    <Heart className={`w-5 h-5 ${user?.likedSongs?.includes(currentSong._id) ? 'fill-current' : ''}`} />
+                <div className="flex items-center justify-center gap-4 sm:gap-6 w-full">
+                  <button tabIndex="0" onClick={() => setIsShuffle(!isShuffle)} className={`tv-focusable focus:ring-2 focus:ring-devotion-gold rounded-full transition-colors p-2 active:scale-90 ${isShuffle ? 'text-devotion-gold' : 'text-gray-400 hover:text-white'}`}>
+                    <Shuffle className="w-5 h-5" />
                   </button>
-                  
+
                   <button tabIndex="0" onClick={handlePrev} className="tv-focusable focus:ring-4 focus:ring-devotion-gold w-12 h-12 flex items-center justify-center rounded-full bg-white/5 hover:bg-white/10 text-white transition-all active:scale-95 border border-white/10">
                     <SkipBack className="w-5 h-5 fill-current" />
                   </button>
@@ -313,8 +364,8 @@ export default function Songs() {
                     <SkipForward className="w-5 h-5 fill-current" />
                   </button>
 
-                  <button tabIndex="0" onClick={toggleMute} className="tv-focusable focus:ring-2 focus:ring-devotion-gold rounded-full text-gray-400 hover:text-white transition-colors p-2 active:scale-90 hidden sm:block">
-                    {isMuted ? <VolumeX className="w-5 h-5" /> : <Volume2 className="w-5 h-5" />}
+                  <button tabIndex="0" onClick={() => setRepeatMode(prev => prev === 'all' ? 'one' : prev === 'one' ? 'none' : 'all')} className={`tv-focusable focus:ring-2 focus:ring-devotion-gold rounded-full transition-colors p-2 active:scale-90 ${repeatMode !== 'none' ? 'text-devotion-gold' : 'text-gray-400 hover:text-white'}`}>
+                    {repeatMode === 'one' ? <Repeat1 className="w-5 h-5" /> : <Repeat className="w-5 h-5" />}
                   </button>
                 </div>
               </>
