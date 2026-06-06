@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { Play, Pause, SkipForward, SkipBack, Volume2, VolumeX, Music, Heart, Search, Download } from 'lucide-react';
 import ReactPlayer from 'react-player';
 import axios from 'axios';
@@ -127,17 +127,38 @@ export default function Songs() {
     setIsPlaying(!isPlaying);
   };
 
-  const handleNext = () => {
+  const handleNext = useCallback(() => {
     if (songs.length === 0) return;
     setCurrentSongIndex((prev) => (prev + 1) % songs.length);
     setIsPlaying(true);
-  };
+  }, [songs.length]);
 
-  const handlePrev = () => {
+  const handlePrev = useCallback(() => {
     if (songs.length === 0) return;
     setCurrentSongIndex((prev) => (prev - 1 + songs.length) % songs.length);
     setIsPlaying(true);
-  };
+  }, [songs.length]);
+
+  useEffect(() => {
+    if ('mediaSession' in navigator && currentSong) {
+      navigator.mediaSession.metadata = new window.MediaMetadata({
+        title: currentSong.title || 'Divine Track',
+        artist: currentSong.artist || 'Gita Wisdom',
+        album: 'Divine Playlist',
+        artwork: [
+          { src: currentSong.cover, sizes: '512x512', type: 'image/jpeg' },
+          { src: currentSong.cover, sizes: '256x256', type: 'image/jpeg' }
+        ]
+      });
+
+      navigator.mediaSession.setActionHandler('play', () => setIsPlaying(true));
+      navigator.mediaSession.setActionHandler('pause', () => setIsPlaying(false));
+      navigator.mediaSession.setActionHandler('previoustrack', handlePrev);
+      navigator.mediaSession.setActionHandler('nexttrack', handleNext);
+      
+      navigator.mediaSession.playbackState = isPlaying ? 'playing' : 'paused';
+    }
+  }, [currentSong, isPlaying, handleNext, handlePrev]);
 
   const handleProgress = (state) => {
     setProgress(state.played * 100);
