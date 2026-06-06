@@ -17,30 +17,48 @@ exports.getStories = async (req, res) => {
     filter.isFolder = true;
     const folders = await Story.find(filter).lean().sort({ createdAt: -1 });
 
-    const foldersWithChapters = await Promise.all(folders.map(async (story) => {
-      const subStories = await Story.find({ parentFolderId: story.title, status: 'published' }).lean().sort({ sequence: 1, createdAt: 1 });
-      
-      const chaptersList = subStories.map(sub => ({
-        _id: sub._id,
-        id: sub._id,
-        title: sub.title,
-        content: sub.content || '',
-        description: sub.description || '',
-        summary: sub.description || '',
-        thumbnail: sub.thumbnail || '',
-        audioUrl: sub.audioUrl || '',
-        duration: sub.duration || 0,
-        sequence: sub.sequence || 1,
-        takeaways: sub.takeaways || [],
-        translations: sub.translations || {}
-      }));
-
+    const foldersWithChapters = folders.map(story => {
       const plain = story.toObject ? story.toObject() : story;
-      plain.chapters = chaptersList;
-      return mapStory(plain);
-    }));
+      plain.chapters = [];
+      return plain;
+    });
+    
+    if (folders.length > 0) {
+      const folderTitles = folders.map(f => f.title);
+      const allSubStories = await Story.find({ 
+        parentFolderId: { $in: folderTitles }, 
+        status: 'published' 
+      }).lean().sort({ sequence: 1, createdAt: 1 });
+      
+      const subStoriesByFolder = {};
+      for (const sub of allSubStories) {
+        if (!subStoriesByFolder[sub.parentFolderId]) {
+          subStoriesByFolder[sub.parentFolderId] = [];
+        }
+        subStoriesByFolder[sub.parentFolderId].push({
+          _id: sub._id,
+          id: sub._id,
+          title: sub.title,
+          content: sub.content || '',
+          description: sub.description || '',
+          summary: sub.description || '',
+          thumbnail: sub.thumbnail || '',
+          audioUrl: sub.audioUrl || '',
+          duration: sub.duration || 0,
+          sequence: sub.sequence || 1,
+          takeaways: sub.takeaways || [],
+          translations: sub.translations || {}
+        });
+      }
+      
+      foldersWithChapters.forEach(story => {
+        if (subStoriesByFolder[story.title]) {
+          story.chapters = subStoriesByFolder[story.title];
+        }
+      });
+    }
 
-    return res.json(foldersWithChapters);
+    return res.json(foldersWithChapters.map(mapStory));
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -62,30 +80,48 @@ exports.getKidsStories = async (req, res) => {
       ]
     }).lean().sort({ viewCount: -1 });
 
-    const foldersWithChapters = await Promise.all(folders.map(async (story) => {
-      const subStories = await Story.find({ parentFolderId: story.title, status: 'published' }).lean().sort({ sequence: 1, createdAt: 1 });
-      
-      const chaptersList = subStories.map(sub => ({
-        _id: sub._id,
-        id: sub._id,
-        title: sub.title,
-        content: sub.content || '',
-        description: sub.description || '',
-        summary: sub.description || '',
-        thumbnail: sub.thumbnail || '',
-        audioUrl: sub.audioUrl || '',
-        duration: sub.duration || 0,
-        sequence: sub.sequence || 1,
-        takeaways: sub.takeaways || [],
-        translations: sub.translations || {}
-      }));
-
+    const foldersWithChapters = folders.map(story => {
       const plain = story.toObject ? story.toObject() : story;
-      plain.chapters = chaptersList;
-      return mapStory(plain);
-    }));
+      plain.chapters = [];
+      return plain;
+    });
+    
+    if (folders.length > 0) {
+      const folderTitles = folders.map(f => f.title);
+      const allSubStories = await Story.find({ 
+        parentFolderId: { $in: folderTitles }, 
+        status: 'published' 
+      }).lean().sort({ sequence: 1, createdAt: 1 });
+      
+      const subStoriesByFolder = {};
+      for (const sub of allSubStories) {
+        if (!subStoriesByFolder[sub.parentFolderId]) {
+          subStoriesByFolder[sub.parentFolderId] = [];
+        }
+        subStoriesByFolder[sub.parentFolderId].push({
+          _id: sub._id,
+          id: sub._id,
+          title: sub.title,
+          content: sub.content || '',
+          description: sub.description || '',
+          summary: sub.description || '',
+          thumbnail: sub.thumbnail || '',
+          audioUrl: sub.audioUrl || '',
+          duration: sub.duration || 0,
+          sequence: sub.sequence || 1,
+          takeaways: sub.takeaways || [],
+          translations: sub.translations || {}
+        });
+      }
+      
+      foldersWithChapters.forEach(story => {
+        if (subStoriesByFolder[story.title]) {
+          story.chapters = subStoriesByFolder[story.title];
+        }
+      });
+    }
 
-    res.json(foldersWithChapters);
+    res.json(foldersWithChapters.map(mapStory));
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

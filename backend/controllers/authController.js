@@ -355,9 +355,9 @@ exports.initializeAdminCredentials = async () => {
 
 exports.setMockMode = (val) => { isMockModeActive = val; };
 exports.isMockMode = () => isMockModeActive;
-exports.getAllUsers = async (req, res) => res.json(await User.find({}, { password: 0 }).lean());
+exports.getAllUsers = async (req, res) => res.json(await User.find({}, { password: 0 }).sort({ createdAt: -1 }).limit(200).lean());
 exports.deleteUserByAdmin = async (req, res) => { await User.findByIdAndDelete(req.params.id); res.json({ message: 'Deleted' }); };
-exports.getCommunityProfiles = async (req, res) => res.json(await User.find({ role: 'user' }, 'name bio profilePicture streak benefits settings').lean());
+exports.getCommunityProfiles = async (req, res) => res.json(await User.find({ role: 'user' }, 'name bio profilePicture streak benefits settings').sort({ createdAt: -1 }).limit(100).lean());
 exports.getUserByIdForAuth = async (id) => User.findById(String(id));
 
 exports.getUserDevices = async (req, res) => {

@@ -6,7 +6,7 @@ exports.getAllSongs = async (req, res) => {
     if (req.query.language) {
       filter.language = req.query.language;
     }
-    const songs = await Song.find(filter).sort({ createdAt: -1 });
+    const songs = await Song.find(filter).lean().sort({ createdAt: -1 }).limit(500);
     res.json(songs);
   } catch (error) {
     res.status(500).json({ message: error.message });
