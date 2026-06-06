@@ -138,6 +138,7 @@ function AdminDashboardContent() {
   const [editingMovieId, setEditingMovieId] = useState(null);
   const [editingVideoId, setEditingVideoId] = useState(null);
   const [editingQuizSetId, setEditingQuizSetId] = useState(null);
+  const [editingSongId, setEditingSongId] = useState(null);
   const [quizSetForm, setQuizSetForm] = useState({
     title: '', description: '', category: 'General', difficulty: 'medium', timeLimit: 0, thumbnail: '', tags: '', isPublished: false, questions: []
   });
@@ -518,8 +519,13 @@ function AdminDashboardContent() {
           }
         }
       } else if (activeTab === 'songs') {
-        const { data: newlyCreated } = await axios.post(endpoint, payload, { headers: { Authorization: `Bearer ${token}` } });
-        setData(prev => ({ ...prev, songs: [newlyCreated, ...prev.songs] }));
+        if (editingSongId) {
+          const { data: updatedSong } = await axios.patch(`${endpoint}/${editingSongId}`, payload, { headers: { Authorization: `Bearer ${token}` } });
+          setData(prev => ({ ...prev, songs: prev.songs.map(s => (String(s._id || s.id) === String(editingSongId)) ? updatedSong : s) }));
+        } else {
+          const { data: newlyCreated } = await axios.post(endpoint, payload, { headers: { Authorization: `Bearer ${token}` } });
+          setData(prev => ({ ...prev, songs: [newlyCreated, ...prev.songs] }));
+        }
         await fetchAdminData();
       } else if (activeTab === 'quizzes') {
         if (editingQuizSetId) {
@@ -921,6 +927,23 @@ function AdminDashboardContent() {
       tags: Array.isArray(video.tags) ? video.tags.join(', ') : (video.tags || ''),
       views: video.views || 0,
       language: video.language || 'en',
+    });
+    setShowAddModal(true);
+  };
+
+  const handleEditSong = (song) => {
+    setActiveTab('songs');
+    setEditingSongId(song._id || song.id);
+    setEditingStoryId(null);
+    setEditingMovieId(null);
+    setEditingVideoId(null);
+    setSongForm({
+      title: song.title || '',
+      artist: song.artist || '',
+      url: song.url || '',
+      cover: song.cover || '',
+      duration: song.duration || '',
+      language: song.language || 'telugu'
     });
     setShowAddModal(true);
   };
@@ -1386,7 +1409,10 @@ function AdminDashboardContent() {
                             <td className="py-4 pr-4 text-gray-300 font-medium">{song.artist}</td>
                             <td className="py-4 pr-4 text-gray-400 capitalize">{song.language || 'telugu'}</td>
                             <td className="py-4 pr-4 text-gray-300">{song.duration}</td>
-                            <td className="py-4 text-right">
+                            <td className="py-4 text-right flex items-center justify-end gap-2">
+                              <button onClick={() => handleEditSong(song)} className="text-blue-400 hover:text-blue-300 p-2 rounded-xl hover:bg-blue-400/10 transition-colors">
+                                <Edit2 className="w-5 h-5" />
+                              </button>
                               <button onClick={() => handleDeleteContent('songs', song._id, song.title)} className="text-red-400 hover:text-red-300 p-2 rounded-xl hover:bg-red-400/10 transition-colors">
                                 <Trash2 className="w-5 h-5" />
                               </button>

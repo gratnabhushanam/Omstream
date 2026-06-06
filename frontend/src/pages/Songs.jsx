@@ -113,7 +113,7 @@ export default function Songs() {
                   <img 
                     src={currentSong.cover} 
                     alt={currentSong.title} 
-                    className={`w-full h-full object-cover transition-transform duration-[20s] linear ${isPlaying ? 'rotate-180 scale-150' : 'scale-100'}`} 
+                    className={`w-full h-full object-cover ${isPlaying ? 'animate-[spin_20s_linear_infinite] scale-125' : 'scale-100'}`} 
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
                   <div className="absolute inset-0 flex items-center justify-center">

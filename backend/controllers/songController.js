@@ -22,6 +22,15 @@ exports.addSong = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+exports.updateSong = async (req, res) => {
+  try {
+    const song = await Song.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    if (!song) return res.status(404).json({ message: 'Song not found' });
+    res.json(song);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
 
 exports.deleteSong = async (req, res) => {
   try {
