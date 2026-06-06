@@ -469,7 +469,7 @@ export default function Stories() {
                 <input
                   type="text"
                   placeholder="Search folders or chapters..."
-                  className="w-full bg-white/5 border border-white/10 rounded-2xl pl-12 pr-4 py-4 text-sm text-white placeholder-gray-400 focus:border-devotion-gold outline-none"
+                  className="w-full bg-white/5 border border-white/10 rounded-2xl pl-12 pr-12 py-4 text-sm text-white placeholder-gray-400 focus:border-devotion-gold outline-none"
                   value={searchQuery}
                   onChange={e => setSearchQuery(e.target.value)}
                 />

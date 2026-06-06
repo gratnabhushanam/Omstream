@@ -186,7 +186,6 @@ export default function KidsMode() {
     { title: "Tenali Raman Stories", filter: (v) => v.category === 'animated' && v.tags?.includes('tenali') },
     { title: "Animated Learning", filter: (v) => v.tags?.includes('educational') },
     { title: "Moral Stories", filter: (v) => v.tags?.includes('moral') },
-    { title: "Fun Educational Reels", filter: (v) => v.category === 'reels' && v.isKids },
     { title: "Mythological Cartoons", filter: (v) => v.category === 'animated' || v.isKids }
   ];
 

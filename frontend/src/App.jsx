@@ -30,12 +30,10 @@ const ForgotPassword = lazy(() => import('./pages/ForgotPassword'));
 const AdminDashboard = lazy(() => import('./pages/AdminDashboard'));
 const Mentor = lazy(() => import('./pages/Mentor'));
 const DailySloka = lazy(() => import('./pages/DailySloka'));
-const Reels = lazy(() => import('./pages/Reels'));
 const KidsMode = lazy(() => import('./pages/KidsMode'));
 const Search = lazy(() => import('./pages/Search'));
 const Profile = lazy(() => import('./pages/Profile'));
 const Movies = lazy(() => import('./pages/Movies'));
-const UploadReel = lazy(() => import('./pages/UploadReel'));
 const Satsangs = lazy(() => import('./pages/Satsangs'));
 const InstallApp = lazy(() => import('./pages/InstallApp'));
 const Subscription = lazy(() => import('./pages/Subscription'));
@@ -95,8 +93,6 @@ function AppShell() {
       </div>
     </div>
   );
-
-  const isFullScreenRoute = location.pathname.startsWith('/reels');
 
   if (loading) {
     return <SplashScreen />;
@@ -170,7 +166,6 @@ function AppShell() {
   const getAuraColor = () => {
     const path = location.pathname;
     if (path.startsWith('/kids')) return 'aura-pink';
-    if (path.startsWith('/reels')) return 'aura-purple';
     if (path.startsWith('/movies')) return 'aura-blue';
     if (path.startsWith('/stories')) return 'aura-gold';
     return 'aura-gold';
@@ -198,7 +193,7 @@ function AppShell() {
       {/* Primary Responsive Layout Container */}
       <div className="relative z-10 w-full min-h-[100dvh] flex flex-col flex-1">
         
-        <div className={`${!isAuthRoute && isFullScreenRoute ? 'hidden md:block' : ''}`}>
+        <div>
            {!isAuthRoute && <Navbar />}
         </div>
         <GlobalInstallPrompt />
@@ -231,12 +226,10 @@ function AppShell() {
                 <Route path="/mentor" element={isSubscribed(user) ? <Mentor /> : <Navigate to="/subscription" replace />} />
                 <Route path="/satsangs" element={isSubscribed(user) ? <Satsangs /> : <Navigate to="/subscription" replace />} />
                 <Route path="/daily-sloka" element={isSubscribed(user) ? <DailySloka /> : <Navigate to="/subscription" replace />} />
-                <Route path="/reels" element={isSubscribed(user) ? <Reels /> : <Navigate to="/subscription" replace />} />
                 <Route path="/kids" element={isSubscribed(user) ? <KidsMode /> : <Navigate to="/subscription" replace />} />
                 <Route path="/search" element={isSubscribed(user) ? <Search /> : <Navigate to="/subscription" replace />} />
                 <Route path="/profile" element={isSubscribed(user) ? <Profile /> : <Navigate to="/subscription" replace />} />
                 <Route path="/movies" element={isSubscribed(user) ? <Movies /> : <Navigate to="/subscription" replace />} />
-                <Route path="/upload-reel" element={isSubscribed(user) ? <UploadReel /> : <Navigate to="/subscription" replace />} />
                 <Route path="/admin" element={user && user.role === 'admin' ? <AdminDashboard /> : <Navigate to="/subscription" replace />} />
                 <Route path="/songs" element={<Songs />} />
                 <Route path="*" element={<NotFound />} />

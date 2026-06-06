@@ -12,7 +12,7 @@ export default function Search() {
   const navigate = useNavigate();
   const { t, tLabel, language } = useLanguage();
   const [query, setQuery] = useState('');
-  const [results, setResults] = useState({ slokas: [], stories: [], videos: [], movies: [], reels: [] });
+  const [results, setResults] = useState({ slokas: [], stories: [], videos: [], movies: [] });
   const [loading, setLoading] = useState(false);
   const [recentSearches, setRecentSearches] = useState([]);
   const [isListening, setIsListening] = useState(false);
@@ -53,7 +53,7 @@ export default function Search() {
     const trimmed = query.trim();
     // Don't fire search on empty query — show the landing UI instead
     if (!trimmed) {
-      setResults({ slokas: [], stories: [], videos: [], movies: [], reels: [] });
+      setResults({ slokas: [], stories: [], videos: [], movies: [] });
       setAiInsight(null);
       setLoading(false);
       return;
@@ -79,7 +79,6 @@ export default function Search() {
         slokas: Array.isArray(response.data?.slokas) ? response.data.slokas : [],
         stories: Array.isArray(response.data?.stories) ? response.data.stories : [],
         videos: Array.isArray(response.data?.videos) ? response.data.videos : [],
-        reels: Array.isArray(response.data?.reels) ? response.data.reels : [],
         movies: Array.isArray(response.data?.movies) ? response.data.movies : [],
       });
 
@@ -92,7 +91,7 @@ export default function Search() {
       localStorage.setItem(RECENT_SEARCHES_KEY, JSON.stringify(updatedRecentSearches));
     } catch (error) {
       console.error('Search error:', error);
-      setResults({ slokas: [], stories: [], videos: [], movies: [], reels: [] });
+      setResults({ slokas: [], stories: [], videos: [], movies: [] });
     } finally {
       setLoading(false);
     }
@@ -128,9 +127,7 @@ export default function Search() {
         ? <Book className="text-blue-400" />
         : type === 'video'
           ? <Video className="text-red-400" />
-          : type === 'reel'
-            ? <Film className="text-purple-400" />
-            : <Film className="text-[#F5C542]" />;
+          : <Film className="text-[#F5C542]" />;
     
     return (
       <button
@@ -177,13 +174,11 @@ export default function Search() {
     }
     const pathMap = {
       story: '/stories',
-      reel: '/reels',
       video: item?.isKids ? '/kids' : '/videos',
       movie: '/movies',
     };
     const keyMap = {
       story: 'openStoryId',
-      reel: 'focusReelId',
       video: 'openVideoId',
       movie: 'openMovieId',
     };
@@ -269,7 +264,7 @@ export default function Search() {
                 </div>
                 <p className="text-[#FF7A00] text-xs font-black uppercase tracking-[0.6em] animate-pulse">Scanning Akashic Records</p>
              </div>
-          ) : (results.slokas.length > 0 || results.stories.length > 0 || results.videos.length > 0 || results.movies.length > 0 || results.reels.length > 0) ? (
+          ) : (results.slokas.length > 0 || results.stories.length > 0 || results.videos.length > 0 || results.movies.length > 0) ? (
             <div className="space-y-24 animate-slide-up">
                {results.movies.length > 0 && (
                   <section>
@@ -279,18 +274,6 @@ export default function Search() {
                      </div>
                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-10">
                         {results.movies.map(m => <ResultCard key={m._id} item={m} type="movie" onOpen={() => openResult(m, 'movie')} />)}
-                     </div>
-                  </section>
-               )}
-
-               {results.reels.length > 0 && (
-                  <section>
-                     <div className="flex items-center gap-6 mb-10">
-                        <div className="h-1.5 w-12 bg-purple-500 rounded-full shadow-[0_0_15px_rgba(168,85,247,0.5)]" />
-                        <h2 className="text-3xl font-black uppercase tracking-[0.3em] italic">Spiritual Reels</h2>
-                     </div>
-                     <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-8">
-                        {results.reels.map(r => <ResultCard key={r._id} item={r} type="reel" onOpen={() => openResult(r, 'reel')} />)}
                      </div>
                   </section>
                )}

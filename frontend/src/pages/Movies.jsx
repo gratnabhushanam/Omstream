@@ -106,8 +106,8 @@ export default function Movies() {
              <span className="text-2xl font-black tracking-tight premium-text-gradient uppercase italic">Gita Wisdom</span>
           </div>
           <div className="hidden lg:flex items-center gap-10 text-xs font-black uppercase tracking-[0.25em] text-white/50">
-             {['Home', 'Movies', 'Reels', 'Library'].map(m => (
-               <button key={m} onClick={() => navigate(`/${m.toLowerCase()}`)} className={`hover:text-white transition-all hover:tracking-[0.4em] relative group ${m === 'Movies' ? 'text-white' : ''}`}>
+             {['Home', 'Movies', 'Library'].map(m => (
+               <button key={m} onClick={() => navigate(m === 'Library' ? '/stories' : `/${m.toLowerCase()}`)} className={`hover:text-white transition-all hover:tracking-[0.4em] relative group ${m === 'Movies' ? 'text-white' : ''}`}>
                  {m}
                  {m === 'Movies' && <div className="absolute -bottom-2 left-0 w-full h-1 bg-[#FF7A00] rounded-full shadow-[0_0_10px_#FF7A00]" />}
                </button>

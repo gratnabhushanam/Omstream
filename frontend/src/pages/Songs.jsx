@@ -6,6 +6,55 @@ import axios from 'axios';
 import { useLanguage } from '../context/LanguageContext';
 import { useAuth } from '../context/AuthContext';
 
+const SongItem = React.memo(({ song, isSelected, actualIndex, onPlay, onLike, isLiked }) => {
+  return (
+    <div 
+      tabIndex="0"
+      onClick={() => onPlay(actualIndex)}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          onPlay(actualIndex);
+        }
+      }}
+      className={`group tv-focusable focus:outline-none focus:ring-4 focus:ring-devotion-gold flex items-center gap-4 p-3 sm:p-4 rounded-2xl cursor-pointer transition-all duration-300 border ${
+        isSelected 
+          ? 'bg-gradient-to-r from-devotion-gold/20 to-transparent border-devotion-gold/40 shadow-[0_0_15px_rgba(255,215,0,0.1)]' 
+          : 'bg-white/5 border-white/5 hover:bg-white/10 hover:border-white/20'
+      }`}
+    >
+      <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-xl overflow-hidden relative flex-shrink-0">
+        <img src={song.cover} alt={song.title} loading="lazy" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+        {isSelected && (
+          <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+            <div className="flex items-end gap-1 h-4">
+              <div className="w-1 bg-devotion-gold animate-music-bar-1 h-full rounded-full"></div>
+              <div className="w-1 bg-devotion-gold animate-music-bar-2 h-3/4 rounded-full"></div>
+              <div className="w-1 bg-devotion-gold animate-music-bar-3 h-full rounded-full"></div>
+            </div>
+          </div>
+        )}
+      </div>
+
+      <div className="flex-1 min-w-0">
+        <h3 className={`text-base sm:text-lg font-bold truncate ${isSelected ? 'text-devotion-gold' : 'text-white group-hover:text-devotion-gold transition-colors'}`}>
+          {song.title}
+        </h3>
+        <p className="text-xs text-gray-400 uppercase tracking-wider font-medium truncate mt-0.5">
+          {song.artist}
+        </p>
+      </div>
+
+      <div className="flex-shrink-0 flex items-center gap-4 text-right pr-2">
+        <button onClick={(e) => onLike(e, song._id)} className={`active:scale-90 transition-all ${isLiked ? 'text-red-500 hover:text-red-600' : 'text-gray-500 hover:text-red-400 opacity-0 group-hover:opacity-100'}`}>
+          <Heart className={`w-4 h-4 ${isLiked ? 'fill-current' : ''}`} />
+        </button>
+        <span className="text-xs font-bold text-gray-500 tracking-widest min-w-[30px]">{song.duration || 'Playing'}</span>
+      </div>
+    </div>
+  );
+});
+
 export default function Songs() {
   const { language } = useLanguage();
   const { user, setUser } = useAuth();
@@ -236,65 +285,24 @@ export default function Songs() {
           </div>
 
           <div className="flex flex-col gap-3 h-[500px] overflow-y-auto custom-scrollbar pr-2 pb-10">
-            {React.useMemo(() => {
-              return songs.filter(s => s.title.toLowerCase().includes(searchQuery.toLowerCase()) || s.artist.toLowerCase().includes(searchQuery.toLowerCase())).map((song) => {
-                const actualIndex = songs.findIndex(s => s._id === song._id);
-                const isSelected = currentSongIndex === actualIndex;
-                return (
-                <div 
-                  key={song._id}
-                  tabIndex="0"
-                  onClick={() => {
-                    setCurrentSongIndex(actualIndex);
+            {songs.filter(s => s.title.toLowerCase().includes(searchQuery.toLowerCase()) || s.artist.toLowerCase().includes(searchQuery.toLowerCase())).map((song) => {
+              const actualIndex = songs.findIndex(s => s._id === song._id);
+              const isSelected = currentSongIndex === actualIndex;
+              return (
+                <SongItem 
+                  key={song._id} 
+                  song={song} 
+                  isSelected={isSelected} 
+                  actualIndex={actualIndex} 
+                  onPlay={(idx) => {
+                    setCurrentSongIndex(idx);
                     setIsPlaying(true);
                   }}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                      e.preventDefault();
-                      setCurrentSongIndex(actualIndex);
-                      setIsPlaying(true);
-                    }
-                  }}
-                  className={`group tv-focusable focus:outline-none focus:ring-4 focus:ring-devotion-gold flex items-center gap-4 p-3 sm:p-4 rounded-2xl cursor-pointer transition-all duration-300 border ${
-                    isSelected 
-                      ? 'bg-gradient-to-r from-devotion-gold/20 to-transparent border-devotion-gold/40 shadow-[0_0_15px_rgba(255,215,0,0.1)]' 
-                      : 'bg-white/5 border-white/5 hover:bg-white/10 hover:border-white/20'
-                  }`}
-                >
-                  <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-xl overflow-hidden relative flex-shrink-0">
-                    <img src={song.cover} alt={song.title} loading="lazy" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
-                    <div className="absolute inset-0 bg-black/40 group-hover:bg-black/20 transition-colors flex items-center justify-center">
-                      {isSelected && isPlaying ? (
-                        <div className="flex items-end justify-center gap-0.5 h-4">
-                          <div className="w-1 bg-devotion-gold animate-[bounce_1s_infinite_0ms] h-full rounded-full"></div>
-                          <div className="w-1 bg-devotion-gold animate-[bounce_1s_infinite_200ms] h-2/3 rounded-full"></div>
-                          <div className="w-1 bg-devotion-gold animate-[bounce_1s_infinite_400ms] h-full rounded-full"></div>
-                        </div>
-                      ) : (
-                        <Play className={`w-6 h-6 ${isSelected ? 'text-devotion-gold' : 'text-white'} opacity-0 group-hover:opacity-100 transition-opacity`} />
-                      )}
-                    </div>
-                  </div>
-                  
-                  <div className="flex-1 min-w-0">
-                    <h3 className={`text-base sm:text-lg font-bold truncate ${isSelected ? 'text-devotion-gold' : 'text-white group-hover:text-devotion-gold transition-colors'}`}>
-                      {song.title}
-                    </h3>
-                    <p className="text-xs text-gray-400 uppercase tracking-wider font-medium truncate mt-0.5">
-                      {song.artist}
-                    </p>
-                  </div>
-
-                  <div className="flex-shrink-0 flex items-center gap-4 text-right pr-2">
-                    <button onClick={(e) => handleLike(e, song._id)} className={`active:scale-90 transition-all ${user?.likedSongs?.includes(song._id) ? 'text-red-500 hover:text-red-600' : 'text-gray-500 hover:text-red-400 opacity-0 group-hover:opacity-100'}`}>
-                      <Heart className={`w-4 h-4 ${user?.likedSongs?.includes(song._id) ? 'fill-current' : ''}`} />
-                    </button>
-                    <span className="text-xs font-bold text-gray-500 tracking-widest min-w-[30px]">{song.duration || 'Playing'}</span>
-                  </div>
-                </div>
-                );
-              });
-            }, [songs, searchQuery, currentSongIndex, isPlaying, user?.likedSongs])}
+                  onLike={handleLike}
+                  isLiked={user?.likedSongs?.includes(song._id)}
+                />
+              );
+            })}
           </div>
         </div>
 

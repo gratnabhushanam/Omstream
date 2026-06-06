@@ -1044,7 +1044,6 @@ function AdminDashboardContent() {
             { id: 'movies', name: 'Movies', icon: <Film className="w-5 h-5" /> },
             { id: 'stories', name: 'Stories', icon: <BookOpen className="w-5 h-5" /> },
             { id: 'videos', name: 'Videos', icon: <Video className="w-5 h-5" /> },
-            { id: 'reels', name: 'Reels Moderation', icon: <Video className="w-5 h-5 text-devotion-gold" /> },
             { id: 'quizzes', name: 'Quiz Manager', icon: <Check className="w-5 h-5 text-green-400" /> },
             { id: 'users', name: 'Users', icon: <Users className="w-5 h-5" /> },
             { id: 'ai-jobs', name: 'AI Jobs', icon: <Cpu className="w-5 h-5 text-blue-400" /> },
@@ -1092,7 +1091,6 @@ function AdminDashboardContent() {
                 { id: 'movies', name: 'Movies', icon: <Film className="w-4 h-4" /> },
                 { id: 'stories', name: 'Stories', icon: <BookOpen className="w-4 h-4" /> },
                 { id: 'videos', name: 'Videos', icon: <Video className="w-4 h-4" /> },
-                { id: 'reels', name: 'Reels Moderation', icon: <Video className="w-4 h-4 text-devotion-gold" /> },
                 { id: 'quizzes', name: 'Quiz Manager', icon: <Check className="w-4 h-4 text-green-400" /> },
                 { id: 'users', name: 'Users', icon: <Users className="w-4 h-4" /> },
                 { id: 'ai-jobs', name: 'AI Jobs', icon: <Cpu className="w-4 h-4 text-blue-400" /> },
@@ -2629,7 +2627,7 @@ function AdminDashboardContent() {
               </button>
 
               <h2 className="text-5xl font-serif font-black text-white mb-12 text-center uppercase tracking-tighter">
-                {(editingStoryId || editingMovieId || editingVideoId) ? 'Edit' : 'Publish'} <span className="text-devotion-gold">{activeTab === 'stories' ? 'Story' : activeTab === 'movies' ? 'Movie' : (activeTab === 'videos' && videosUploadType === 'quiz' ? 'Quiz Question' : currentContentLabel)}</span>
+                {(editingStoryId || editingMovieId || editingVideoId || editingSongId) ? 'Edit' : 'Publish'} <span className="text-devotion-gold">{activeTab === 'stories' ? 'Story' : activeTab === 'movies' ? 'Movie' : (activeTab === 'videos' && videosUploadType === 'quiz' ? 'Quiz Question' : activeTab === 'songs' ? 'Song' : currentContentLabel)}</span>
               </h2>
 
               <form onSubmit={handleAddContent} className="space-y-10">
@@ -2662,9 +2660,29 @@ function AdminDashboardContent() {
                          )}
                        </div>
                     </div>
-                    <div>
-                      <label className="text-[10px] font-black uppercase tracking-widest text-devotion-gold ml-2">Cover Image URL</label>
-                      <input type="url" className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-5 text-white focus:border-devotion-gold outline-none" value={songForm.cover} onChange={e => setSongForm({...songForm, cover: e.target.value})} placeholder="https://..." required />
+                    <div className="space-y-4">
+                      <label className="text-[10px] font-black uppercase tracking-widest text-devotion-gold ml-2">Cover Image URL or Direct Upload</label>
+                      <div className="flex gap-2">
+                        <input type="url" className="flex-1 bg-white/5 border border-white/10 rounded-2xl px-6 py-5 text-white focus:border-devotion-gold outline-none" value={songForm.cover} onChange={e => setSongForm({...songForm, cover: e.target.value})} placeholder="https://... or upload image ->" required />
+                        <label className="cursor-pointer bg-devotion-gold/10 border border-devotion-gold/30 text-devotion-gold px-6 py-5 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-devotion-gold/20 transition-all flex items-center gap-2 flex-shrink-0">
+                          <Upload className="w-4 h-4" /> Upload
+                          <input type="file" accept="image/*" className="hidden" onChange={async (e) => {
+                            const file = e.target.files[0];
+                            if (!file) return;
+                            try {
+                              const token = localStorage.getItem('token');
+                              const result = await resumableUpload({
+                                file,
+                                url: '/api/videos/upload/resumable',
+                                headers: { Authorization: `Bearer ${token}`, 'video-only-upload': 'true' },
+                                onProgress: () => {}
+                              });
+                              if (result && result.videoUrl) setSongForm((prev) => ({ ...prev, cover: result.videoUrl }));
+                              else if (result && result.fileName) setSongForm((prev) => ({ ...prev, cover: `/uploads/reels/${result.fileName}` }));
+                            } catch (err) { alert('Image upload failed'); }
+                          }} />
+                        </label>
+                      </div>
                     </div>
                     <div>
                       <label className="text-[10px] font-black uppercase tracking-widest text-devotion-gold ml-2">Duration (e.g. 5:30)</label>
@@ -3287,7 +3305,7 @@ function AdminDashboardContent() {
                     {loading ? <div className="w-6 h-6 border-2 border-devotion-darkBlue border-t-transparent rounded-full animate-spin"></div> : (
                       <>
                         <Upload className="w-6 h-6 group-hover:scale-125 transition-transform" />
-                        {(editingStoryId || editingMovieId || editingVideoId) ? `UPDATE \${activeTab === 'stories' ? 'STORY' : activeTab === 'movies' ? 'MOVIE' : 'VIDEO'}` : (activeTab === 'videos' && videosUploadType === 'quiz' ? 'PUBLISH QUIZ QUESTION' : activeTab === 'songs' ? 'PUBLISH SONG' : 'PUBLISH TO DIVINE LIBRARY')}
+                        {(editingStoryId || editingMovieId || editingVideoId || editingSongId) ? `UPDATE ${activeTab === 'stories' ? 'STORY' : activeTab === 'movies' ? 'MOVIE' : activeTab === 'songs' ? 'SONG' : 'VIDEO'}` : (activeTab === 'videos' && videosUploadType === 'quiz' ? 'PUBLISH QUIZ QUESTION' : activeTab === 'songs' ? 'PUBLISH SONG' : 'PUBLISH TO DIVINE LIBRARY')}
                       </>
                     )}
                  </button>

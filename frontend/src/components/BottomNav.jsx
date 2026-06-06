@@ -9,7 +9,6 @@ export default function BottomNav() {
 
   const navItems = [
     { name: 'Home',    path: '/home',        icon: Home     },
-    { name: 'Reels',   path: '/reels',       icon: Film     },
     { name: 'Kids',    path: '/kids',        icon: Star     },
     { name: 'Songs',   path: '/songs',       icon: Music    },
     { name: 'Slokas',  path: '/daily-sloka', icon: BookOpen },
