@@ -47,7 +47,8 @@ export default function Login() {
       await login(loginIdentifier, formData.password);
       navigate('/home', { replace: true });
     } catch (err) {
-      setError(err.response?.data?.message || 'Invalid credentials.');
+      const errorMessage = err.response?.data?.message || err.message || 'Invalid credentials.';
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
