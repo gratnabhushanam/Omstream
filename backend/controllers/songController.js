@@ -74,3 +74,25 @@ exports.autoCollectSongs = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
+exports.toggleLikedSong = async (req, res) => {
+  try {
+    const User = require('../models/User');
+    const user = await User.findById(req.user.id);
+    if (!user) return res.status(404).json({ message: 'User not found' });
+
+    const songId = req.params.id;
+    const index = user.likedSongs.indexOf(songId);
+
+    if (index > -1) {
+      user.likedSongs.splice(index, 1);
+    } else {
+      user.likedSongs.push(songId);
+    }
+
+    await user.save();
+    res.json({ message: 'Liked songs updated', likedSongs: user.likedSongs });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};

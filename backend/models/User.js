@@ -38,6 +38,7 @@ const UserSchema = new mongoose.Schema(
     savedReels: { type: [String], default: [] },
     watchlist: { type: [mongoose.Schema.Types.ObjectId], ref: 'Movie', default: [] },
     storyWatchlist: { type: [mongoose.Schema.Types.ObjectId], ref: 'Story', default: [] },
+    likedSongs: { type: [mongoose.Schema.Types.ObjectId], ref: 'Song', default: [] },
     japaCount: { type: Number, default: 0 },
     japaMalas: { type: Number, default: 0 },
     pushSubscriptions: { type: Array, default: [] },

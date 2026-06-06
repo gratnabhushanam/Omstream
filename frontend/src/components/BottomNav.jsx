@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
-import { Home, Film, BookOpen, User, Star, Shield } from 'lucide-react';
+import { Home, Film, BookOpen, User, Star, Shield, Music } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 export default function BottomNav() {
@@ -11,6 +11,7 @@ export default function BottomNav() {
     { name: 'Home',    path: '/home',        icon: Home     },
     { name: 'Reels',   path: '/reels',       icon: Film     },
     { name: 'Kids',    path: '/kids',        icon: Star     },
+    { name: 'Songs',   path: '/songs',       icon: Music    },
     { name: 'Slokas',  path: '/daily-sloka', icon: BookOpen },
     { name: 'Profile', path: '/profile',     icon: User     },
     ...(user?.role === 'admin' ? [{ name: 'Admin', path: '/admin', icon: Shield }] : []),

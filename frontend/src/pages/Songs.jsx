@@ -1,12 +1,14 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Play, Pause, SkipForward, SkipBack, Volume2, VolumeX, Music } from 'lucide-react';
+import { Play, Pause, SkipForward, SkipBack, Volume2, VolumeX, Music, Heart } from 'lucide-react';
 import ReactPlayer from 'react-player';
 import axios from 'axios';
 
 import { useLanguage } from '../context/LanguageContext';
+import { useAuth } from '../context/AuthContext';
 
 export default function Songs() {
   const { language } = useLanguage();
+  const { user, setUser } = useAuth();
   const [songs, setSongs] = useState([]);
   const [currentSongIndex, setCurrentSongIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -33,6 +35,20 @@ export default function Songs() {
     };
     fetchSongs();
   }, [language]);
+
+
+  const handleLike = async (e, songId) => {
+    e.stopPropagation();
+    if (!user) return alert('Please login to save songs.');
+    try {
+      const { data } = await axios.post(`/api/songs/${songId}/like`, {}, {
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+      });
+      setUser(prev => ({ ...prev, likedSongs: data.likedSongs }));
+    } catch (err) {
+      console.error(err);
+    }
+  };
 
   const currentSong = songs[currentSongIndex] || null;
 
@@ -130,8 +146,8 @@ export default function Songs() {
                 </div>
 
                 <div className="flex items-center justify-center gap-6 w-full">
-                  <button onClick={toggleMute} className="text-gray-400 hover:text-white transition-colors p-2 active:scale-90 hidden sm:block">
-                    {isMuted ? <VolumeX className="w-5 h-5" /> : <Volume2 className="w-5 h-5" />}
+                  <button onClick={(e) => handleLike(e, currentSong._id)} className={`text-gray-400 hover:text-red-500 transition-colors p-2 active:scale-90 ${user?.likedSongs?.includes(currentSong._id) ? 'text-red-500' : ''}`}>
+                    <Heart className={`w-5 h-5 ${user?.likedSongs?.includes(currentSong._id) ? 'fill-current' : ''}`} />
                   </button>
                   
                   <button onClick={handlePrev} className="w-12 h-12 flex items-center justify-center rounded-full bg-white/5 hover:bg-white/10 text-white transition-all active:scale-95 border border-white/10">
@@ -149,7 +165,9 @@ export default function Songs() {
                     <SkipForward className="w-5 h-5 fill-current" />
                   </button>
 
-                  <div className="w-9 h-9 hidden sm:block"></div>
+                  <button onClick={toggleMute} className="text-gray-400 hover:text-white transition-colors p-2 active:scale-90 hidden sm:block">
+                    {isMuted ? <VolumeX className="w-5 h-5" /> : <Volume2 className="w-5 h-5" />}
+                  </button>
                 </div>
 
                 <div className="hidden">
@@ -225,8 +243,11 @@ export default function Songs() {
                     </p>
                   </div>
 
-                  <div className="flex-shrink-0 text-right pr-2">
-                    <span className="text-xs font-bold text-gray-500 tracking-widest">{song.duration || 'Playing'}</span>
+                  <div className="flex-shrink-0 flex items-center gap-4 text-right pr-2">
+                    <button onClick={(e) => handleLike(e, song._id)} className={`active:scale-90 transition-all ${user?.likedSongs?.includes(song._id) ? 'text-red-500 hover:text-red-600' : 'text-gray-500 hover:text-red-400 opacity-0 group-hover:opacity-100'}`}>
+                      <Heart className={`w-4 h-4 ${user?.likedSongs?.includes(song._id) ? 'fill-current' : ''}`} />
+                    </button>
+                    <span className="text-xs font-bold text-gray-500 tracking-widest min-w-[30px]">{song.duration || 'Playing'}</span>
                   </div>
                 </div>
               );
