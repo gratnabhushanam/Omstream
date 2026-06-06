@@ -15,7 +15,7 @@ exports.getStories = async (req, res) => {
 
     const filter = req.query.all === 'true' ? {} : { status: 'published' };
     filter.isFolder = true;
-    const folders = await Story.find(filter).lean().sort({ createdAt: -1 });
+    const folders = await Story.find(filter).lean().sort({ createdAt: -1 }).limit(200);
 
     const foldersWithChapters = folders.map(story => {
       const plain = story.toObject ? story.toObject() : story;
@@ -28,7 +28,7 @@ exports.getStories = async (req, res) => {
       const allSubStories = await Story.find({ 
         parentFolderId: { $in: folderTitles }, 
         status: 'published' 
-      }).lean().sort({ sequence: 1, createdAt: 1 });
+      }).lean().sort({ sequence: 1, createdAt: 1 }).limit(1000);
       
       const subStoriesByFolder = {};
       for (const sub of allSubStories) {
@@ -78,7 +78,7 @@ exports.getKidsStories = async (req, res) => {
         { tags: { $regex: 'kids', $options: 'i' } },
         { category: { $regex: 'kids', $options: 'i' } }
       ]
-    }).lean().sort({ viewCount: -1 });
+    }).lean().sort({ viewCount: -1 }).limit(200);
 
     const foldersWithChapters = folders.map(story => {
       const plain = story.toObject ? story.toObject() : story;
@@ -91,7 +91,7 @@ exports.getKidsStories = async (req, res) => {
       const allSubStories = await Story.find({ 
         parentFolderId: { $in: folderTitles }, 
         status: 'published' 
-      }).lean().sort({ sequence: 1, createdAt: 1 });
+      }).lean().sort({ sequence: 1, createdAt: 1 }).limit(1000);
       
       const subStoriesByFolder = {};
       for (const sub of allSubStories) {
