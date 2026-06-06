@@ -246,7 +246,7 @@ const startServer = async () => {
         if (isProduction) {
           console.log('[KEEP-ALIVE] Initialized self-ping every 14 minutes');
           setInterval(() => {
-            require('https').get('https://gita-wisdom-1.onrender.com/ping', (resp) => {
+            require('https').get('https://gitawisdom.onrender.com/ping', (resp) => {
               console.log('[KEEP-ALIVE] Ping status:', resp.statusCode);
             }).on("error", (err) => {
               console.error('[KEEP-ALIVE] Ping failed:', err.message);

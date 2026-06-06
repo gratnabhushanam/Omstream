@@ -331,15 +331,15 @@ exports.initializeAdminCredentials = async () => {
   
   try {
     const admin = await User.findOne({ email: safeEmail });
-    const hashedPassword = await bcrypt.hash(ADMIN_PASSWORD, 8);
 
     if (admin) {
-      // Sync password from env to DB to ensure latest credentials work
-      admin.password = hashedPassword;
-      admin.role = 'admin';
-      await admin.save();
-      console.log('[AUTH] Admin credentials synchronized from environment.');
+      if (admin.role !== 'admin') {
+        admin.role = 'admin';
+        await admin.save();
+        console.log('[AUTH] Promoted existing user to admin.');
+      }
     } else {
+      const hashedPassword = await bcrypt.hash(ADMIN_PASSWORD, 8);
       await User.create({ 
         name: ADMIN_NAME || 'Gita Admin', 
         email: safeEmail, 
