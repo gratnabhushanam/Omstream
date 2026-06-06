@@ -21,6 +21,7 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     const token = localStorage.getItem('token');
     if (token) {
+      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
       fetchUser(token);
     } else {
       setLoading(false);
@@ -49,6 +50,7 @@ export const AuthProvider = ({ children }) => {
     const userData = data.user || data;
     localStorage.setItem('token', data.token);
     localStorage.setItem('user', JSON.stringify(userData));
+    axios.defaults.headers.common['Authorization'] = `Bearer ${data.token}`;
     setUser(userData);
     return data;
   };
@@ -60,9 +62,12 @@ export const AuthProvider = ({ children }) => {
 
   const verifyRegisterOtp = async (email, otp) => {
     const { data } = await axios.post('/api/auth/register/verify-otp', { email, otp });
-    const userData = data.user || data;
-    localStorage.setItem('token', data.token);
+    // Backend returns flat: { token, id, name, email, role, ... }
+    const { token, ...rest } = data;
+    const userData = rest.user || rest; // handle both shapes
+    localStorage.setItem('token', token);
     localStorage.setItem('user', JSON.stringify(userData));
+    axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
     setUser(userData);
     return data;
   };
@@ -79,9 +84,12 @@ export const AuthProvider = ({ children }) => {
 
   const verifyOtpLogin = async (payload) => {
     const { data } = await axios.post('/api/auth/verify-otp', payload);
+    // otpController returns { token, user: userObj }
+    const userData = data.user || data;
     localStorage.setItem('token', data.token);
-    localStorage.setItem('user', JSON.stringify(data.user)); // Note: unified payload
-    setUser(data.user);
+    localStorage.setItem('user', JSON.stringify(userData));
+    axios.defaults.headers.common['Authorization'] = `Bearer ${data.token}`;
+    setUser(userData);
     return data;
   };
 
