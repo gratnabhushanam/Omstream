@@ -59,9 +59,9 @@ export default function Navbar() {
             </div>
           </Link>
           
-          <div className="hidden md:flex items-center flex-1 min-w-0 ml-4 justify-end gap-1 xl:gap-2">
-            <div className="flex items-center gap-1 xl:gap-2 overflow-x-auto hide-scrollbar flex-1 mask-fade-right">
-            <Link to="/search" className="tv-focusable w-10 h-10 tv:w-14 tv:h-14 rounded-xl flex items-center justify-center text-gray-400 hover:bg-white/5 hover:text-white transition-all active:scale-110 mr-2">
+          <div className="hidden md:flex items-center flex-1 min-w-0 ml-4 justify-end gap-2 xl:gap-4">
+            <div className="flex items-center gap-0.5 xl:gap-1.5 overflow-x-auto hide-scrollbar flex-1 justify-end pr-2">
+            <Link to="/search" className="tv-focusable shrink-0 w-9 h-9 tv:w-14 tv:h-14 rounded-xl flex items-center justify-center text-gray-400 hover:bg-white/5 hover:text-white transition-all active:scale-110 mr-1">
               <Search className="w-5 h-5 tv:w-6 tv:h-6" />
             </Link>
 
@@ -134,14 +134,14 @@ export default function Navbar() {
             </div>
             
             {user ? (
-              <div className="flex items-center gap-3 pl-4 border-l border-white/10 ml-2">
+              <div className="flex items-center gap-3 pl-4 border-l border-white/10 shrink-0">
                 <Link to="/profile" className="tv-focusable focus:outline-none focus:ring-4 focus:ring-devotion-gold rounded-2xl flex items-center gap-2 lg:gap-3 group">
                   <div className="w-8 h-8 lg:w-10 lg:h-10 tv:w-14 tv:h-14 rounded-xl overflow-hidden border border-white/10 group-hover:border-devotion-gold/50 transition-colors shrink-0">
                     {user.profilePicture ? <img src={user.profilePicture} alt="" className="w-full h-full object-cover" /> : <div className="w-full h-full bg-devotion-gold/10 flex items-center justify-center text-devotion-gold font-black text-[10px] lg:text-xs tv:text-sm uppercase">{getInitials(selectedProfile?.name || user.name)}</div>}
                   </div>
-                  <div className="hidden lg:flex flex-col">
-                    <span className="text-[9px] lg:text-[10px] tv:text-xs font-black text-white group-hover:text-devotion-gold transition-colors uppercase tracking-wider truncate max-w-[80px] lg:max-w-[100px] tv:max-w-[150px]">{selectedProfile?.name || user.name}</span>
-                    <span className="text-[7px] lg:text-[8px] tv:text-[10px] font-bold text-gray-500 uppercase tracking-widest">{selectedProfile ? 'Profile' : 'Devotee'}</span>
+                  <div className="hidden lg:flex flex-col shrink-0">
+                    <span className="text-[9px] lg:text-[10px] tv:text-xs font-black text-white group-hover:text-devotion-gold transition-colors uppercase tracking-wider whitespace-nowrap">{selectedProfile?.name || user.name}</span>
+                    <span className="text-[7px] lg:text-[8px] tv:text-[10px] font-bold text-gray-500 uppercase tracking-widest whitespace-nowrap">{selectedProfile ? 'Profile' : 'Devotee'}</span>
                   </div>
                 </Link>
                 {selectedProfile && selectedProfile._id !== 'default' && (
