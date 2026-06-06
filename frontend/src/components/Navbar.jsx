@@ -46,8 +46,8 @@ export default function Navbar() {
   const toggleNotifications = () => { setIsOpen(false); setShowNotifications(prev => !prev); };
 
   return (
-    <nav className="sticky top-0 w-full z-50 bg-[#0F1014]/95 backdrop-blur-2xl border-b border-white/5 shadow-[0_10px_30px_rgba(0,0,0,0.5)] tv:h-24 transition-all duration-500 mb-6 sm:mb-10">
-      <div className="max-w-[1920px] mx-auto px-4 sm:px-8 lg:px-12 pl-safe pr-safe">
+    <nav className="sticky top-0 w-full z-50 bg-[#0F1014]/95 backdrop-blur-2xl border-b border-white/5 shadow-[0_10px_30px_rgba(0,0,0,0.5)] tv:h-24 transition-all duration-500 mb-6 sm:mb-10" style={{ paddingTop: 'env(safe-area-inset-top)' }}>
+      <div className="max-w-[1920px] mx-auto px-4 sm:px-8 lg:px-12">
         <div className="flex items-center justify-between h-16 tv:h-24">
           <Link to="/home" tabIndex={0} className="tv-focusable focus:outline-none focus:ring-4 focus:ring-devotion-gold rounded-2xl group flex items-center gap-2 sm:gap-3 hover:opacity-80 transition-all flex-shrink-0">
             <div className="w-8 h-8 sm:w-9 sm:h-9 tv:w-14 tv:h-14 rounded-xl overflow-hidden flex items-center justify-center bg-[#00A8FF]/10 border border-[#00A8FF]/30 shadow-[0_0_20px_rgba(0,168,255,0.1)] group-hover:shadow-[0_0_30px_rgba(0,168,255,0.3)] transition-all">

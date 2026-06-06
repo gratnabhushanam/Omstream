@@ -80,7 +80,10 @@ export function MobileNotificationSheet({ notifications, unreadCount, handleMark
 
   return (
     <div className="fixed inset-0 z-[10000] bg-[#070F1D] flex flex-col overflow-hidden animate-in fade-in duration-300" onClick={handleBackdrop}>
-      <div className="flex-shrink-0 px-6 pt-[calc(env(safe-area-inset-top,0px)+4.5rem)] pb-6 flex justify-between items-center border-b border-white/5 bg-[#0D1424]">
+      <div 
+        className="flex-shrink-0 px-6 pb-6 flex justify-between items-center border-b border-white/5 bg-[#0D1424]"
+        style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 4.5rem)' }}
+      >
         <div className="flex items-center gap-4">
           <div className="w-12 h-12 rounded-2xl bg-devotion-gold/10 border border-devotion-gold/30 flex items-center justify-center shadow-inner">
             <Bell className="w-6 h-6 text-devotion-gold" />

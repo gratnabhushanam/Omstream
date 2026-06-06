@@ -18,15 +18,10 @@ export default function BottomNav() {
 
   return (
     /* Hidden on desktop & TV, shown on mobile/tablet in portrait */
-    <nav className="
-      md:hidden tv:hidden
-      fixed bottom-0 left-0 w-full z-50
-      bg-[#060F1B]/95 backdrop-blur-xl
-      border-t border-devotion-gold/10
-      shadow-[0_-8px_30px_rgba(0,0,0,0.5)]
-      pb-safe
-      landscape:hidden
-    ">
+    <nav 
+      className="md:hidden tv:hidden fixed bottom-0 left-0 w-full z-50 bg-[#060F1B]/95 backdrop-blur-xl border-t border-devotion-gold/10 shadow-[0_-8px_30px_rgba(0,0,0,0.5)] landscape:hidden"
+      style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
+    >
       <div className="flex justify-around items-center h-[60px] px-1">
         {navItems.map((item) => {
           const Icon = item.icon;

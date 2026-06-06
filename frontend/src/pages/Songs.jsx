@@ -243,7 +243,13 @@ export default function Songs() {
   };
 
   return (
-    <div className="min-h-screen pt-[calc(env(safe-area-inset-top)+6rem)] pb-[calc(env(safe-area-inset-bottom)+8rem)] px-4 sm:px-6 lg:px-8 relative bg-[#06101E] overflow-hidden flex flex-col items-center w-full">
+    <div 
+      className="min-h-screen px-4 sm:px-6 lg:px-8 relative bg-[#06101E] overflow-x-hidden flex flex-col items-center w-full"
+      style={{ 
+        paddingTop: 'max(1.5rem, env(safe-area-inset-top))',
+        paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 5.5rem)' 
+      }}
+    >
       <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(circle_at_center,rgba(255,215,0,0.05),transparent_60%)]"></div>
       
       <div className="w-full max-w-5xl mx-auto relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 mt-4 sm:mt-0">

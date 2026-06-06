@@ -76,10 +76,12 @@
   }
 
   /* Safe area insets for notched devices */
+  /* NOTE: padding-top is intentionally NOT applied to body here.
+     Each fixed/sticky component manages its own safe-area-inset-top
+     to avoid double-offset conflicts with the Navbar and fullscreen overlays. */
   body {
     padding-left: env(safe-area-inset-left);
     padding-right: env(safe-area-inset-right);
-    padding-top: env(safe-area-inset-top);
     padding-bottom: env(safe-area-inset-bottom);
   }
 
