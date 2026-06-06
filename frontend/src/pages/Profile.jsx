@@ -1,10 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { User, Users, Mail, Bell, Shield, Heart, Flame, Trophy, Settings, LogOut, Camera, Edit2, Check, ExternalLink, Sparkles, BookOpen, Share2, Bookmark, Video, Trash2, Library, Play } from 'lucide-react';
+import { 
+  User, Users, Mail, Bell, Shield, Heart, Flame, Trophy, Settings, LogOut, Camera, 
+  Edit2, Check, ExternalLink, Sparkles, BookOpen, Share2, Bookmark, Video, Trash2, 
+  Library, Play, Monitor, Smartphone, Laptop, Plus, Lock, Unlock, Smile, Baby 
+} from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { requestNotificationPermission } from '../utils/notificationService';
 import JapaCounter from '../components/JapaCounter';
+import { io } from 'socket.io-client';
 
 const INTEREST_OPTIONS = ['Karma Yoga', 'Bhakti Yoga', 'Meditation', 'Stress Relief', 'Motivation', 'Leadership'];
 
@@ -33,6 +38,23 @@ export default function Profile() {
   const [watchlistMovies, setWatchlistMovies] = useState([]);
   const [watchlistStories, setWatchlistStories] = useState([]);
   const [watchlistLoading, setWatchlistLoading] = useState(false);
+  
+  // Device & Profile additions
+  const [deviceRequests, setDeviceRequests] = useState([]);
+  const [editingProfileId, setEditingProfileId] = useState(null);
+  const [editProfileForm, setEditProfileForm] = useState({
+    name: '',
+    avatar: '',
+    pin: '',
+    isKids: false
+  });
+  const [newProfileForm, setNewProfileForm] = useState({
+    name: '',
+    avatar: '',
+    pin: '',
+    isKids: false
+  });
+  const [isAddingProfile, setIsAddingProfile] = useState(false);
 
   const fileInputRef = React.useRef(null);
 
@@ -136,6 +158,81 @@ export default function Profile() {
     loadWatchlistMovies();
     loadWatchlistStories();
   }, [user]);
+
+  const fetchDeviceRequests = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const { data } = await axios.get('/api/auth/device-requests', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setDeviceRequests(data.requests || []);
+    } catch (err) {
+      console.error('Error fetching device requests:', err);
+    }
+  };
+
+  useEffect(() => {
+    if (!user) return;
+    fetchDeviceRequests();
+
+    const socket = io(window.location.origin || 'http://localhost:8888');
+    socket.emit('authenticate', user._id || user.id);
+
+    socket.on('new_device_request', (req) => {
+      setDeviceRequests(prev => [req, ...prev]);
+    });
+
+    socket.on('device_request_update', () => {
+      fetchDeviceRequests();
+    });
+
+    return () => {
+      socket.disconnect();
+    };
+  }, [user]);
+
+  const handleApproveRequest = async (id) => {
+    try {
+      const token = localStorage.getItem('token');
+      const { data } = await axios.post(`/api/auth/device-requests/${id}/approve`, {}, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setUser(prev => ({ ...prev, devices: data.devices }));
+      setDeviceRequests(prev => prev.filter(r => r._id !== id));
+      alert('Device access approved!');
+    } catch (err) {
+      alert(err.response?.data?.message || 'Approval failed');
+    }
+  };
+
+  const handleDenyRequest = async (id) => {
+    try {
+      const token = localStorage.getItem('token');
+      await axios.post(`/api/auth/device-requests/${id}/deny`, {}, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setDeviceRequests(prev => prev.filter(r => r._id !== id));
+      alert('Device access denied.');
+    } catch (err) {
+      alert(err.response?.data?.message || 'Operation failed');
+    }
+  };
+
+  const handleReplaceDevice = async (requestId, replaceDeviceId) => {
+    try {
+      const token = localStorage.getItem('token');
+      const { data } = await axios.post(`/api/auth/device-requests/${requestId}/replace`, {
+        replaceDeviceId
+      }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setUser(prev => ({ ...prev, devices: data.devices }));
+      setDeviceRequests(prev => prev.filter(r => r._id !== requestId));
+      alert('Device replaced successfully!');
+    } catch (err) {
+      alert(err.response?.data?.message || 'Replacement failed');
+    }
+  };
 
   const handleUpdate = async () => {
     try {
@@ -838,90 +935,264 @@ export default function Profile() {
                )
              )}
           </section>
-          
 
           {/* Family Profiles Section */}
           <section className="bg-glass-gradient backdrop-blur-3xl rounded-[2.5rem] border border-devotion-gold/20 p-10 shadow-2xl mt-10">
-             <div className="flex items-center gap-4 mb-8">
-                <Users className="text-devotion-gold w-8 h-8" />
-                <h3 className="text-3xl font-serif font-bold text-white uppercase tracking-tighter">Family Profiles</h3>
+             <div className="flex items-center justify-between gap-4 mb-8">
+                <div className="flex items-center gap-4">
+                   <Users className="text-devotion-gold w-8 h-8" />
+                   <h3 className="text-3xl font-serif font-bold text-white uppercase tracking-tighter">Family Profiles</h3>
+                </div>
+                {(user?.profiles || []).length < 3 && !isAddingProfile && (
+                  <button
+                    onClick={() => {
+                      setIsAddingProfile(true);
+                      setNewProfileForm({ name: '', avatar: '', pin: '', isKids: false });
+                    }}
+                    className="flex items-center gap-2 px-4 py-2 bg-devotion-gold/10 hover:bg-devotion-gold text-devotion-gold hover:text-devotion-darkBlue border border-devotion-gold/30 rounded-xl text-xs font-black uppercase tracking-wider transition-all"
+                  >
+                    <Plus className="w-4 h-4" /> Add Member
+                  </button>
+                )}
              </div>
 
              <div className="space-y-6">
                 <p className="text-xs text-gray-400">
-                  Share your spiritual journey with your family. Create up to 3 family profiles under your account.
+                  Share your spiritual journey with your family. Create up to 3 custom member profiles.
                 </p>
-                
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                  {(user?.profiles || []).map((prof) => (
-                    <div key={prof._id || prof.name} className="bg-white/5 border border-white/10 rounded-2xl p-4 flex flex-col items-center justify-between relative group">
-                      <div className="w-16 h-16 rounded-full bg-devotion-gold/20 flex items-center justify-center mb-3 border-2 border-devotion-gold/30">
-                        <span className="text-xl font-bold text-[#f7d77d]">
-                          {prof.name[0].toUpperCase()}
-                        </span>
+
+                {/* Add Profile Form */}
+                {isAddingProfile && (
+                  <div className="bg-black/30 border border-devotion-gold/30 p-6 rounded-3xl space-y-4">
+                    <h4 className="text-white font-bold text-sm uppercase">Create New Profile</h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="text-[10px] text-gray-400 font-bold uppercase block mb-1">Profile Name</label>
+                        <input
+                          type="text"
+                          placeholder="e.g. Seeker Kid"
+                          value={newProfileForm.name}
+                          onChange={(e) => setNewProfileForm({ ...newProfileForm, name: e.target.value })}
+                          className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-devotion-gold text-white"
+                        />
                       </div>
-                      <p className="text-sm font-semibold truncate max-w-full">{prof.name}</p>
-                      
+                      <div>
+                        <label className="text-[10px] text-gray-400 font-bold uppercase block mb-1">Avatar Image URL (Optional)</label>
+                        <input
+                          type="text"
+                          placeholder="https://example.com/avatar.png"
+                          value={newProfileForm.avatar}
+                          onChange={(e) => setNewProfileForm({ ...newProfileForm, avatar: e.target.value })}
+                          className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-devotion-gold text-white"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-[10px] text-gray-400 font-bold uppercase block mb-1">Profile PIN (4 Digits, Optional)</label>
+                        <input
+                          type="text"
+                          maxLength={4}
+                          placeholder="Leave blank for no PIN"
+                          value={newProfileForm.pin}
+                          onChange={(e) => setNewProfileForm({ ...newProfileForm, pin: e.target.value.replace(/\D/g, '') })}
+                          className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-devotion-gold text-white"
+                        />
+                      </div>
+                      <div className="flex items-center gap-3 pt-6">
+                        <input
+                          type="checkbox"
+                          id="new-isKids"
+                          checked={newProfileForm.isKids}
+                          onChange={(e) => setNewProfileForm({ ...newProfileForm, isKids: e.target.checked })}
+                          className="w-4 h-4 accent-devotion-gold rounded"
+                        />
+                        <label htmlFor="new-isKids" className="text-xs text-gray-300 font-bold uppercase select-none cursor-pointer flex items-center gap-1.5">
+                          <Baby className="w-3.5 h-3.5 text-devotion-gold" /> Kids Profile
+                        </label>
+                      </div>
+                    </div>
+                    <div className="flex justify-end gap-2 pt-2">
+                      <button
+                        onClick={() => setIsAddingProfile(false)}
+                        className="px-4 py-2 bg-white/5 hover:bg-white/10 rounded-xl text-xs font-bold uppercase text-gray-400"
+                      >
+                        Cancel
+                      </button>
                       <button
                         onClick={async () => {
-                          const confirmed = window.confirm(`Remove profile "${prof.name}"?`);
-                          if (!confirmed) return;
+                          if (!newProfileForm.name.trim()) return alert('Name is required');
                           try {
                             const token = localStorage.getItem('token');
-                            const { data } = await axios.delete(`/api/auth/profiles/${prof._id}`, {
+                            const { data } = await axios.post('/api/auth/profiles', newProfileForm, {
                               headers: { Authorization: `Bearer ${token}` }
                             });
-                            setUser(prev => ({ ...prev, profiles: data.profiles }));
-                            if (selectedProfile && String(selectedProfile._id) === String(prof._id)) {
-                              selectProfile(null);
-                            }
+                            setUser(prev => ({ ...prev, profiles: data }));
+                            setIsAddingProfile(false);
+                            alert('Profile created!');
                           } catch (err) {
-                            alert(err.response?.data?.message || 'Failed to remove profile');
+                            alert(err.response?.data?.message || 'Creation failed');
                           }
                         }}
-                        className="mt-3 text-[10px] text-red-400 hover:text-red-300 font-bold uppercase tracking-widest transition-colors"
+                        className="px-4 py-2 bg-devotion-gold text-devotion-darkBlue rounded-xl text-xs font-black uppercase tracking-wider"
                       >
-                        Remove
+                        Create
                       </button>
                     </div>
-                  ))}
-                </div>
-
-                {(user?.profiles || []).length < 3 ? (
-                  <form onSubmit={async (e) => {
-                    e.preventDefault();
-                    const name = e.target.elements.profileName.value.trim();
-                    if (!name) return;
-                    try {
-                      const token = localStorage.getItem('token');
-                      const { data } = await axios.post('/api/auth/profiles', { name }, {
-                        headers: { Authorization: `Bearer ${token}` }
-                      });
-                      setUser(prev => ({ ...prev, profiles: data }));
-                      e.target.reset();
-                    } catch (err) {
-                      alert(err.response?.data?.message || 'Failed to create profile');
-                    }
-                  }} className="flex gap-2">
-                    <input
-                      name="profileName"
-                      type="text"
-                      placeholder="Enter profile name"
-                      required
-                      className="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-devotion-gold"
-                    />
-                    <button
-                      type="submit"
-                      className="bg-devotion-gold text-devotion-darkBlue px-4 py-2 rounded-xl font-black text-xs uppercase tracking-widest hover:bg-yellow-400 transition-colors"
-                    >
-                      Add Profile
-                    </button>
-                  </form>
-                ) : (
-                  <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-3 text-xs text-red-300 text-center font-bold">
-                    Maximum member limit reached.
                   </div>
                 )}
+
+                {/* Profiles Grid */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+                  {(user?.profiles || []).map((prof) => {
+                    const isEditingThis = editingProfileId === prof._id;
+                    const isActive = selectedProfile && String(selectedProfile._id) === String(prof._id);
+
+                    if (isEditingThis) {
+                      return (
+                        <div key={prof._id} className="bg-white/5 border border-devotion-gold/30 rounded-3xl p-5 space-y-4">
+                          <h4 className="text-devotion-gold text-xs font-bold uppercase">Edit Profile</h4>
+                          <input
+                            type="text"
+                            value={editProfileForm.name}
+                            onChange={(e) => setEditProfileForm({ ...editProfileForm, name: e.target.value })}
+                            className="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-devotion-gold text-white"
+                            placeholder="Name"
+                          />
+                          <input
+                            type="text"
+                            value={editProfileForm.avatar}
+                            onChange={(e) => setEditProfileForm({ ...editProfileForm, avatar: e.target.value })}
+                            className="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-xs focus:outline-none text-white"
+                            placeholder="Avatar URL"
+                          />
+                          <input
+                            type="text"
+                            maxLength={4}
+                            value={editProfileForm.pin}
+                            onChange={(e) => setEditProfileForm({ ...editProfileForm, pin: e.target.value.replace(/\D/g, '') })}
+                            className="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-xs focus:outline-none text-white"
+                            placeholder="Profile PIN (4-digit)"
+                          />
+                          <div className="flex items-center gap-2">
+                            <input
+                              type="checkbox"
+                              id={`edit-iskids-${prof._id}`}
+                              checked={editProfileForm.isKids}
+                              onChange={(e) => setEditProfileForm({ ...editProfileForm, isKids: e.target.checked })}
+                              className="accent-devotion-gold"
+                            />
+                            <label htmlFor={`edit-iskids-${prof._id}`} className="text-[10px] text-gray-300 font-bold uppercase select-none cursor-pointer">
+                              Kids Profile
+                            </label>
+                          </div>
+                          <div className="flex gap-2 justify-end pt-2">
+                            <button
+                              onClick={() => setEditingProfileId(null)}
+                              className="px-2.5 py-1 bg-white/5 hover:bg-white/10 text-gray-400 rounded text-[10px] font-bold uppercase"
+                            >
+                              Cancel
+                            </button>
+                            <button
+                              onClick={() => {
+                                saveProfileChanges(prof._id);
+                              }}
+                              className="px-2.5 py-1 bg-devotion-gold text-devotion-darkBlue rounded text-[10px] font-black uppercase"
+                            >
+                              Save
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    }
+
+                    return (
+                      <div 
+                        key={prof._id} 
+                        className={`bg-white/5 border rounded-3xl p-5 flex flex-col items-center justify-between relative group transition-all ${isActive ? 'border-devotion-gold shadow-[0_0_15px_rgba(255,215,0,0.15)] bg-devotion-gold/5' : 'border-white/10 hover:border-white/20'}`}
+                      >
+                        <div 
+                          onClick={async () => {
+                            if (prof.pin) {
+                              const enteredPin = prompt(`Enter 4-digit PIN for profile "${prof.name}":`);
+                              if (!enteredPin) return;
+                              try {
+                                const token = localStorage.getItem('token');
+                                await axios.post(`/api/auth/profiles/${prof._id}/verify-pin`, { pin: enteredPin }, {
+                                  headers: { Authorization: `Bearer ${token}` }
+                                });
+                                selectProfile(prof);
+                              } catch (err) {
+                                alert(err.response?.data?.message || 'Incorrect PIN!');
+                              }
+                            } else {
+                              selectProfile(prof);
+                            }
+                          }}
+                          className="cursor-pointer text-center flex flex-col items-center w-full"
+                        >
+                          <div className="w-20 h-20 rounded-full bg-devotion-gold/10 flex items-center justify-center mb-3 border-2 border-devotion-gold/30 overflow-hidden relative group-hover:scale-105 transition-transform">
+                            {prof.avatar ? (
+                              <img src={prof.avatar} alt={prof.name} className="w-full h-full object-cover" />
+                            ) : (
+                              <Smile className="w-10 h-10 text-devotion-gold" />
+                            )}
+                            {prof.pin && (
+                              <div className="absolute bottom-1 right-1 bg-black/80 p-1 rounded-full border border-devotion-gold/40">
+                                <Lock className="w-2.5 h-2.5 text-devotion-gold" />
+                              </div>
+                            )}
+                          </div>
+                          <p className="text-sm font-semibold truncate max-w-full text-white flex items-center gap-1.5 justify-center">
+                            {prof.name}
+                            {prof.isKids && (
+                              <span className="text-[9px] bg-devotion-gold text-devotion-darkBlue font-black px-1.5 py-0.5 rounded-full uppercase scale-90">KIDS</span>
+                            )}
+                          </p>
+                          {isActive && (
+                            <span className="mt-1.5 text-[9px] bg-green-500/20 text-green-400 font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">Active Screen</span>
+                          )}
+                        </div>
+                        
+                        <div className="flex gap-4 mt-4 border-t border-white/5 w-full pt-3 justify-center opacity-70 group-hover:opacity-100 transition-opacity">
+                          <button
+                            onClick={() => {
+                              setEditingProfileId(prof._id);
+                              setEditProfileForm({
+                                name: prof.name,
+                                avatar: prof.avatar || '',
+                                pin: prof.pin || '',
+                                isKids: !!prof.isKids
+                              });
+                            }}
+                            className="text-[10px] text-devotion-gold hover:text-white font-bold uppercase tracking-widest transition-colors flex items-center gap-1"
+                          >
+                            <Edit2 className="w-3 h-3" /> Edit
+                          </button>
+                          <button
+                            onClick={async () => {
+                              const confirmed = window.confirm(`Remove profile "${prof.name}"?`);
+                              if (!confirmed) return;
+                              try {
+                                const token = localStorage.getItem('token');
+                                const { data } = await axios.delete(`/api/auth/profiles/${prof._id}`, {
+                                  headers: { Authorization: `Bearer ${token}` }
+                                });
+                                setUser(prev => ({ ...prev, profiles: data.profiles }));
+                                if (selectedProfile && String(selectedProfile._id) === String(prof._id)) {
+                                  selectProfile(null);
+                                }
+                              } catch (err) {
+                                alert(err.response?.data?.message || 'Failed to remove profile');
+                              }
+                            }}
+                            className="text-[10px] text-red-400 hover:text-red-300 font-bold uppercase tracking-widest transition-colors flex items-center gap-1"
+                          >
+                            <Trash2 className="w-3 h-3" /> Delete
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
              </div>
           </section>
 
@@ -929,42 +1200,112 @@ export default function Profile() {
           <section className="bg-glass-gradient backdrop-blur-3xl rounded-[2.5rem] border border-devotion-gold/20 p-10 shadow-2xl mt-10">
              <div className="flex items-center gap-4 mb-8">
                 <Shield className="text-devotion-gold w-8 h-8" />
-                <h3 className="text-3xl font-serif font-bold text-white uppercase tracking-tighter">Device Management</h3>
+                <h3 className="text-3xl font-serif font-bold text-white uppercase tracking-tighter">Device Security</h3>
              </div>
 
-             <div className="space-y-4">
+             <div className="space-y-6">
+                {/* Pending Device Access Requests */}
+                {deviceRequests.length > 0 && (
+                  <div className="bg-devotion-gold/10 border border-devotion-gold/40 rounded-2xl p-5 mb-6">
+                    <h4 className="text-devotion-gold font-black text-xs uppercase tracking-[0.2em] mb-4 flex items-center gap-2">
+                      <Sparkles className="w-4 h-4" /> Pending Login Access Requests ({deviceRequests.length})
+                    </h4>
+                    <div className="space-y-4">
+                      {deviceRequests.map((req) => (
+                        <div key={req._id} className="bg-black/40 p-4 rounded-xl border border-white/10 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                          <div>
+                            <p className="font-bold text-white flex items-center gap-2">
+                              <Monitor className="w-4 h-4 text-devotion-gold" /> {req.deviceName}
+                            </p>
+                            <p className="text-[11px] text-gray-400">
+                              OS: {req.osVersion} • Browser: {req.browserVersion}
+                            </p>
+                            <p className="text-[11px] text-gray-400">
+                              IP: {req.ipAddress} • Location: {req.location}
+                            </p>
+                            <p className="text-[9px] text-gray-500 mt-1">
+                              Time: {new Date(req.createdAt).toLocaleString()}
+                            </p>
+                          </div>
+                          <div className="flex flex-wrap gap-2">
+                            <button
+                              onClick={() => handleApproveRequest(req._id)}
+                              className="px-3 py-1.5 bg-green-600 hover:bg-green-500 text-white rounded-lg text-[10px] font-black uppercase tracking-wider"
+                            >
+                              Approve
+                            </button>
+                            <button
+                              onClick={() => handleDenyRequest(req._id)}
+                              className="px-3 py-1.5 bg-red-600 hover:bg-red-500 text-white rounded-lg text-[10px] font-black uppercase tracking-wider"
+                            >
+                              Deny
+                            </button>
+                            <select
+                              onChange={(e) => {
+                                if (e.target.value) {
+                                  handleReplaceDevice(req._id, e.target.value);
+                                  e.target.value = '';
+                                }
+                              }}
+                              className="px-3 py-1.5 bg-white/10 hover:bg-white/20 border border-white/20 text-white rounded-lg text-[10px] font-black uppercase tracking-wider focus:outline-none"
+                            >
+                              <option value="" className="bg-devotion-darkBlue text-white">Replace Active Device...</option>
+                              {(user?.devices || []).map(d => (
+                                <option key={d.deviceId} value={d.deviceId} className="bg-devotion-darkBlue text-white">
+                                  {d.deviceName}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
                 <p className="text-xs text-gray-400">
-                  This account can be used on up to 3 devices simultaneously. Here are the currently active devices:
+                  This subscription permits a maximum of 3 concurrent active devices. Disconnect any unfamiliar devices below:
                 </p>
                 <div className="divide-y divide-white/5">
-                  {(user?.devices || []).map((dev) => (
-                    <div key={dev.deviceId} className="flex justify-between items-center py-3">
-                      <div>
-                        <p className="text-sm font-semibold text-white">{dev.deviceName || 'Unknown Device'}</p>
-                        <p className="text-[10px] text-gray-500">
-                          Last active: {new Date(dev.lastLogin).toLocaleString()}
-                        </p>
+                  {(user?.devices || []).map((dev) => {
+                    const isMobile = String(dev.osVersion || '').toLowerCase().includes('android') || String(dev.osVersion || '').toLowerCase().includes('ios') || String(dev.osVersion || '').toLowerCase().includes('iphone');
+                    return (
+                      <div key={dev.deviceId} className="flex justify-between items-center py-4 group">
+                        <div className="flex items-center gap-3">
+                          <div className="p-3 bg-white/5 rounded-xl border border-white/10 text-gray-400 group-hover:border-devotion-gold/30 group-hover:text-devotion-gold transition-colors">
+                            {isMobile ? <Smartphone className="w-5 h-5" /> : <Laptop className="w-5 h-5" />}
+                          </div>
+                          <div>
+                            <p className="text-sm font-semibold text-white">{dev.deviceName || 'Unknown Device'}</p>
+                            <p className="text-[10px] text-gray-400">
+                              OS: {dev.osVersion} • IP: {dev.ipAddress}
+                            </p>
+                            <p className="text-[10px] text-gray-500">
+                              Last active: {new Date(dev.lastLogin).toLocaleString()}
+                            </p>
+                          </div>
+                        </div>
+                        <button
+                          onClick={async () => {
+                            const confirmed = window.confirm(`Log out device "${dev.deviceName}" remotely?`);
+                            if (!confirmed) return;
+                            try {
+                              const token = localStorage.getItem('token');
+                              const { data } = await axios.delete(`/api/auth/devices/${dev.deviceId}`, {
+                                headers: { Authorization: `Bearer ${token}` }
+                              });
+                              setUser(prev => ({ ...prev, devices: data.devices }));
+                            } catch (err) {
+                              alert(err.response?.data?.message || 'Failed to remove device');
+                            }
+                          }}
+                          className="text-[10px] text-red-400 hover:text-red-300 font-black uppercase tracking-widest transition-colors"
+                        >
+                          Revoke Access
+                        </button>
                       </div>
-                      <button
-                        onClick={async () => {
-                          const confirmed = window.confirm(`Remove device "${dev.deviceName}"?`);
-                          if (!confirmed) return;
-                          try {
-                            const token = localStorage.getItem('token');
-                            const { data } = await axios.delete(`/api/auth/devices/${dev.deviceId}`, {
-                              headers: { Authorization: `Bearer ${token}` }
-                            });
-                            setUser(prev => ({ ...prev, devices: data.devices }));
-                          } catch (err) {
-                            alert(err.response?.data?.message || 'Failed to remove device');
-                          }
-                        }}
-                        className="text-xs text-red-400 hover:text-red-300 font-bold uppercase tracking-widest transition-colors"
-                      >
-                        Remove Device
-                      </button>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
              </div>
           </section>

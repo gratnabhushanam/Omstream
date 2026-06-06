@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import DeviceLimitResolver from '../components/DeviceLimitResolver';
 import { ArrowLeft, ArrowRight, MailCheck, RotateCcw, Shield, Sparkles, KeyRound } from 'lucide-react';
 import heroImage from '../assets/hero.png';
 import '../styles/auth.css';
@@ -27,6 +28,8 @@ export default function RegisterVerifyOtp() {
   const [infoMessage, setInfoMessage] = useState('Enter the OTP sent to your email to complete account creation.');
   const [loading, setLoading] = useState(false);
   const [otpResendCooldown, setOtpResendCooldown] = useState(() => Number(location.state?.retryAfterSeconds || sessionPending?.retryAfterSeconds || 0));
+  const [previewCode, setPreviewCode] = useState(() => location.state?.previewCode || sessionPending?.previewCode || '');
+  const [pendingRequestId, setPendingRequestId] = useState(null);
 
   useEffect(() => {
     if (!email) {
@@ -67,7 +70,11 @@ export default function RegisterVerifyOtp() {
       sessionStorage.removeItem('pending_registration_v1');
       navigate('/home', { replace: true });
     } catch (err) {
-      setError(err.response?.data?.message || 'OTP verification failed. Please try again.');
+      if (err.response?.data?.status === 'device_limit_reached') {
+        setPendingRequestId(err.response.data.deviceRequestId);
+      } else {
+        setError(err.response?.data?.message || 'OTP verification failed. Please try again.');
+      }
     } finally {
       setLoading(false);
     }
@@ -83,6 +90,11 @@ export default function RegisterVerifyOtp() {
       const retryAfterSeconds = Number(response?.retryAfterSeconds || RESEND_COOLDOWN_SECONDS);
       setOtpResendCooldown(retryAfterSeconds);
       setInfoMessage(response?.message || 'A new OTP has been sent to your email.');
+      if (response?.previewCode) {
+        setPreviewCode(response.previewCode);
+      } else {
+        setPreviewCode('');
+      }
     } catch (err) {
       const retryAfterSeconds = Number(err.response?.data?.retryAfterSeconds || 0);
       if (retryAfterSeconds > 0) {
@@ -93,6 +105,22 @@ export default function RegisterVerifyOtp() {
       setLoading(false);
     }
   };
+
+  if (pendingRequestId) {
+    return (
+      <div className="auth-page flex min-h-screen items-center justify-center px-4 py-8 sm:px-6 lg:px-8 bg-[#06101E]">
+        <DeviceLimitResolver 
+          deviceRequestId={pendingRequestId}
+          onSuccess={() => {
+            sessionStorage.removeItem('pending_registration_v1');
+            navigate('/home', { replace: true });
+            window.location.reload();
+          }}
+          onCancel={() => setPendingRequestId(null)}
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="auth-page flex min-h-screen items-start px-4 py-6 sm:px-6 lg:px-8">
@@ -119,6 +147,15 @@ export default function RegisterVerifyOtp() {
             {infoMessage && (
               <div className="mb-5 rounded-2xl border border-emerald-300/25 bg-emerald-500/10 p-4 text-sm text-emerald-100">
                 {infoMessage}
+              </div>
+            )}
+
+            {previewCode && (
+              <div className="mb-5 rounded-2xl border border-[#f7d77d]/30 bg-[#f7d77d]/10 p-4 text-sm text-[#ffe3a3] flex items-center gap-3 animate-pulse">
+                <KeyRound className="h-5 w-5 text-[#f7d77d] shrink-0" />
+                <div>
+                  <span className="font-bold">Testing/Fallback Mode:</span> Use code <span className="font-mono font-black text-white text-base bg-black/40 px-2 py-0.5 rounded border border-[#f7d77d]/35">{previewCode}</span> to verify.
+                </div>
               </div>
             )}
 

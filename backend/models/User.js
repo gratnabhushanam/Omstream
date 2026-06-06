@@ -46,6 +46,9 @@ const UserSchema = new mongoose.Schema(
       type: [{
         deviceId: { type: String, required: true },
         deviceName: { type: String },
+        osVersion: { type: String, default: 'Unknown OS' },
+        browserVersion: { type: String, default: 'Unknown Browser' },
+        ipAddress: { type: String, default: '127.0.0.1' },
         lastLogin: { type: Date, default: Date.now }
       }],
       default: []
@@ -53,7 +56,22 @@ const UserSchema = new mongoose.Schema(
     profiles: {
       type: [{
         name: { type: String, required: true },
-        avatar: { type: String, default: null }
+        avatar: { type: String, default: null },
+        pin: { type: String, default: null },
+        isKids: { type: Boolean, default: false },
+        favorites: { type: Array, default: [] },
+        watchHistory: [{
+          mediaId: { type: String, required: true },
+          mediaType: { type: String, required: true },
+          watchedAt: { type: Date, default: Date.now },
+          progress: { type: Number, default: 0 }
+        }],
+        continueWatching: [{
+          mediaId: { type: String, required: true },
+          mediaType: { type: String, required: true },
+          progress: { type: Number, default: 0 },
+          updatedAt: { type: Date, default: Date.now }
+        }]
       }],
       default: []
     },

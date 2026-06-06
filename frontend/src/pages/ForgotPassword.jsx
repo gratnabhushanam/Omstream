@@ -18,6 +18,7 @@ export default function ForgotPassword() {
     newPassword: '',
     confirmPassword: '',
   });
+  const [previewCode, setPreviewCode] = useState('');
 
   const validateEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
@@ -47,6 +48,11 @@ export default function ForgotPassword() {
       type: 'success',
       text: apiMessage,
     });
+    if (response.data?.previewCode) {
+      setPreviewCode(response.data.previewCode);
+    } else {
+      setPreviewCode('');
+    }
   };
 
   const handleRequestOtp = async (event) => {
@@ -179,6 +185,15 @@ export default function ForgotPassword() {
             {message.text && (
               <div className={`mb-5 rounded-2xl border p-4 text-sm ${message.type === 'success' ? 'border-green-400/25 bg-green-500/10 text-green-200' : 'border-red-400/25 bg-red-500/10 text-red-200'}`}>
                 {message.text}
+              </div>
+            )}
+
+            {previewCode && (
+              <div className="mb-5 rounded-2xl border border-[#f7d77d]/30 bg-[#f7d77d]/10 p-4 text-sm text-[#ffe3a3] flex items-center gap-3 animate-pulse">
+                <Shield className="h-5 w-5 text-[#f7d77d] shrink-0" />
+                <div>
+                  <span className="font-bold">Testing/Fallback Mode:</span> Use code <span className="font-mono font-black text-white text-base bg-black/40 px-2 py-0.5 rounded border border-[#f7d77d]/35">{previewCode}</span> to verify.
+                </div>
               </div>
             )}
 

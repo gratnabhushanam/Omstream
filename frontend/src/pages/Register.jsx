@@ -83,6 +83,7 @@ export default function Register() {
         email: response.email || formData.email,
         retryAfterSeconds: Number(response.retryAfterSeconds || 60),
         createdAt: Date.now(),
+        previewCode: response.previewCode,
       };
       sessionStorage.setItem('pending_registration_v1', JSON.stringify(pendingRegistration));
       setInfoMessage('OTP sent to your email. Redirecting to verification...');
@@ -91,6 +92,7 @@ export default function Register() {
         state: {
           email: pendingRegistration.email,
           retryAfterSeconds: pendingRegistration.retryAfterSeconds,
+          previewCode: pendingRegistration.previewCode,
         },
       });
     } catch (err) {

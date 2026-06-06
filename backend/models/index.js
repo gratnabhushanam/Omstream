@@ -22,6 +22,8 @@ Video.schema.index({ title: 'text', description: 'text', tags: 'text' }, { weigh
 Movie.schema.index({ category: 1, tags: 1, status: 1 });
 Movie.schema.index({ title: 'text', description: 'text', tags: 'text' }, { weights: { title: 10, tags: 5, description: 3 }, name: "MovieTextIndex" });
 
+const AccessRequest = require('./AccessRequest');
+
 module.exports = {
   User,
   Sloka,
@@ -36,5 +38,6 @@ module.exports = {
   Group,
   Post,
   Job,
-  Song
+  Song,
+  AccessRequest
 };

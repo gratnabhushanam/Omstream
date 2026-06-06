@@ -88,7 +88,13 @@ exports.registerUser = async (req, res) => {
     console.log(`[AUTH] Sending OTP to ${safeEmail}`);
     sendOtpEmail({ email: safeEmail, name, otp }).catch(e => console.error('[AUTH] Async email error:', e));
     
-    const isPreview = process.env.EMAIL_PROVIDER === 'preview';
+    if (phoneNumber) {
+      console.log(`[AUTH] Sending registration OTP to phone: ${phoneNumber}`);
+      const { sendSmsOtp } = require('../utils/smsHelpers');
+      sendSmsOtp(phoneNumber, otp).catch(e => console.error('[AUTH] Async SMS error:', e));
+    }
+    
+    const isPreview = process.env.EMAIL_PROVIDER === 'preview' || process.env.ALLOW_OTP_PREVIEW === 'true' || process.env.NODE_ENV === 'development';
     return res.status(200).json({ message: 'OTP sent', email: safeEmail, previewCode: isPreview ? otp : undefined });
   } catch (error) { 
     console.error(`[AUTH] Registration error: ${error.message}`);
@@ -108,7 +114,14 @@ exports.resendRegistrationOtp = async (req, res) => {
     pending.expiresAt = getOtpExpiryTime();
     
     sendOtpEmail({ email: safeEmail, name: pending.name, otp }).catch(e => console.error('[AUTH] Async resend email error:', e));
-    const isPreview = process.env.EMAIL_PROVIDER === 'preview';
+    
+    if (pending.phoneNumber) {
+      console.log(`[AUTH] Resending registration OTP to phone: ${pending.phoneNumber}`);
+      const { sendSmsOtp } = require('../utils/smsHelpers');
+      sendSmsOtp(pending.phoneNumber, otp).catch(e => console.error('[AUTH] Async SMS error:', e));
+    }
+
+    const isPreview = process.env.EMAIL_PROVIDER === 'preview' || process.env.ALLOW_OTP_PREVIEW === 'true' || process.env.NODE_ENV === 'development';
     res.json({ message: 'OTP resent', previewCode: isPreview ? otp : undefined });
   } catch (error) { res.status(500).json({ message: error.message }); }
 };
@@ -124,7 +137,14 @@ exports.verifyRegistrationOtp = async (req, res) => {
     pendingRegistrations.delete(safeEmail);
 
     const { checkAndRegisterDevice } = require('../middleware/authMiddleware');
-    await checkAndRegisterDevice(user, req.headers);
+    const checkResult = await checkAndRegisterDevice(user, req.headers, req.ip || req.connection.remoteAddress);
+    if (!checkResult.allowed) {
+      return res.status(403).json({ 
+        status: 'device_limit_reached',
+        deviceRequestId: checkResult.deviceRequestId,
+        message: "Maximum device limit reached. This account can be used on up to 3 devices only." 
+      });
+    }
 
     res.status(201).json({ ...sanitizeUserForResponse(user), token: generateToken(user.id) });
   } catch (error) { res.status(500).json({ message: error.message }); }
@@ -153,9 +173,13 @@ exports.loginUser = async (req, res) => {
 
         // Check device limit
         const { checkAndRegisterDevice } = require('../middleware/authMiddleware');
-        const allowed = await checkAndRegisterDevice(user, req.headers);
-        if (!allowed) {
-          return res.status(403).json({ message: "Maximum device limit reached. This account can be used on up to 3 devices only." });
+        const checkResult = await checkAndRegisterDevice(user, req.headers, req.ip || req.connection.remoteAddress);
+        if (!checkResult.allowed) {
+          return res.status(403).json({ 
+            status: 'device_limit_reached',
+            deviceRequestId: checkResult.deviceRequestId,
+            message: "Maximum device limit reached. This account can be used on up to 3 devices only." 
+          });
         }
 
         // Run updates non-blocking
@@ -300,7 +324,7 @@ exports.requestPasswordResetOtp = async (req, res) => {
     pendingPasswordResets.set(normalizeEmail(email), { otp, expiresAt: getOtpExpiryTime() });
     
     sendOtpEmail({ email: user.email, name: user.name, otp }).catch(e => console.error('[AUTH] Async email error:', e));
-    const isPreview = process.env.EMAIL_PROVIDER === 'preview';
+    const isPreview = process.env.EMAIL_PROVIDER === 'preview' || process.env.ALLOW_OTP_PREVIEW === 'true' || process.env.NODE_ENV === 'development';
     res.json({ message: 'Reset OTP sent', previewCode: isPreview ? otp : undefined });
   } catch (error) { res.status(500).json({ message: error.message }); }
 };

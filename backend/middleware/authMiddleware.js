@@ -10,31 +10,83 @@ const resolveJwtSecret = () => {
   return 'gita_wisdom_super_secret_key';
 };
 
-const checkAndRegisterDevice = async (user, headers) => {
-  if (user.role === 'admin') return true;
+const checkAndRegisterDevice = async (user, headers, ipAddress = '127.0.0.1') => {
+  if (user.role === 'admin') return { allowed: true };
   const deviceId = headers['x-device-id'];
   const deviceName = headers['x-device-name'] || 'Unknown Device';
+  const osVersion = headers['x-os-version'] || 'Unknown OS';
+  const browserVersion = headers['x-browser-version'] || 'Unknown Browser';
 
-  if (!deviceId) return true;
+  if (!deviceId) return { allowed: true };
 
   const isDeviceRegistered = user.devices.some(d => d.deviceId === deviceId);
   if (!isDeviceRegistered) {
     if (user.devices.length >= 3) {
-      return false;
+      const { AccessRequest, Notification } = require('../models');
+      const { sendRealtimeEvent } = require('../services/socketService');
+
+      // Create or locate a pending access request
+      let request = await AccessRequest.findOne({ userId: user._id, deviceId, status: 'pending' });
+      if (!request) {
+        request = await AccessRequest.create({
+          userId: user._id,
+          deviceId,
+          deviceName,
+          osVersion,
+          browserVersion,
+          ipAddress,
+          location: headers['x-device-location'] || 'India',
+          status: 'pending'
+        });
+      }
+
+      // Notify owner via system notifications list
+      await Notification.create({
+        userId: String(user._id),
+        type: 'system',
+        title: 'New Device Request',
+        message: `Device "${deviceName}" is requesting access to your account.`
+      });
+
+      // Emit real-time owner socket event
+      sendRealtimeEvent(user._id, 'new_device_request', {
+        deviceRequestId: request._id,
+        deviceName,
+        osVersion,
+        browserVersion,
+        ipAddress,
+        location: request.location,
+        createdAt: request.createdAt
+      });
+
+      return { allowed: false, deviceRequestId: request._id };
     }
-    user.devices.push({ deviceId, deviceName, lastLogin: new Date() });
-    User.updateOne(
-      { _id: user._id }, 
-      { $push: { devices: { deviceId, deviceName, lastLogin: new Date() } } }
-    ).catch(err => console.error('[AUTH] Failed to save new device:', err.message));
+
+    // Push new device details
+    user.devices.push({
+      deviceId,
+      deviceName,
+      osVersion,
+      browserVersion,
+      ipAddress,
+      lastLogin: new Date()
+    });
+    await user.save();
   } else {
-    // Update last login asynchronously (fire-and-forget) to prevent blocking the API response
+    // Update last login details asynchronously
     User.updateOne(
       { _id: user._id, "devices.deviceId": deviceId },
-      { $set: { "devices.$.lastLogin": new Date() } }
+      { 
+        $set: { 
+          "devices.$.lastLogin": new Date(),
+          "devices.$.osVersion": osVersion,
+          "devices.$.browserVersion": browserVersion,
+          "devices.$.ipAddress": ipAddress
+        } 
+      }
     ).catch(err => console.error('Device lastLogin update failed:', err.message));
   }
-  return true;
+  return { allowed: true };
 };
 
 const protect = async (req, res, next) => {
@@ -62,9 +114,13 @@ const protect = async (req, res, next) => {
       }
 
       // Enforce device limit
-      const allowed = await checkAndRegisterDevice(req.user, req.headers);
-      if (!allowed) {
-        return res.status(403).json({ message: "Maximum device limit reached. This account can be used on up to 3 devices only." });
+      const checkResult = await checkAndRegisterDevice(req.user, req.headers, req.ip || req.connection.remoteAddress);
+      if (!checkResult.allowed) {
+        return res.status(403).json({ 
+          status: 'device_limit_reached',
+          deviceRequestId: checkResult.deviceRequestId,
+          message: "Maximum device limit reached. This account can be used on up to 3 devices only." 
+        });
       }
 
       next();

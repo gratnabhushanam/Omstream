@@ -5,10 +5,11 @@ import { useAuth } from '../context/AuthContext';
 import axios from 'axios';
 
 const PLANS = [
-  { id: '1_month_trial', name: '1 Month Trial', price: 0, duration: '30 days', highlight: false, type: 'trial' },
-  { id: '1_month', name: 'Monthly Premium', price: 99, duration: '1 Month', highlight: false, type: 'paid' },
-  { id: '6_months', name: 'Half-Yearly Premium', price: 499, duration: '6 Months', highlight: false, type: 'paid' },
-  { id: '1_year', name: 'Divine Annual', price: 899, duration: '1 Year', highlight: true, type: 'paid' },
+  { id: 'free', name: 'Free Seeker Plan', price: 0, duration: 'Free / Trial', highlight: false, type: 'trial' },
+  { id: 'monthly', name: 'Monthly Devotional', price: 99, duration: '1 Month', highlight: false, type: 'paid' },
+  { id: 'quarterly', name: 'Quarterly Wisdom', price: 249, duration: '3 Months', highlight: false, type: 'paid' },
+  { id: 'annual', name: 'Divine Annual', price: 899, duration: '1 Year', highlight: true, type: 'paid' },
+  { id: 'family_premium', name: 'Premium Family Plan', price: 1499, duration: '1 Year (3 Profiles)', highlight: false, type: 'paid' },
 ];
 
 export default function Subscription() {
@@ -16,7 +17,7 @@ export default function Subscription() {
   const { user } = useAuth();
   
   // Default to Annual plan, unless unauthenticated (then default to Trial)
-  const [selectedPlanId, setSelectedPlanId] = useState(user ? '1_year' : '1_month_trial');
+  const [selectedPlanId, setSelectedPlanId] = useState(user ? 'annual' : 'free');
 
   // If user is already logged in and has an active trial/subscription, they shouldn't be here
   React.useEffect(() => {

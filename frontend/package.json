@@ -21,7 +21,8 @@
     "react-dom": "^19.2.6",
     "react-is": "^19.2.6",
     "react-player": "^3.4.0",
-    "recharts": "^3.8.1"
+    "recharts": "^3.8.1",
+    "socket.io-client": "^4.8.3"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.4",

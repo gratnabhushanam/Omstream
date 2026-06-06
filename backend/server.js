@@ -4,6 +4,7 @@ const helmet = require('helmet');
 const path = require('path');
 const fs = require('fs');
 const dotenv = require('dotenv');
+const http = require('http');
 const { connectDB } = require('./config/db');
 const { startWorker } = require('./services/aiWorker');
 
@@ -291,8 +292,12 @@ const startServer = async () => {
       });
     } else {
       await initializeApp();
-      app.listen(PORT, '0.0.0.0', () => {
-        console.log(`[SERVER] Running on port ${PORT}`);
+      const httpServer = http.createServer(app);
+      const { initSocket } = require('./services/socketService');
+      initSocket(httpServer);
+
+      httpServer.listen(PORT, '0.0.0.0', () => {
+        console.log(`[SERVER] Running on port ${PORT} with Socket.IO`);
         
         // Prevent Render Free Tier Sleep
         if (isProduction) {
@@ -307,7 +312,9 @@ const startServer = async () => {
         }
       });
       if (!isProduction && String(LEGACY_PORT) !== String(PORT)) {
-        app.listen(LEGACY_PORT, '0.0.0.0', () => {
+        const legacyServer = http.createServer(app);
+        initSocket(legacyServer);
+        legacyServer.listen(LEGACY_PORT, '0.0.0.0', () => {
           console.log(`[SERVER] Legacy compatibility port running on ${LEGACY_PORT}`);
         });
       }

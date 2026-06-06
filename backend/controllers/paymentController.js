@@ -90,12 +90,14 @@ exports.verifyPayment = async (req, res) => {
     }
     
     const endDate = new Date();
-    if (planName === 'Monthly Premium') {
+    if (planName.includes('Monthly')) {
       endDate.setMonth(endDate.getMonth() + 1);
-    } else if (planName === 'Half-Yearly Premium') {
+    } else if (planName.includes('Quarterly')) {
+      endDate.setMonth(endDate.getMonth() + 3);
+    } else if (planName.includes('Half-Yearly')) {
       endDate.setMonth(endDate.getMonth() + 6);
     } else {
-      endDate.setFullYear(endDate.getFullYear() + 1); // Default to 1 year
+      endDate.setFullYear(endDate.getFullYear() + 1); // Default to 1 year (Annual / Premium Family)
     }
 
     const updatedUser = await User.findByIdAndUpdate(

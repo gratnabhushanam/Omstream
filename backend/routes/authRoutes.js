@@ -62,11 +62,22 @@ router.post('/profile/points', protect, require('../controllers/authController')
 router.post('/streak', protect, require('../controllers/authController').updateStreak);
 
 // Device and Profile Management
-router.get('/devices', protect, getUserDevices);
-router.delete('/devices/:deviceId', protect, removeUserDevice);
+const deviceController = require('../controllers/deviceController');
+router.get('/devices', protect, deviceController.getDevices);
+router.delete('/devices/:deviceId', protect, deviceController.removeDevice);
+router.get('/device-requests', protect, deviceController.getDeviceRequests);
+router.post('/device-requests/:id/approve', protect, deviceController.approveDeviceRequest);
+router.post('/device-requests/:id/deny', protect, deviceController.denyDeviceRequest);
+router.post('/device-requests/:id/replace', protect, deviceController.replaceDevice);
+router.get('/device-requests/status/:id', deviceController.checkRequestStatus);
 router.get('/profiles', protect, getUserProfiles);
 router.post('/profiles', protect, createUserProfile);
 router.delete('/profiles/:profileId', protect, removeUserProfile);
+const profileController = require('../controllers/profileController');
+router.put('/profiles/:profileId', protect, profileController.updateProfile);
+router.post('/profiles/:profileId/favorites', protect, profileController.toggleFavorite);
+router.post('/profiles/:profileId/history', protect, profileController.updateWatchHistory);
+router.post('/profiles/:profileId/verify-pin', protect, profileController.verifyProfilePin);
 router.post('/subscribe', protect, activateSubscription);
 
 // Admin Routes
