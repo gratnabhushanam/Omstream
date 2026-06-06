@@ -28,10 +28,10 @@ const checkAndRegisterDevice = async (user, headers) => {
       return false;
     }
     user.devices.push({ deviceId, deviceName, lastLogin: new Date() });
-    await User.updateOne(
+    User.updateOne(
       { _id: user._id }, 
       { $push: { devices: { deviceId, deviceName, lastLogin: new Date() } } }
-    );
+    ).catch(err => console.error('[AUTH] Failed to save new device:', err.message));
   } else {
     // Update last login asynchronously (fire-and-forget) to prevent blocking the API response
     User.updateOne(

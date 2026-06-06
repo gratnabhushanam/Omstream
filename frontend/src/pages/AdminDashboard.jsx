@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ErrorBoundary } from '../components/ErrorBoundary';
 import axios from 'axios';
-import { Database, Upload, Users, BookOpen, Video, LogOut, Settings, Film, Plus, X, Check, AlertCircle, Image as ImageIcon, Link as LinkIcon, FileText, Flame, Trash2, Pencil, Menu, Eye, Sparkles, RefreshCw, Cpu, Bell, BarChart3, Layers, Zap, Folder, FolderPlus, ArrowLeft, GripVertical } from 'lucide-react';
+import { Database, Upload, Users, BookOpen, Video, LogOut, Settings, Film, Plus, X, Check, AlertCircle, Image as ImageIcon, Link as LinkIcon, FileText, Flame, Trash2, Pencil, Menu, Eye, Sparkles, RefreshCw, Cpu, Bell, BarChart3, Layers, Zap, Folder, FolderPlus, ArrowLeft, GripVertical, Music } from 'lucide-react';
 import { resumableUpload } from '../utils/resumableUpload';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
@@ -74,7 +74,7 @@ function AdminDashboardContent() {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [showAddModal, setShowAddModal] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [data, setData] = useState({ users: [], stats: null, movies: [], stories: [], videos: [], quizQuestions: [], quizSets: [], aiJobs: [] });
+  const [data, setData] = useState({ users: [], stats: null, movies: [], stories: [], videos: [], quizQuestions: [], quizSets: [], aiJobs: [], songs: [] });
   const [translationJobs, setTranslationJobs] = useState([]);
   const [pendingUserReels, setPendingUserReels] = useState([]);
   const [pendingContentFilter, setPendingContentFilter] = useState('all');
@@ -110,6 +110,7 @@ function AdminDashboardContent() {
   const [showMultiUpload, setShowMultiUpload] = useState(false);
   const [multiChaptersText, setMultiChaptersText] = useState('');
   const [selectedTargetStoryId, setSelectedTargetStoryId] = useState('');
+  const [songForm, setSongForm] = useState({ title: '', artist: '', url: '', cover: '', duration: '' });
   const [videoForm, setVideoForm] = useState({ title: '', description: '', videoUrl: '', trailerUrl: '', category: 'reels', collectionTitle: 'Bhagavad Gita', isKids: false, isComingSoon: false, tags: '', quizSetId: '', views: 0 });
   // Quiz builder state for video upload
   const [videoQuizList, setVideoQuizList] = useState([]);
@@ -312,6 +313,9 @@ function AdminDashboardContent() {
         const { data: jobs } = await axios.get('/api/ai/jobs', { headers });
         const tJobs = Array.isArray(jobs) ? jobs.filter(j => j.type === 'translation' || j.type === 'all') : [];
         setTranslationJobs(tJobs);
+      } else if (activeTab === 'songs') {
+        const { data: songs } = await axios.get('/api/songs', { headers });
+        setData(prev => ({ ...prev, songs: Array.isArray(songs) ? songs : [] }));
       }
     } catch (error) {
       if (error.response?.status === 401) {
@@ -414,6 +418,9 @@ function AdminDashboardContent() {
              payload.chapters = storyForm.rootChapters || storyForm.chapters;
           }
         }
+      } else if (activeTab === 'songs') {
+        endpoint = '/api/songs';
+        payload = songForm;
       } else if (activeTab === 'quizzes') {
         endpoint = editingQuizSetId ? `/api/quiz/admin/sets/${editingQuizSetId}` : '/api/quiz/admin/sets';
         payload = {
@@ -500,6 +507,10 @@ function AdminDashboardContent() {
             });
           }
         }
+      } else if (activeTab === 'songs') {
+        const { data: newlyCreated } = await axios.post(endpoint, payload, { headers: { Authorization: `Bearer ${token}` } });
+        setData(prev => ({ ...prev, songs: [newlyCreated, ...prev.songs] }));
+        await fetchAdminData();
       } else if (activeTab === 'quizzes') {
         if (editingQuizSetId) {
           const { data: updatedSet } = await axios.put(endpoint, payload, { headers: { Authorization: `Bearer ${token}` } });
@@ -792,6 +803,7 @@ function AdminDashboardContent() {
   };
 
   const resetForms = () => {
+    setSongForm({ title: '', artist: '', url: '', cover: '', duration: '' });
     setMovieForm({ title: '', description: '', videoUrl: '', hlsUrl: '', trailerUrl: '', thumbnail: '', releaseYear: 2025, ownerHistory: '', tags: '', views: 0, isComingSoon: false, isKids: false, genre: 'Divine', duration: 0, originalLanguage: 'en' });
     setStoryForm({
       title: '',
@@ -1005,6 +1017,7 @@ function AdminDashboardContent() {
             { id: 'ai-jobs', name: 'AI Jobs', icon: <Cpu className="w-5 h-5 text-blue-400" /> },
             { id: 'notifications', name: 'Notifications', icon: <AlertCircle className="w-5 h-5 text-purple-400" /> },
             { id: 'translations', name: 'Translations', icon: <Sparkles className="w-5 h-5 text-devotion-gold" /> },
+            { id: 'songs', name: 'Songs', icon: <Music className="w-5 h-5 text-pink-400" /> },
           ].map(item => (
             <button
               key={item.id}
@@ -1052,6 +1065,7 @@ function AdminDashboardContent() {
                 { id: 'ai-jobs', name: 'AI Jobs', icon: <Cpu className="w-4 h-4 text-blue-400" /> },
                 { id: 'notifications', name: 'Notifications', icon: <AlertCircle className="w-4 h-4 text-purple-400" /> },
                 { id: 'translations', name: 'Translations', icon: <Sparkles className="w-4 h-4 text-devotion-gold" /> },
+                { id: 'songs', name: 'Songs', icon: <Music className="w-4 h-4 text-pink-400" /> },
               ].map(item => (
                 <button
                   key={item.id}
@@ -1090,7 +1104,7 @@ function AdminDashboardContent() {
                <p className="text-gray-500 tv:text-3xl text-sm font-serif italic">Managing the divine knowledge base.</p>
             </div>
             
-            {['movies', 'stories', 'videos', 'quizzes'].includes(activeTab) && (
+            {['movies', 'stories', 'videos', 'quizzes', 'songs'].includes(activeTab) && (
               <button
                 onClick={() => {
                   resetForms();
@@ -1101,7 +1115,7 @@ function AdminDashboardContent() {
                 }}
                 className="bg-devotion-gold text-devotion-darkBlue px-10 py-5 rounded-2xl font-black text-[11px] uppercase tracking-[0.2em] hover:bg-yellow-400 transition-all flex items-center gap-3 shadow-2xl shadow-devotion-gold/20 transform hover:-translate-y-1 active:scale-95"
               >
-                <Plus className="w-5 h-5" /> Add New {activeTab === 'videos' ? 'Video' : activeTab === 'quizzes' ? 'Quiz Set' : currentContentLabel}
+                <Plus className="w-5 h-5" /> Add New {activeTab === 'videos' ? 'Video' : activeTab === 'quizzes' ? 'Quiz Set' : activeTab === 'songs' ? 'Song' : currentContentLabel}
               </button>
             )}
          </div>
@@ -1321,6 +1335,50 @@ function AdminDashboardContent() {
               </div>
             )}
 
+            {activeTab === 'songs' && (
+              <div className="space-y-6">
+                <div className="bg-glass-premium backdrop-blur-3xl rounded-[2.5rem] border border-devotion-gold/20 p-8 shadow-2xl">
+                  <h2 className="text-xl font-black uppercase tracking-widest text-devotion-gold mb-8">Manage Devotional Songs</h2>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left border-collapse">
+                      <thead>
+                        <tr className="border-b border-white/10 text-xs uppercase tracking-widest text-gray-400">
+                          <th className="pb-4 pr-4 font-black">Song</th>
+                          <th className="pb-4 pr-4 font-black">Artist</th>
+                          <th className="pb-4 pr-4 font-black">Duration</th>
+                          <th className="pb-4 font-black text-right">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody className="text-sm">
+                        {(data.songs || []).map((song) => (
+                          <tr key={song._id} className="border-b border-white/5 hover:bg-white/5 transition-colors">
+                            <td className="py-4 pr-4">
+                              <div className="flex items-center gap-4">
+                                <img src={song.cover} alt={song.title} className="w-12 h-12 rounded-xl object-cover" />
+                                <div>
+                                  <p className="font-bold text-white">{song.title}</p>
+                                  <a href={song.url} target="_blank" rel="noreferrer" className="text-xs text-blue-400 hover:underline truncate w-32 block">URL</a>
+                                </div>
+                              </div>
+                            </td>
+                            <td className="py-4 pr-4 text-gray-300 font-medium">{song.artist}</td>
+                            <td className="py-4 pr-4 text-gray-300">{song.duration}</td>
+                            <td className="py-4 text-right">
+                              <button onClick={() => handleDeleteContent('songs', song._id, song.title)} className="text-red-400 hover:text-red-300 p-2 rounded-xl hover:bg-red-400/10 transition-colors">
+                                <Trash2 className="w-5 h-5" />
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                        {(!data.songs || data.songs.length === 0) && (
+                          <tr><td colSpan="4" className="py-8 text-center text-gray-500">No songs found.</td></tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            )}
             {activeTab === 'users' && (
                <div className="bg-white/5 border border-white/10 rounded-[3rem] p-12 backdrop-blur-3xl">
                   <div className="flex justify-between items-center mb-12">
@@ -2528,7 +2586,31 @@ function AdminDashboardContent() {
               <form onSubmit={handleAddContent} className="space-y-10">
                  
                  {/* MOVIE FORM */}
-                 {activeTab === 'movies' && (
+                  {activeTab === 'songs' && (
+                  <div className="space-y-6">
+                    <div>
+                      <label className="text-[10px] font-black uppercase tracking-widest text-devotion-gold ml-2">Song Title</label>
+                      <input type="text" className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-5 text-white focus:border-devotion-gold outline-none" value={songForm.title} onChange={e => setSongForm({...songForm, title: e.target.value})} placeholder="Hare Krishna Maha Mantra" required />
+                    </div>
+                    <div>
+                      <label className="text-[10px] font-black uppercase tracking-widest text-devotion-gold ml-2">Artist / Singer</label>
+                      <input type="text" className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-5 text-white focus:border-devotion-gold outline-none" value={songForm.artist} onChange={e => setSongForm({...songForm, artist: e.target.value})} placeholder="Srila Prabhupada" required />
+                    </div>
+                    <div>
+                      <label className="text-[10px] font-black uppercase tracking-widest text-devotion-gold ml-2">Audio/YouTube URL</label>
+                      <input type="url" className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-5 text-white focus:border-devotion-gold outline-none" value={songForm.url} onChange={e => setSongForm({...songForm, url: e.target.value})} placeholder="https://youtube.com/..." required />
+                    </div>
+                    <div>
+                      <label className="text-[10px] font-black uppercase tracking-widest text-devotion-gold ml-2">Cover Image URL</label>
+                      <input type="url" className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-5 text-white focus:border-devotion-gold outline-none" value={songForm.cover} onChange={e => setSongForm({...songForm, cover: e.target.value})} placeholder="https://..." required />
+                    </div>
+                    <div>
+                      <label className="text-[10px] font-black uppercase tracking-widest text-devotion-gold ml-2">Duration (e.g. 5:30)</label>
+                      <input type="text" className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-5 text-white focus:border-devotion-gold outline-none" value={songForm.duration} onChange={e => setSongForm({...songForm, duration: e.target.value})} placeholder="5:30" />
+                    </div>
+                  </div>
+                )}
+                {activeTab === 'movies' && (
                    <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
                        {/* Quick Guide Banner */}
                        <div className="md:col-span-2 bg-devotion-gold/5 border border-devotion-gold/20 rounded-2xl p-5 mb-2">
@@ -3135,7 +3217,7 @@ function AdminDashboardContent() {
                     {loading ? <div className="w-6 h-6 border-2 border-devotion-darkBlue border-t-transparent rounded-full animate-spin"></div> : (
                       <>
                         <Upload className="w-6 h-6 group-hover:scale-125 transition-transform" />
-                        {(editingStoryId || editingMovieId || editingVideoId) ? `UPDATE ${activeTab === 'stories' ? 'STORY' : activeTab === 'movies' ? 'MOVIE' : 'VIDEO'}` : (activeTab === 'videos' && videosUploadType === 'quiz' ? 'PUBLISH QUIZ QUESTION' : 'PUBLISH TO DIVINE LIBRARY')}
+                        {(editingStoryId || editingMovieId || editingVideoId) ? `UPDATE \${activeTab === 'stories' ? 'STORY' : activeTab === 'movies' ? 'MOVIE' : 'VIDEO'}` : (activeTab === 'videos' && videosUploadType === 'quiz' ? 'PUBLISH QUIZ QUESTION' : activeTab === 'songs' ? 'PUBLISH SONG' : 'PUBLISH TO DIVINE LIBRARY')}
                       </>
                     )}
                  </button>

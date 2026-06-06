@@ -158,10 +158,12 @@ exports.loginUser = async (req, res) => {
           return res.status(403).json({ message: "Maximum device limit reached. This account can be used on up to 3 devices only." });
         }
 
-        await User.updateOne({ _id: user._id }, { 
+        // Run updates non-blocking
+        User.updateOne({ _id: user._id }, { 
           $set: { lastActive: new Date() },
           $inc: { streak: 1 } 
-        });
+        }).catch(err => console.error('[AUTH] Failed to update login stats:', err.message));
+        
         user.lastActive = new Date();
         user.streak = (user.streak || 0) + 1;
         console.log(`[AUTH] Login successful: ${email}`);
