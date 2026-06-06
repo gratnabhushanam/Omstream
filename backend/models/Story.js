@@ -37,4 +37,10 @@ const StorySchema = new mongoose.Schema({
   strict: false
 });
 
+// High-Performance Indexes for Millions of Users
+StorySchema.index({ status: 1, isFolder: 1, createdAt: -1 });
+StorySchema.index({ parentFolderId: 1, status: 1 });
+StorySchema.index({ 'chapters.folderId': 1 });
+StorySchema.index({ isKids: 1, status: 1 });
+
 module.exports = mongoose.models.Story || mongoose.model('Story', StorySchema);

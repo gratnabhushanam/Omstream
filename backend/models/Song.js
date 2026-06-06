@@ -13,4 +13,6 @@ const SongSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+SongSchema.index({ status: 1, language: 1, createdAt: -1 });
+
 module.exports = mongoose.models.Song || mongoose.model('Song', SongSchema);

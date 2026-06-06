@@ -15,4 +15,7 @@ const QuizSetSchema = new mongoose.Schema({
   collection: 'quiz_sets',
 });
 
+QuizSetSchema.index({ category: 1, isPublished: 1 });
+QuizSetSchema.index({ isPublished: 1 });
+
 module.exports = mongoose.models.QuizSet || mongoose.model('QuizSet', QuizSetSchema);

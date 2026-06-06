@@ -47,6 +47,17 @@ async function handleResumableUpload(req, res) {
         }
         
         videoUrl = await uploadToVercelBlob(filePath, `videos/${fileName}`);
+        
+        // CRITICAL DISK CLEANUP for millions of users
+        try {
+          fs.rmSync(hlsOutputDir, { recursive: true, force: true });
+          if (fs.existsSync(filePath)) {
+            fs.unlinkSync(filePath);
+          }
+          console.log(`[CLEANUP] Freed local disk space for ${fileName}`);
+        } catch (cleanupErr) {
+          console.error('[CLEANUP ERROR]', cleanupErr);
+        }
       } catch (e) { console.warn('Blob fallback', e); }
     }
 

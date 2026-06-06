@@ -66,6 +66,10 @@ const UserSchema = new mongoose.Schema(
   }
 );
 
+// High-Performance index for midnight CRON trial-expiration checks
+UserSchema.index({ subscriptionStatus: 1, trialEndDate: 1 });
+UserSchema.index({ email: 1 });
+
 UserSchema.pre('save', function (next) {
   if (this.isNew) {
     if (!this.trialStartDate) {
