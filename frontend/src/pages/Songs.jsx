@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Play, Pause, SkipForward, SkipBack, Volume2, VolumeX, Music, Heart } from 'lucide-react';
+import { Play, Pause, SkipForward, SkipBack, Volume2, VolumeX, Music, Heart, Search } from 'lucide-react';
 import ReactPlayer from 'react-player';
 import axios from 'axios';
 
@@ -16,6 +16,7 @@ export default function Songs() {
   const [isMuted, setIsMuted] = useState(false);
   const [currentTime, setCurrentTime] = useState('0:00');
   const [duration, setDuration] = useState('0:00');
+  const [searchQuery, setSearchQuery] = useState('');
   
   const playerRef = useRef(null);
 
@@ -196,21 +197,35 @@ export default function Songs() {
 
         {/* Right Side: Playlist */}
         <div className="lg:col-span-7 flex flex-col">
-          <div className="mb-6 flex items-end justify-between">
-            <h2 className="text-3xl font-serif font-black uppercase tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-white to-gray-400">
-              Devotional Playlist
-            </h2>
-            <span className="text-devotion-gold text-sm font-bold tracking-widest uppercase">{songs.length} Tracks</span>
+          <div className="mb-6 flex flex-col sm:flex-row items-start sm:items-end justify-between gap-4">
+            <div>
+              <h2 className="text-3xl font-serif font-black uppercase tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-white to-gray-400">
+                Devotional Playlist
+              </h2>
+              <span className="text-devotion-gold text-sm font-bold tracking-widest uppercase">{songs.length} Tracks</span>
+            </div>
+            
+            <div className="relative w-full sm:w-64">
+              <input 
+                type="text" 
+                placeholder="Search songs..." 
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full bg-white/5 border border-white/10 rounded-xl py-2.5 pl-10 pr-4 text-white text-sm focus:border-devotion-gold outline-none"
+              />
+              <Search className="w-4 h-4 text-gray-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+            </div>
           </div>
 
           <div className="flex flex-col gap-3 h-[500px] overflow-y-auto custom-scrollbar pr-2 pb-10">
-            {songs.map((song, index) => {
-              const isSelected = currentSongIndex === index;
+            {songs.filter(s => s.title.toLowerCase().includes(searchQuery.toLowerCase()) || s.artist.toLowerCase().includes(searchQuery.toLowerCase())).map((song) => {
+              const actualIndex = songs.findIndex(s => s._id === song._id);
+              const isSelected = currentSongIndex === actualIndex;
               return (
                 <div 
-                  key={song._id || index}
+                  key={song._id}
                   onClick={() => {
-                    setCurrentSongIndex(index);
+                    setCurrentSongIndex(actualIndex);
                     setIsPlaying(true);
                   }}
                   className={`group flex items-center gap-4 p-3 sm:p-4 rounded-2xl cursor-pointer transition-all duration-300 border ${
