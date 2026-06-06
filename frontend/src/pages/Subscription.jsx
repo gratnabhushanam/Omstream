@@ -75,7 +75,8 @@ export default function Subscription() {
             const { data } = await axios.post('/api/payments/verify', {
               razorpay_payment_id: response.razorpay_payment_id,
               razorpay_order_id: response.razorpay_order_id,
-              razorpay_signature: response.razorpay_signature
+              razorpay_signature: response.razorpay_signature,
+              plan: selectedPlan.name
             }, {
               headers: { Authorization: `Bearer ${token}` }
             });

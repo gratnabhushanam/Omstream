@@ -14,6 +14,19 @@ exports.createOrder = async (req, res) => {
     const { amount, currency = 'INR', plan = 'Premium Annual' } = req.body;
     const userId = req.user.id;
 
+    const keyId = process.env.RAZORPAY_KEY_ID || 'rzp_test_dummykey123';
+    
+    // Bypass Razorpay API if using dummy keys
+    if (keyId === 'rzp_test_dummykey123' || !process.env.RAZORPAY_KEY_SECRET) {
+       console.log('[RAZORPAY] Dummy mode: Generating mock order');
+       return res.json({ 
+         orderId: `order_dummy_${Date.now()}`, 
+         amount: amount * 100, 
+         currency, 
+         keyId 
+       });
+    }
+
     const instance = initRazorpay();
 
     const options = {
@@ -31,12 +44,13 @@ exports.createOrder = async (req, res) => {
       return res.status(500).json({ message: 'Error creating Razorpay order' });
     }
 
-    res.json({ orderId: order.id, amount: order.amount, currency: order.currency, keyId: process.env.RAZORPAY_KEY_ID || 'rzp_test_dummykey123' });
+    res.json({ orderId: order.id, amount: order.amount, currency: order.currency, keyId });
   } catch (error) {
     console.error('Error in createOrder:', error);
     res.status(500).json({ message: error.message || 'Internal server error' });
   }
 };
+
 
 exports.verifyPayment = async (req, res) => {
   try {
@@ -60,11 +74,20 @@ exports.verifyPayment = async (req, res) => {
 
     // Calculate end date based on plan notes
     // Fetch order details to know the plan if possible, but Razorpay verify doesn't give us order notes directly.
-    // Instead we can temporarily assign 1 year or fetch the order from razorpay.
-    // Actually, we can fetch the order from Razorpay to get the plan:
-    const instance = initRazorpay();
-    const order = await instance.orders.fetch(razorpay_order_id);
-    const planName = order.notes ? order.notes.plan : 'Divine Annual';
+    const keyId = process.env.RAZORPAY_KEY_ID || 'rzp_test_dummykey123';
+    let planName = req.body.plan || 'Divine Annual'; // fallback or passed from frontend
+
+    if (keyId !== 'rzp_test_dummykey123' && process.env.RAZORPAY_KEY_SECRET) {
+      const instance = initRazorpay();
+      try {
+        const order = await instance.orders.fetch(razorpay_order_id);
+        if (order.notes && order.notes.plan) {
+          planName = order.notes.plan;
+        }
+      } catch (err) {
+        console.error('Failed to fetch razorpay order for plan notes', err);
+      }
+    }
     
     const endDate = new Date();
     if (planName === 'Monthly Premium') {
