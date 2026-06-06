@@ -172,11 +172,7 @@ export default function Songs() {
                     className={`w-full h-full object-cover ${isPlaying ? 'animate-[spin_20s_linear_infinite] scale-125' : 'scale-100'}`} 
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="w-12 h-12 bg-[#06101E]/80 backdrop-blur-sm rounded-full border border-devotion-gold/50 flex items-center justify-center">
 
-                    </div>
-                  </div>
                 </div>
 
                 <div className="text-center mb-8 w-full flex flex-col items-center">
