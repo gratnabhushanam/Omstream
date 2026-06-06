@@ -15,7 +15,7 @@ exports.getStories = async (req, res) => {
 
     const filter = req.query.all === 'true' ? {} : { status: 'published' };
     filter.isFolder = true;
-    const folders = await Story.find(filter).sort({ createdAt: -1 });
+    const folders = await Story.find(filter).lean().sort({ createdAt: -1 });
 
     const foldersWithChapters = await Promise.all(folders.map(async (story) => {
       const subStories = await Story.find({ parentFolderId: story.title, status: 'published' }).lean().sort({ sequence: 1, createdAt: 1 });

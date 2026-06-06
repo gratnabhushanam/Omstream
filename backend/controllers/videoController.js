@@ -113,6 +113,7 @@ exports.getUserReelModerationQueue = async (req, res) => {
     const status = req.query.status || 'pending';
     const reels = await Video.find({ isUserReel: true, moderationStatus: status })
       .populate('uploadedBy', 'name email role _id')
+      .lean()
       .sort({ createdAt: -1 });
     return res.json(reels.map(mapVideo));
   } catch (error) {

@@ -11,6 +11,14 @@ const { startWorker } = require('./services/aiWorker');
 dotenv.config();
 
 const app = express();
+const compression = require('compression');
+
+// Enable GZIP/Brotli Compression for High-Traffic Payload Optimization
+app.use(compression({
+  level: 6,
+  threshold: 10 * 1024, // only compress > 10kb
+}));
+
 let initializePromise = null;
 
 // Top-level response time logger
@@ -265,10 +273,18 @@ app.get('/ping', (req, res) => res.status(200).send('pong'));
 
 const startServer = async () => {
   try {
-    if (false) { // Disabled cluster for debugging
+    const isPrimary = cluster.isPrimary || cluster.isMaster;
+    if (isProduction && isPrimary) {
+      console.log(`[CLUSTER] Primary ${process.pid} is running`);
       const numCPUs = os.cpus().length;
+      
+      console.log(`[CLUSTER] Forking ${numCPUs} optimized workers for high-concurrency traffic...`);
       for (let i = 0; i < numCPUs; i++) cluster.fork();
-      cluster.on('exit', () => cluster.fork());
+      
+      cluster.on('exit', (worker, code, signal) => {
+        console.warn(`[CLUSTER] Worker ${worker.process.pid} died. Forking a replacement...`);
+        cluster.fork();
+      });
     } else {
       await initializeApp();
       app.listen(PORT, '0.0.0.0', () => {

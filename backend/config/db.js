@@ -14,8 +14,8 @@ const connectDB = async () => {
   try {
     await mongoose.connect(mongoUri, {
       serverSelectionTimeoutMS: 5000,
-      maxPoolSize: 50,
-      minPoolSize: 10,
+      maxPoolSize: 500, // Maximized for ultra-high concurrency (lakhs of users)
+      minPoolSize: 50,
       socketTimeoutMS: 45000,
     });
     console.log('MongoDB Connected successfully');
