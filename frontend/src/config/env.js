@@ -1,5 +1,5 @@
 export const ENV = {
-  API_BASE_URL: import.meta.env.VITE_API_BASE_URL || (import.meta.env.MODE === 'production' ? 'https://gita-wisdom-1.onrender.com' : 'http://localhost:8888'),
+  API_BASE_URL: import.meta.env.VITE_API_BASE_URL || (import.meta.env.MODE === 'production' ? 'https://gitawisdom.onrender.com' : ''),
   API_KEY: String(import.meta.env.VITE_APP_API_KEY || import.meta.env.VITE_PERMANENT_API_KEY || 'spiritual-wisdom-permanent-key-2025').trim(),
 };
 
