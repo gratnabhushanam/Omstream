@@ -89,7 +89,7 @@ app.use('/api', cors({
     return callback(new Error('CORS blocked for this origin'));
   },
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'x-api-key'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'x-api-key', 'x-device-id', 'x-device-name'],
   credentials: true,
   maxAge: 86400 // 24 hours
 }));
