@@ -1,74 +1,233 @@
-import React from 'react';
-import { Music, Play, ExternalLink } from 'lucide-react';
+import React, { useState, useRef, useEffect } from 'react';
+import { Play, Pause, SkipForward, SkipBack, Volume2, VolumeX, Music } from 'lucide-react';
+import ReactPlayer from 'react-player';
+import axios from 'axios';
 
 export default function Songs() {
-  const platforms = [
-    {
-      name: 'Spotify',
-      icon: 'https://upload.wikimedia.org/wikipedia/commons/2/26/Spotify_logo_with_text.svg',
-      link: 'https://open.spotify.com/search/divine%20songs%20bhakti',
-      color: 'bg-[#1DB954]'
-    },
-    {
-      name: 'YouTube Music',
-      icon: 'https://upload.wikimedia.org/wikipedia/commons/b/bd/Youtube_Music_logo.svg',
-      link: 'https://music.youtube.com/search?q=divine+devotional+songs',
-      color: 'bg-[#FF0000]'
-    },
-    {
-      name: 'Apple Music',
-      icon: 'https://upload.wikimedia.org/wikipedia/commons/f/fa/Apple_logo_black.svg',
-      link: 'https://music.apple.com/in/search?term=devotional%20songs',
-      color: 'bg-[#FA243C]'
-    },
-    {
-      name: 'JioSaavn',
-      icon: 'https://upload.wikimedia.org/wikipedia/en/e/eb/JioSaavn_Logo.svg',
-      link: 'https://www.jiosaavn.com/search/bhakti',
-      color: 'bg-[#2BC5B4]'
-    }
-  ];
+  const [songs, setSongs] = useState([]);
+  const [currentSongIndex, setCurrentSongIndex] = useState(0);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const [isMuted, setIsMuted] = useState(false);
+  const [currentTime, setCurrentTime] = useState('0:00');
+  const [duration, setDuration] = useState('0:00');
+  
+  const playerRef = useRef(null);
+
+  useEffect(() => {
+    const fetchSongs = async () => {
+      try {
+        const { data } = await axios.get('/api/songs');
+        if (data && data.length > 0) {
+          setSongs(data);
+        }
+      } catch (error) {
+        console.error('Error fetching songs:', error);
+      }
+    };
+    fetchSongs();
+  }, []);
+
+  const currentSong = songs[currentSongIndex] || null;
+
+  const togglePlay = () => {
+    setIsPlaying(!isPlaying);
+  };
+
+  const handleNext = () => {
+    if (songs.length === 0) return;
+    setCurrentSongIndex((prev) => (prev + 1) % songs.length);
+    setIsPlaying(true);
+  };
+
+  const handlePrev = () => {
+    if (songs.length === 0) return;
+    setCurrentSongIndex((prev) => (prev - 1 + songs.length) % songs.length);
+    setIsPlaying(true);
+  };
+
+  const handleProgress = (state) => {
+    setProgress(state.played * 100);
+    const mins = Math.floor(state.playedSeconds / 60);
+    const secs = Math.floor(state.playedSeconds % 60);
+    setCurrentTime(`${mins}:${secs < 10 ? '0' : ''}${secs}`);
+  };
+
+  const handleDuration = (dur) => {
+    const mins = Math.floor(dur / 60);
+    const secs = Math.floor(dur % 60);
+    setDuration(`${mins}:${secs < 10 ? '0' : ''}${secs}`);
+  };
+
+  const handleProgressClick = (e) => {
+    if (!playerRef.current) return;
+    const bar = e.currentTarget;
+    const clickX = e.clientX - bar.getBoundingClientRect().left;
+    const percentage = clickX / bar.offsetWidth;
+    playerRef.current.seekTo(percentage);
+  };
+
+  const toggleMute = () => {
+    setIsMuted(!isMuted);
+  };
 
   return (
-    <div className="min-h-screen pt-24 pb-12 px-4 sm:px-6 lg:px-8 relative">
-      <div className="max-w-4xl mx-auto relative z-10">
-        <div className="text-center mb-16 animate-fade-in">
-          <div className="w-20 h-20 mx-auto bg-devotion-gold/10 rounded-full flex items-center justify-center mb-6 shadow-[0_0_30px_rgba(255,215,0,0.2)]">
-            <Music className="w-10 h-10 text-devotion-gold" />
+    <div className="min-h-screen pt-24 pb-20 px-4 sm:px-6 lg:px-8 relative bg-[#06101E] overflow-hidden flex flex-col items-center">
+      <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(circle_at_center,rgba(255,215,0,0.05),transparent_60%)]"></div>
+      
+      <div className="w-full max-w-5xl mx-auto relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12">
+        
+        {/* Left Side: Music Player */}
+        <div className="lg:col-span-5 flex flex-col items-center">
+          <div className="w-full bg-glass-premium backdrop-blur-3xl rounded-[2.5rem] border border-devotion-gold/20 p-6 sm:p-8 shadow-2xl flex flex-col items-center animate-slide-up">
+            <h1 className="text-2xl font-serif font-black uppercase tracking-widest text-devotion-gold mb-6 text-center">
+              Divine Player
+            </h1>
+            
+            {currentSong ? (
+              <>
+                <div className={`relative w-48 h-48 sm:w-64 sm:h-64 rounded-full border-4 border-devotion-gold/30 shadow-[0_0_40px_rgba(255,215,0,0.2)] overflow-hidden mb-8 transition-all duration-700 ${isPlaying ? 'scale-105 shadow-[0_0_60px_rgba(255,215,0,0.4)]' : ''}`}>
+                  <img 
+                    src={currentSong.cover} 
+                    alt={currentSong.title} 
+                    className={`w-full h-full object-cover transition-transform duration-[20s] linear ${isPlaying ? 'rotate-180 scale-150' : 'scale-100'}`} 
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <div className="w-12 h-12 bg-[#06101E]/80 backdrop-blur-sm rounded-full border border-devotion-gold/50 flex items-center justify-center">
+                      <Music className="w-5 h-5 text-devotion-gold" />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="text-center mb-8 w-full">
+                  <h2 className="text-2xl font-bold text-white mb-2 truncate px-2">{currentSong.title}</h2>
+                  <p className="text-devotion-gold/80 text-sm font-medium tracking-wider uppercase">{currentSong.artist}</p>
+                </div>
+
+                <div className="w-full mb-8">
+                  <div className="flex justify-between text-[10px] text-gray-400 font-bold tracking-widest mb-2">
+                    <span>{currentTime}</span>
+                    <span>{duration}</span>
+                  </div>
+                  <div 
+                    className="w-full h-2 bg-white/10 rounded-full cursor-pointer relative overflow-hidden group"
+                    onClick={handleProgressClick}
+                  >
+                    <div 
+                      className="absolute top-0 left-0 h-full bg-gradient-to-r from-devotion-gold to-yellow-400 rounded-full transition-all duration-100 ease-linear"
+                      style={{ width: `${progress}%` }}
+                    >
+                      <div className="absolute right-0 top-1/2 -translate-y-1/2 w-2 h-2 bg-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity shadow-[0_0_10px_rgba(255,255,255,1)]"></div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-center gap-6 w-full">
+                  <button onClick={toggleMute} className="text-gray-400 hover:text-white transition-colors p-2 active:scale-90 hidden sm:block">
+                    {isMuted ? <VolumeX className="w-5 h-5" /> : <Volume2 className="w-5 h-5" />}
+                  </button>
+                  
+                  <button onClick={handlePrev} className="w-12 h-12 flex items-center justify-center rounded-full bg-white/5 hover:bg-white/10 text-white transition-all active:scale-95 border border-white/10">
+                    <SkipBack className="w-5 h-5 fill-current" />
+                  </button>
+                  
+                  <button 
+                    onClick={togglePlay} 
+                    className="w-16 h-16 flex items-center justify-center rounded-full bg-gradient-to-br from-devotion-gold to-yellow-600 text-[#06101E] shadow-[0_0_20px_rgba(255,215,0,0.3)] hover:shadow-[0_0_30px_rgba(255,215,0,0.5)] hover:scale-105 transition-all active:scale-95"
+                  >
+                    {isPlaying ? <Pause className="w-8 h-8 fill-current" /> : <Play className="w-8 h-8 fill-current translate-x-0.5" />}
+                  </button>
+                  
+                  <button onClick={handleNext} className="w-12 h-12 flex items-center justify-center rounded-full bg-white/5 hover:bg-white/10 text-white transition-all active:scale-95 border border-white/10">
+                    <SkipForward className="w-5 h-5 fill-current" />
+                  </button>
+
+                  <div className="w-9 h-9 hidden sm:block"></div>
+                </div>
+
+                <div className="hidden">
+                  <ReactPlayer
+                    ref={playerRef}
+                    url={currentSong.url}
+                    playing={isPlaying}
+                    muted={isMuted}
+                    onProgress={handleProgress}
+                    onDuration={handleDuration}
+                    onEnded={handleNext}
+                    width="0"
+                    height="0"
+                    playsinline
+                  />
+                </div>
+              </>
+            ) : (
+              <div className="text-gray-400 py-10 flex flex-col items-center">
+                <Music className="w-10 h-10 mb-4 opacity-50" />
+                <p>Loading divine songs...</p>
+              </div>
+            )}
           </div>
-          <h1 className="text-4xl md:text-5xl font-serif font-black uppercase tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-devotion-gold via-[#FFF2C8] to-devotion-gold mb-4">
-            Divine Songs
-          </h1>
-          <p className="text-lg text-gray-300 max-w-2xl mx-auto font-light">
-            Listen to soulful devotional and divine songs on your favorite streaming platforms.
-          </p>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 animate-slide-up">
-          {platforms.map((platform, idx) => (
-            <a
-              key={idx}
-              href={platform.link}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="group relative bg-[#0B121F]/80 backdrop-blur-xl border border-devotion-gold/20 p-8 rounded-3xl hover:border-devotion-gold/50 transition-all duration-300 flex flex-col items-center justify-center gap-6 overflow-hidden hover:-translate-y-2 hover:shadow-[0_20px_40px_rgba(255,215,0,0.15)]"
-            >
-              {/* Animated Background Gradient */}
-              <div className="absolute inset-0 opacity-0 group-hover:opacity-10 transition-opacity duration-500 bg-gradient-to-br from-devotion-gold to-transparent" />
-              
-              <div className={`w-24 h-24 rounded-2xl flex items-center justify-center bg-white p-4 shadow-lg group-hover:scale-110 transition-transform duration-500`}>
-                <img src={platform.icon} alt={platform.name} className="w-full h-full object-contain" />
-              </div>
-              
-              <div className="text-center relative z-10">
-                <h3 className="text-xl font-bold text-white mb-2">{platform.name}</h3>
-                <span className="inline-flex items-center gap-2 text-sm text-devotion-gold font-medium">
-                  Listen Now <ExternalLink className="w-4 h-4" />
-                </span>
-              </div>
-            </a>
-          ))}
+        {/* Right Side: Playlist */}
+        <div className="lg:col-span-7 flex flex-col">
+          <div className="mb-6 flex items-end justify-between">
+            <h2 className="text-3xl font-serif font-black uppercase tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-white to-gray-400">
+              Devotional Playlist
+            </h2>
+            <span className="text-devotion-gold text-sm font-bold tracking-widest uppercase">{songs.length} Tracks</span>
+          </div>
+
+          <div className="flex flex-col gap-3 h-[500px] overflow-y-auto custom-scrollbar pr-2 pb-10">
+            {songs.map((song, index) => {
+              const isSelected = currentSongIndex === index;
+              return (
+                <div 
+                  key={song._id || index}
+                  onClick={() => {
+                    setCurrentSongIndex(index);
+                    setIsPlaying(true);
+                  }}
+                  className={`group flex items-center gap-4 p-3 sm:p-4 rounded-2xl cursor-pointer transition-all duration-300 border ${
+                    isSelected 
+                      ? 'bg-gradient-to-r from-devotion-gold/20 to-transparent border-devotion-gold/40 shadow-[0_0_15px_rgba(255,215,0,0.1)]' 
+                      : 'bg-white/5 border-white/5 hover:bg-white/10 hover:border-white/20'
+                  }`}
+                >
+                  <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-xl overflow-hidden relative flex-shrink-0">
+                    <img src={song.cover} alt={song.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                    <div className="absolute inset-0 bg-black/40 group-hover:bg-black/20 transition-colors flex items-center justify-center">
+                      {isSelected && isPlaying ? (
+                        <div className="flex items-end justify-center gap-0.5 h-4">
+                          <div className="w-1 bg-devotion-gold animate-[bounce_1s_infinite_0ms] h-full rounded-full"></div>
+                          <div className="w-1 bg-devotion-gold animate-[bounce_1s_infinite_200ms] h-2/3 rounded-full"></div>
+                          <div className="w-1 bg-devotion-gold animate-[bounce_1s_infinite_400ms] h-full rounded-full"></div>
+                        </div>
+                      ) : (
+                        <Play className={`w-6 h-6 ${isSelected ? 'text-devotion-gold' : 'text-white'} opacity-0 group-hover:opacity-100 transition-opacity`} />
+                      )}
+                    </div>
+                  </div>
+                  
+                  <div className="flex-1 min-w-0">
+                    <h3 className={`text-base sm:text-lg font-bold truncate ${isSelected ? 'text-devotion-gold' : 'text-white group-hover:text-devotion-gold transition-colors'}`}>
+                      {song.title}
+                    </h3>
+                    <p className="text-xs text-gray-400 uppercase tracking-wider font-medium truncate mt-0.5">
+                      {song.artist}
+                    </p>
+                  </div>
+
+                  <div className="flex-shrink-0 text-right pr-2">
+                    <span className="text-xs font-bold text-gray-500 tracking-widest">{song.duration || 'Playing'}</span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         </div>
+
       </div>
     </div>
   );

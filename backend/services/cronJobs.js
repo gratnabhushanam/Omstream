@@ -1,5 +1,5 @@
 const cron = require('node-cron');
-const { Sloka, User } = require('../models');
+const { Sloka, User, Song } = require('../models');
 const { sendEmail } = require('../utils/notificationService');
 
 const mockSlokas = [
@@ -106,6 +106,43 @@ const seedDatabaseIfEmpty = async () => {
       console.log('[CRON] Database empty. Seeding initial spiritual slokas...');
       await Sloka.insertMany(mockSlokas);
       console.log('[CRON] Successfully seeded database.');
+    }
+    
+    // Seed Songs
+    const songCount = await Song.countDocuments();
+    if (songCount === 0) {
+      console.log('[CRON] Seeding initial AI collected divine songs...');
+      await Song.insertMany([
+        {
+          title: 'Hare Krishna Maha Mantra',
+          artist: 'Srila Prabhupada',
+          url: 'https://www.youtube.com/watch?v=kR6Z8Q9f4eA',
+          cover: 'https://images.unsplash.com/photo-1604502598377-50798e4d3db4?auto=format&fit=crop&w=500&q=80',
+          duration: '10:00'
+        },
+        {
+          title: 'Shri Hanuman Chalisa',
+          artist: 'Hariharan',
+          url: 'https://www.youtube.com/watch?v=AETFvQonfV8',
+          cover: 'https://images.unsplash.com/photo-1598425257969-9c59f0f97905?auto=format&fit=crop&w=500&q=80',
+          duration: '9:41'
+        },
+        {
+          title: 'Om Namah Shivaya',
+          artist: 'Krishna Das',
+          url: 'https://www.youtube.com/watch?v=LqUo3E9i-0w',
+          cover: 'https://images.unsplash.com/photo-1588665045050-a9474dd7e2ba?auto=format&fit=crop&w=500&q=80',
+          duration: '7:55'
+        },
+        {
+          title: 'Vishnu Sahasranamam',
+          artist: 'M.S. Subbulakshmi',
+          url: 'https://www.youtube.com/watch?v=yY1I7YqF92w',
+          cover: 'https://images.unsplash.com/photo-1601614745800-47b2b67f132e?auto=format&fit=crop&w=500&q=80',
+          duration: '29:08'
+        }
+      ]);
+      console.log('[CRON] Successfully seeded songs.');
     }
   } catch (err) {
     console.error('[CRON] Error seeding database:', err.message);

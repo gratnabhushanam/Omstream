@@ -210,6 +210,7 @@ console.log('Loading storyRoutes...');
 app.use('/api/stories', require('./routes/storyRoutes'));
 app.use('/api/movies', require('./routes/movieRoutes'));
 app.use('/api/videos', require('./routes/videoRoutes'));
+app.use('/api/songs', require('./routes/songRoutes'));
 app.use('/api/slokas', require('./routes/slokaRoutes'));
 app.use('/api/search', require('./routes/searchRoutes'));
 app.use('/api/forum', require('./routes/forumRoutes'));

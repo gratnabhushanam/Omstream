@@ -11,7 +11,7 @@ const QuizAttempt = require('./QuizAttempt');
 const Group = require('./Group');
 const Post = require('./Post');
 const Job = require('./Job');
-
+const Song = require('./Song');
 // Performance Indexes
 Story.schema.index({ category: 1, isKids: 1, tags: 1, status: 1 });
 Story.schema.index({ title: 'text', description: 'text', content: 'text', tags: 'text' }, { weights: { title: 10, tags: 5, description: 3, content: 1 }, name: "StoryTextIndex" });
@@ -35,5 +35,6 @@ module.exports = {
   QuizAttempt,
   Group,
   Post,
-  Job
+  Job,
+  Song
 };
