@@ -1348,7 +1348,18 @@ function AdminDashboardContent() {
             {activeTab === 'songs' && (
               <div className="space-y-6">
                 <div className="bg-glass-premium backdrop-blur-3xl rounded-[2.5rem] border border-devotion-gold/20 p-8 shadow-2xl">
-                  <h2 className="text-xl font-black uppercase tracking-widest text-devotion-gold mb-8">Manage Devotional Songs</h2>
+                  <div className="flex justify-between items-center mb-8">
+                    <h2 className="text-xl font-black uppercase tracking-widest text-devotion-gold">Manage Devotional Songs</h2>
+                    <button
+                      onClick={() => {
+                        resetForms();
+                        setShowAddModal(true);
+                      }}
+                      className="bg-white/10 border border-white/20 text-white px-5 py-2 rounded-xl font-black text-[10px] uppercase tracking-[0.2em] hover:bg-white/15 transition-all flex items-center gap-2"
+                    >
+                      <Plus className="w-4 h-4" /> Add Song
+                    </button>
+                  </div>
                   <div className="overflow-x-auto">
                     <table className="w-full text-left border-collapse">
                       <thead>
