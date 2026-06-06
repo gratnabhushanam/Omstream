@@ -24,8 +24,9 @@ const sendViaFast2SMS = async (phone, otp) => {
     }
 
     const postData = querystring.stringify({
-      route: 'otp',
-      variables_values: otp,
+      route: 'q',
+      message: `Your Gita Wisdom OTP is ${otp}. Valid for 10 minutes. Do not share.`,
+      language: 'english',
       numbers: mobileNumber,
     });
 

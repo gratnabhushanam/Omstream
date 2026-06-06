@@ -162,10 +162,12 @@ export default function RegisterVerifyOtp() {
             )}
 
             {previewCode && (
-              <div className="mb-5 rounded-2xl border border-[#f7d77d]/30 bg-[#f7d77d]/10 p-4 text-sm text-[#ffe3a3] flex items-center gap-3 animate-pulse">
-                <KeyRound className="h-5 w-5 text-[#f7d77d] shrink-0" />
-                <div>
-                  <span className="font-bold">Testing/Fallback Mode:</span> Use code <span className="font-mono font-black text-white text-base bg-black/40 px-2 py-0.5 rounded border border-[#f7d77d]/35">{previewCode}</span> to verify.
+              <div className="mb-5 rounded-2xl border-2 border-amber-400/60 bg-amber-500/10 p-4">
+                <p className="text-xs font-bold uppercase tracking-[0.2em] text-amber-400/80 mb-1">⚠️ Dev Preview — SMS Not Configured</p>
+                <p className="text-xs text-amber-200/60 mb-3">OTP auto-filled. Add FAST2SMS_API_KEY to Render to send real SMS.</p>
+                <div className="flex items-center justify-between gap-3">
+                  <span className="text-3xl font-black tracking-[0.5em] text-amber-400 font-mono">{previewCode}</span>
+                  <button type="button" onClick={() => setOtpCode(previewCode)} className="text-xs bg-amber-400/20 hover:bg-amber-400/30 text-amber-300 px-3 py-1.5 rounded-lg font-semibold transition-colors">Use Code</button>
                 </div>
               </div>
             )}

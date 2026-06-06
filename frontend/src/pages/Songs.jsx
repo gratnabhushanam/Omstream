@@ -1,6 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { Play, Pause, SkipForward, SkipBack, Volume2, VolumeX, Music, Heart, Search, Download, Shuffle, Repeat, Repeat1 } from 'lucide-react';
-import ReactPlayer from 'react-player';
 import axios from 'axios';
 
 import { useLanguage } from '../context/LanguageContext';
@@ -52,7 +51,7 @@ const SongItem = React.memo(({ song, isSelected, actualIndex, onPlay, onLike, is
         <button onClick={(e) => onLike(e, song._id)} className={`active:scale-90 transition-all ${isLiked ? 'text-red-500 hover:text-red-600' : 'text-gray-500 hover:text-red-400 opacity-0 group-hover:opacity-100'}`}>
           <Heart className={`w-4 h-4 ${isLiked ? 'fill-current' : ''}`} />
         </button>
-        <span className="text-xs font-bold text-gray-500 tracking-widest min-w-[30px]">{song.duration || 'Playing'}</span>
+        <span className="text-xs font-bold text-gray-500 tracking-widest min-w-[30px]">{song.duration || '—'}</span>
       </div>
     </div>
   );
@@ -73,11 +72,12 @@ export default function Songs() {
   const [isShuffle, setIsShuffle] = useState(false);
   const [repeatMode, setRepeatMode] = useState('all'); // 'none', 'all', 'one'
   
-  const playerRef = useRef(null);
-  const audioRef = useRef(null);
+  // Refs for both audio types
+  const audioRef = useRef(null);   // Native <audio> for direct files
+  const ytRef    = useRef(null);   // iframe for YouTube
+  const ytReady  = useRef(false);
   
   useEffect(() => {
-
     const fetchSongs = async () => {
       try {
         setLoading(true);
@@ -102,8 +102,142 @@ export default function Songs() {
     setCurrentTime('0:00');
     setDuration('0:00');
     setProgress(0);
+    ytReady.current = false;
   }, [currentSongIndex]);
 
+  const currentSong = songs[currentSongIndex] || null;
+  const isYouTube = !!(
+    currentSong?.url?.includes('youtube.com') ||
+    currentSong?.url?.includes('youtu.be')
+  );
+
+  // Extract YouTube video ID
+  const getYouTubeId = (url) => {
+    if (!url) return null;
+    const m = url.match(/(?:v=|youtu\.be\/|embed\/)([A-Za-z0-9_-]{11})/);
+    return m ? m[1] : null;
+  };
+
+  const ytId = getYouTubeId(currentSong?.url);
+
+  // ─── Native Audio Control ───────────────────────────────────────────────
+  useEffect(() => {
+    const el = audioRef.current;
+    if (!el || isYouTube) return;
+    el.muted = isMuted;
+    if (isPlaying) {
+      const p = el.play();
+      if (p) p.catch(err => console.warn('audio.play():', err));
+    } else {
+      el.pause();
+    }
+  }, [isPlaying, isYouTube, isMuted]);
+
+  // When song changes, reset audio src and auto-play if needed
+  useEffect(() => {
+    const el = audioRef.current;
+    if (!el || isYouTube) return;
+    el.load(); // reload with new src
+    if (isPlaying) {
+      const p = el.play();
+      if (p) p.catch(err => console.warn('audio.play() on song change:', err));
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentSongIndex, isYouTube]);
+
+  // ─── YouTube IFrame API Control ─────────────────────────────────────────
+  useEffect(() => {
+    if (!isYouTube || !ytId) return;
+
+    // Load YT IFrame API if not already loaded
+    if (!window.YT) {
+      const tag = document.createElement('script');
+      tag.src = 'https://www.youtube.com/iframe_api';
+      document.body.appendChild(tag);
+    }
+
+    let player = null;
+    let progressInterval = null;
+
+    const initPlayer = () => {
+      if (ytRef.current && !ytRef.current.__ytPlayer) {
+        player = new window.YT.Player(ytRef.current, {
+          videoId: ytId,
+          playerVars: {
+            autoplay: 0,
+            controls: 0,
+            modestbranding: 1,
+            playsinline: 1,
+            rel: 0,
+            iv_load_policy: 3,
+          },
+          events: {
+            onReady: (e) => {
+              ytReady.current = true;
+              ytRef.current.__ytPlayer = e.target;
+              e.target.setVolume(isMuted ? 0 : 100);
+              if (isPlaying) e.target.playVideo();
+
+              // Poll progress
+              progressInterval = setInterval(() => {
+                try {
+                  const ct = e.target.getCurrentTime?.() || 0;
+                  const dur = e.target.getDuration?.() || 0;
+                  if (dur > 0) {
+                    setProgress((ct / dur) * 100);
+                    const fm = (s) => `${Math.floor(s/60)}:${String(Math.floor(s%60)).padStart(2,'0')}`;
+                    setCurrentTime(fm(ct));
+                    setDuration(fm(dur));
+                  }
+                } catch(e) {}
+              }, 1000);
+            },
+            onStateChange: (e) => {
+              if (e.data === window.YT.PlayerState.ENDED) {
+                handleEnded();
+              }
+            },
+            onError: (e) => console.error('YT Player Error', e.data),
+          },
+        });
+      }
+    };
+
+    const waitForYT = () => {
+      if (window.YT && window.YT.Player) {
+        initPlayer();
+      } else {
+        window.onYouTubeIframeAPIReady = initPlayer;
+      }
+    };
+
+    waitForYT();
+
+    return () => {
+      clearInterval(progressInterval);
+      try {
+        const p = ytRef.current?.__ytPlayer;
+        if (p) { p.stopVideo(); p.destroy(); }
+        if (ytRef.current) ytRef.current.__ytPlayer = null;
+      } catch(e) {}
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ytId]);
+
+  // Play/pause YouTube player
+  useEffect(() => {
+    if (!isYouTube) return;
+    const p = ytRef.current?.__ytPlayer;
+    if (!p || !ytReady.current) return;
+    try {
+      if (isPlaying) {
+        p.setVolume(isMuted ? 0 : 100);
+        p.playVideo();
+      } else {
+        p.pauseVideo();
+      }
+    } catch(e) {}
+  }, [isPlaying, isMuted, isYouTube]);
 
   const handleLike = async (e, songId) => {
     e.stopPropagation();
@@ -118,36 +252,34 @@ export default function Songs() {
     }
   };
 
-  const currentSong = songs[currentSongIndex] || null;
-  const isYouTube = currentSong?.url?.includes('youtube.com') || currentSong?.url?.includes('youtu.be');
-
-  useEffect(() => {
-    const el = audioRef.current;
-    if (el && !isYouTube) {
-      el.muted = isMuted;
-      if (isPlaying) {
-        el.play().catch(e => console.error('Audio play error:', e));
-      } else {
-        el.pause();
-      }
-    }
-  }, [isPlaying, currentSong, isYouTube, isMuted]);
-
-  const togglePlay = () => {
-    setIsPlaying(!isPlaying);
-  };
-
-  const handleNext = useCallback(() => {
-    if (songs.length === 0) return;
-    
-    if (isShuffle) {
-      const nextIdx = Math.floor(Math.random() * songs.length);
-      setCurrentSongIndex(nextIdx);
+  const handleEnded = useCallback(() => {
+    if (repeatMode === 'one') {
+      if (audioRef.current) audioRef.current.currentTime = 0;
+      const p = ytRef.current?.__ytPlayer;
+      if (p) { try { p.seekTo(0); p.playVideo(); } catch(e) {} }
+      setIsPlaying(true);
     } else {
       setCurrentSongIndex((prev) => {
         if (repeatMode === 'none' && prev === songs.length - 1) {
-           setIsPlaying(false);
-           return prev;
+          setIsPlaying(false);
+          return prev;
+        }
+        if (isShuffle) return Math.floor(Math.random() * songs.length);
+        return (prev + 1) % songs.length;
+      });
+      setIsPlaying(true);
+    }
+  }, [repeatMode, isShuffle, songs.length]);
+
+  const handleNext = useCallback(() => {
+    if (songs.length === 0) return;
+    if (isShuffle) {
+      setCurrentSongIndex(Math.floor(Math.random() * songs.length));
+    } else {
+      setCurrentSongIndex((prev) => {
+        if (repeatMode === 'none' && prev === songs.length - 1) {
+          setIsPlaying(false);
+          return prev;
         }
         return (prev + 1) % songs.length;
       });
@@ -165,98 +297,41 @@ export default function Songs() {
     setIsPlaying(true);
   }, [songs.length, isShuffle]);
 
-  const handleEnded = useCallback(() => {
-    if (repeatMode === 'one') {
-      if (audioRef.current) audioRef.current.currentTime = 0;
-      if (playerRef.current) playerRef.current.seekTo(0);
-      setIsPlaying(true);
-    } else {
-      handleNext();
-    }
-  }, [repeatMode, handleNext]);
+  const togglePlay = () => setIsPlaying(p => !p);
+  const toggleMute = () => setIsMuted(m => !m);
 
-  useEffect(() => {
-    if (songs.length > 0) {
-      const savedState = localStorage.getItem('gitaPlayerState');
-      if (savedState) {
-        try {
-          const parsed = JSON.parse(savedState);
-          const idx = songs.findIndex(s => s._id === parsed.songId);
-          if (idx !== -1 && idx !== currentSongIndex) {
-            setCurrentSongIndex(idx);
-          }
-        } catch(e) {}
-      }
+  const handleProgressClick = (e) => {
+    const bar = e.currentTarget;
+    const pct = (e.clientX - bar.getBoundingClientRect().left) / bar.offsetWidth;
+    if (isYouTube) {
+      const p = ytRef.current?.__ytPlayer;
+      if (p) { try { p.seekTo(pct * (p.getDuration?.() || 0), true); } catch(e) {} }
+    } else if (audioRef.current) {
+      audioRef.current.currentTime = pct * (audioRef.current.duration || 0);
     }
-  }, [songs.length]);
+  };
 
-  useEffect(() => {
-    if (currentSong) {
-      localStorage.setItem('gitaPlayerState', JSON.stringify({
-        songId: currentSong._id
-      }));
-    }
-  }, [currentSong]);
-
+  // Media session
   useEffect(() => {
     if ('mediaSession' in navigator && currentSong) {
       navigator.mediaSession.metadata = new window.MediaMetadata({
         title: currentSong.title || 'Divine Track',
         artist: currentSong.artist || 'Gita Wisdom',
         album: 'Divine Playlist',
-        artwork: [
-          { src: currentSong.cover, sizes: '512x512', type: 'image/jpeg' },
-          { src: currentSong.cover, sizes: '256x256', type: 'image/jpeg' }
-        ]
+        artwork: [{ src: currentSong.cover, sizes: '512x512', type: 'image/jpeg' }]
       });
-
       navigator.mediaSession.setActionHandler('play', () => setIsPlaying(true));
       navigator.mediaSession.setActionHandler('pause', () => setIsPlaying(false));
       navigator.mediaSession.setActionHandler('previoustrack', handlePrev);
       navigator.mediaSession.setActionHandler('nexttrack', handleNext);
-      
       navigator.mediaSession.playbackState = isPlaying ? 'playing' : 'paused';
     }
   }, [currentSong, isPlaying, handleNext, handlePrev]);
 
-  const handleProgress = (state) => {
-    setProgress(state.played * 100);
-    const played = Number(state.playedSeconds) || 0;
-    const mins = isNaN(played) ? 0 : Math.floor(played / 60);
-    const secs = isNaN(played) ? 0 : Math.floor(played % 60);
-    setCurrentTime(`${mins}:${secs < 10 ? '0' : ''}${secs}`);
-  };
-
-  const handleDuration = (dur) => {
-    const validDur = Number(dur) || 0;
-    const mins = isNaN(validDur) ? 0 : Math.floor(validDur / 60);
-    const secs = isNaN(validDur) ? 0 : Math.floor(validDur % 60);
-    setDuration(`${mins}:${secs < 10 ? '0' : ''}${secs}`);
-  };
-
-  const handleProgressClick = (e) => {
-    const bar = e.currentTarget;
-    const clickX = e.clientX - bar.getBoundingClientRect().left;
-    const percentage = clickX / bar.offsetWidth;
-    
-    if (isYouTube && playerRef.current) {
-      playerRef.current.seekTo(percentage);
-    } else if (audioRef.current) {
-      audioRef.current.currentTime = percentage * (audioRef.current.duration || 0);
-    }
-  };
-
-  const toggleMute = () => {
-    setIsMuted(!isMuted);
-  };
-
   return (
     <div 
       className="min-h-screen px-4 sm:px-6 lg:px-8 relative bg-[#06101E] overflow-x-hidden flex flex-col items-center w-full"
-      style={{ 
-        paddingTop: '1rem',
-        paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 5.5rem)' 
-      }}
+      style={{ paddingTop: '1rem', paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 5.5rem)' }}
     >
       <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(circle_at_center,rgba(255,215,0,0.05),transparent_60%)]"></div>
       
@@ -271,58 +346,46 @@ export default function Songs() {
             
             {currentSong ? (
               <>
-                {/* ── Audio Engine (hidden, outside the visual circle) ── */}
+                {/* ── Hidden Audio Engines ── */}
                 {isYouTube ? (
-                  <div className="absolute w-0 h-0 overflow-hidden pointer-events-none" style={{ position: 'fixed', top: '-9999px', left: '-9999px' }}>
-                    <ReactPlayer
-                      ref={playerRef}
-                      url={currentSong.url?.trim()}
-                      playing={isPlaying}
-                      muted={isMuted}
-                      onProgress={handleProgress}
-                      onDuration={handleDuration}
-                      onEnded={handleEnded}
-                      onError={(e) => console.error('ReactPlayer Error:', e)}
-                      width="1px"
-                      height="1px"
-                      progressInterval={1000}
-                      config={{
-                        youtube: {
-                          playerVars: {
-                            autoplay: 1,
-                            controls: 0,
-                            modestbranding: 1,
-                            playsinline: 1,
-                            origin: window.location.origin
-                          }
-                        }
-                      }}
-                    />
+                  /* YouTube IFrame – completely off-screen but rendered */
+                  <div
+                    style={{
+                      position: 'fixed',
+                      top: '-9999px',
+                      left: '-9999px',
+                      width: '320px',
+                      height: '180px',
+                      pointerEvents: 'none',
+                      zIndex: -1,
+                    }}
+                  >
+                    <div ref={ytRef} />
                   </div>
                 ) : (
+                  /* Native audio element for MP3 / MP4 / direct URL */
                   <audio
                     ref={audioRef}
                     src={currentSong.url}
                     preload="metadata"
-                    playsInline
+                    crossOrigin="anonymous"
                     onTimeUpdate={(e) => {
-                      const curr = Number(e.target.currentTime) || 0;
-                      const dur  = Number(e.target.duration)    || 0;
-                      if (dur > 0 && !isNaN(dur)) {
-                        setProgress((curr / dur) * 100);
-                        const dM = Math.floor(dur / 60);
-                        const dS = Math.floor(dur % 60);
-                        setDuration(`${dM}:${dS < 10 ? '0' : ''}${dS}`);
-                      }
-                      const m = Math.floor(curr / 60);
-                      const s = Math.floor(curr % 60);
-                      setCurrentTime(`${m}:${s < 10 ? '0' : ''}${s}`);
+                      const curr = e.target.currentTime || 0;
+                      const dur  = e.target.duration   || 0;
+                      if (dur > 0) setProgress((curr / dur) * 100);
+                      const fm = (s) => `${Math.floor(s/60)}:${String(Math.floor(s%60)).padStart(2,'0')}`;
+                      setCurrentTime(fm(curr));
+                      if (dur > 0 && !isNaN(dur)) setDuration(fm(dur));
                     }}
-                    onLoadedMetadata={(e) => handleDuration(e.target.duration)}
-                    onDurationChange={(e) => { if (e.target.duration && !isNaN(e.target.duration)) handleDuration(e.target.duration); }}
-                    onCanPlay={(e)        => { if (e.target.duration && !isNaN(e.target.duration)) handleDuration(e.target.duration); }}
+                    onLoadedMetadata={(e) => {
+                      const dur = e.target.duration;
+                      if (dur && !isNaN(dur)) {
+                        const fm = (s) => `${Math.floor(s/60)}:${String(Math.floor(s%60)).padStart(2,'0')}`;
+                        setDuration(fm(dur));
+                      }
+                    }}
                     onEnded={handleEnded}
-                    style={{ display: 'none' }}
+                    onError={(e) => console.error('Audio error', e.target.error)}
                   />
                 )}
 
@@ -387,6 +450,11 @@ export default function Songs() {
                     {repeatMode === 'one' ? <Repeat1 className="w-5 h-5" /> : <Repeat className="w-5 h-5" />}
                   </button>
                 </div>
+
+                {/* Mute button */}
+                <button tabIndex="0" onClick={toggleMute} className="mt-4 tv-focusable focus:ring-2 focus:ring-devotion-gold rounded-full text-gray-400 hover:text-white transition-colors p-2 active:scale-90">
+                  {isMuted ? <VolumeX className="w-5 h-5" /> : <Volume2 className="w-5 h-5" />}
+                </button>
               </>
             ) : (
               <div className="text-gray-400 py-10 flex flex-col items-center">

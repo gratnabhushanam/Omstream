@@ -144,6 +144,7 @@ export default function Login() {
       setOtpResendCooldown(30);
       if (res.previewCode) {
         setPreviewCode(res.previewCode);
+        setOtpVal(res.previewCode); // Auto-fill OTP for testing
       }
     } catch (err) {
       setError(err.response?.data?.message || err.message || 'Failed to send OTP.');
@@ -466,6 +467,17 @@ export default function Login() {
                             <RotateCcw className="h-3.5 w-3.5" /> Change
                           </button>
                         </div>
+
+                        {previewCode && (
+                          <div className="rounded-2xl border-2 border-amber-400/60 bg-amber-500/10 p-4">
+                            <p className="text-xs font-bold uppercase tracking-[0.2em] text-amber-400/80 mb-1">⚠️ Dev Preview — SMS Not Configured</p>
+                            <p className="text-xs text-amber-200/70 mb-3">Your OTP code (auto-filled below). Add SMS credentials to send real SMS.</p>
+                            <div className="flex items-center justify-between gap-3">
+                              <span className="text-3xl font-black tracking-[0.5em] text-amber-400 font-mono">{previewCode}</span>
+                              <button type="button" onClick={() => setOtpVal(previewCode)} className="text-xs bg-amber-400/20 hover:bg-amber-400/30 text-amber-300 px-3 py-1.5 rounded-lg font-semibold transition-colors">Use Code</button>
+                            </div>
+                          </div>
+                        )}
 
                         <div>
                           <label className="mb-2 block text-xs font-bold uppercase tracking-[0.2em] text-white/80">
