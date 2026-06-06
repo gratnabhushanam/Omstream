@@ -281,9 +281,9 @@ const startServer = async () => {
     const isPrimary = cluster.isPrimary || cluster.isMaster;
     if (isProduction && isPrimary) {
       console.log(`[CLUSTER] Primary ${process.pid} is running`);
-      const numCPUs = os.cpus().length;
+      const numCPUs = process.env.WEB_CONCURRENCY ? Number(process.env.WEB_CONCURRENCY) : 1;
       
-      console.log(`[CLUSTER] Forking ${numCPUs} optimized workers for high-concurrency traffic...`);
+      console.log(`[CLUSTER] Forking ${numCPUs} optimized workers to match memory limits...`);
       for (let i = 0; i < numCPUs; i++) cluster.fork();
       
       cluster.on('exit', (worker, code, signal) => {
