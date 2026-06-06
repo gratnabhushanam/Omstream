@@ -40,6 +40,30 @@ app.use('/uploads/reels', protectStreaming, express.static(path.join(__dirname, 
   }
 }));
 
+// Security & Anti-Hacking Rate Limiter
+const rateLimit = require('express-rate-limit');
+
+// 1. General API Rate Limiter (Max 300 requests per 5 minutes per IP)
+const apiLimiter = rateLimit({
+  windowMs: 5 * 60 * 1000,
+  max: 300,
+  message: { message: 'Too many requests from this IP, please try again after 5 minutes' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+app.use('/api/', apiLimiter);
+
+// 2. Strict Auth Rate Limiter (Max 15 attempts per 10 minutes)
+const authLimiter = rateLimit({
+  windowMs: 10 * 60 * 1000,
+  max: 15,
+  message: { message: 'Too many authentication attempts, your IP has been temporarily blocked for security reasons.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+app.use('/api/auth/login', authLimiter);
+app.use('/api/auth/register', authLimiter);
+
 // DRM Content Policy
 app.use(helmet({
   contentSecurityPolicy: {

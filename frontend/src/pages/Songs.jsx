@@ -218,10 +218,11 @@ export default function Songs() {
           </div>
 
           <div className="flex flex-col gap-3 h-[500px] overflow-y-auto custom-scrollbar pr-2 pb-10">
-            {songs.filter(s => s.title.toLowerCase().includes(searchQuery.toLowerCase()) || s.artist.toLowerCase().includes(searchQuery.toLowerCase())).map((song) => {
-              const actualIndex = songs.findIndex(s => s._id === song._id);
-              const isSelected = currentSongIndex === actualIndex;
-              return (
+            {React.useMemo(() => {
+              return songs.filter(s => s.title.toLowerCase().includes(searchQuery.toLowerCase()) || s.artist.toLowerCase().includes(searchQuery.toLowerCase())).map((song) => {
+                const actualIndex = songs.findIndex(s => s._id === song._id);
+                const isSelected = currentSongIndex === actualIndex;
+                return (
                 <div 
                   key={song._id}
                   onClick={() => {
@@ -265,8 +266,9 @@ export default function Songs() {
                     <span className="text-xs font-bold text-gray-500 tracking-widest min-w-[30px]">{song.duration || 'Playing'}</span>
                   </div>
                 </div>
-              );
-            })}
+                );
+              });
+            }, [songs, searchQuery, currentSongIndex, isPlaying, user?.likedSongs])}
           </div>
         </div>
 
