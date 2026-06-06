@@ -7,11 +7,6 @@ const resolveJwtSecret = () => {
   if (secret) {
     return secret;
   }
-
-  if (String(process.env.NODE_ENV || '').toLowerCase() === 'production') {
-    return null;
-  }
-
   return 'gita_wisdom_super_secret_key';
 };
 

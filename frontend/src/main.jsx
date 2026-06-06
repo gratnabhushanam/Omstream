@@ -9,7 +9,7 @@ const isProd = import.meta.env.MODE === 'production';
 // In dev, use '' so requests go through Vite proxy → localhost:8888
 // In prod, use the deployed backend URL
 axios.defaults.baseURL = isProd 
-  ? (import.meta.env.VITE_API_BASE_URL || 'https://gita-wisdom-1.onrender.com') 
+  ? (import.meta.env.VITE_API_BASE_URL || 'https://gitawisdom.onrender.com') 
   : '';
 
 const getOrCreateDeviceId = () => {
