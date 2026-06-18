@@ -54,6 +54,17 @@ registerRoute(
   })
 );
 
+// Cache offline videos and handle Range requests for streaming from cache
+registerRoute(
+  ({ request, url }) => request.destination === 'video' || url.pathname.match(/\.(mp4|webm)$/),
+  new CacheFirst({
+    cacheName: 'offline-video-cache',
+    plugins: [
+      new RangeRequestsPlugin(),
+    ],
+  })
+);
+
 // Listen for push events from the backend
 self.addEventListener('push', function(event) {
   if (event.data) {

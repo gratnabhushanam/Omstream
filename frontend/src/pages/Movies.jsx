@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useRef, Suspense } from 'react';
+import React, { useState, useEffect, Suspense, useRef } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { 
   Play, Plus, Star, ChevronLeft, ChevronRight, 
   Clock, TrendingUp, Sparkles, Heart, Search, User,
-  LayoutGrid, History, Bookmark, Check
+  LayoutGrid, History, Bookmark, Check, Download, CheckCircle
 } from 'lucide-react';
 import MediaPlayerHLS from '../components/MediaPlayerHLS';
 import { useLanguage } from '../context/LanguageContext';
@@ -20,11 +21,82 @@ export default function Movies() {
   const { user, setUser } = useAuth();
   const [movies, setMovies] = useState([]);
   const [watchlist, setWatchlist] = useState([]);
+  const [recommendations, setRecommendations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedMovie, setSelectedMovie] = useState(null);
-   const [featuredMovie, setFeaturedMovie] = useState(null);
+  const [featuredMovie, setFeaturedMovie] = useState(null);
   const [scrolled, setScrolled] = useState(false);
   const [hoveredMovieId, setHoveredMovieId] = useState(null);
+
+  const [downloading, setDownloading] = useState({});
+  const [downloadedMovies, setDownloadedMovies] = useState(() => {
+    try { return JSON.parse(localStorage.getItem('downloadedMovies') || '[]'); } catch { return []; }
+  });
+
+  const [upNextMode, setUpNextMode] = useState(false);
+  const [countdown, setCountdown] = useState(10);
+  const upNextTimerRef = useRef(null);
+
+  const getNextMovie = () => {
+    if (!selectedMovie) return null;
+    if (recommendations && recommendations.length > 0) {
+      const rec = recommendations.find(r => r._id !== selectedMovie._id);
+      if (rec) return rec;
+    }
+    const similar = movies.find(m => m.genre === selectedMovie.genre && m._id !== selectedMovie._id);
+    return similar || movies.find(m => m._id !== selectedMovie._id);
+  };
+  const nextMovie = getNextMovie();
+
+  const handleVideoEnded = () => {
+    if (nextMovie) {
+      setUpNextMode(true);
+      setCountdown(10);
+    }
+  };
+
+  useEffect(() => {
+    if (upNextMode && countdown > 0) {
+      upNextTimerRef.current = setTimeout(() => setCountdown(c => c - 1), 1000);
+    } else if (upNextMode && countdown === 0) {
+      setUpNextMode(false);
+      setSelectedMovie(nextMovie);
+    }
+    return () => clearTimeout(upNextTimerRef.current);
+  }, [upNextMode, countdown, nextMovie]);
+
+  const cancelUpNext = () => {
+    setUpNextMode(false);
+    clearTimeout(upNextTimerRef.current);
+  };
+
+  const downloadVideo = async (movie) => {
+    if (!movie.videoUrl || downloading[movie._id] === 'downloading') return;
+    if (!('caches' in window)) {
+      alert('Offline downloads are not supported in this browser.');
+      return;
+    }
+    try {
+      setDownloading(prev => ({ ...prev, [movie._id]: 'downloading' }));
+      
+      const videoUrlToCache = movie.videoUrl.startsWith('http') ? movie.videoUrl : `${window.location.origin}${movie.videoUrl}`;
+      const cache = await window.caches.open('offline-video-cache');
+      await cache.add(videoUrlToCache);
+      
+      const currentDownloaded = JSON.parse(localStorage.getItem('downloadedMovies') || '[]');
+      if (!currentDownloaded.find(m => m._id === movie._id)) {
+        const newDownloaded = [movie, ...currentDownloaded];
+        localStorage.setItem('downloadedMovies', JSON.stringify(newDownloaded));
+        setDownloadedMovies(newDownloaded);
+      }
+      
+      setDownloading(prev => ({ ...prev, [movie._id]: 'done' }));
+    } catch (err) {
+      console.error('Download failed', err);
+      setDownloading(prev => ({ ...prev, [movie._id]: 'error' }));
+      alert('Failed to download video. It may be too large or network error.');
+    }
+  };
 
   useEffect(() => {
     const fetchData = async () => {
@@ -38,13 +110,17 @@ export default function Movies() {
           setFeaturedMovie(moviesData[0]);
         }
         
-        // Fetch watchlist separately or in parallel but catch its own error
+        // Fetch watchlist and recommendations separately
         if (user) {
           try {
-            const watchlistRes = await axios.get('/api/movies/watchlist');
+            const [watchlistRes, recsRes] = await Promise.all([
+              axios.get('/api/movies/watchlist'),
+              axios.get('/api/movies/recommendations')
+            ]);
             setWatchlist(Array.isArray(watchlistRes.data) ? watchlistRes.data : []);
+            setRecommendations(Array.isArray(recsRes.data) ? recsRes.data : []);
           } catch (watchErr) {
-            console.error("Watchlist fetch failed", watchErr);
+            console.error("Watchlist or recs fetch failed", watchErr);
             setWatchlist([]);
           }
         }
@@ -83,6 +159,8 @@ export default function Movies() {
 
 
   const categories = [
+    ...(downloadedMovies.length > 0 ? [{ title: 'My Downloads', icon: <Download className="w-5 h-5 text-[#FF7A00]"/>, customMovies: downloadedMovies }] : []),
+    ...(recommendations.length > 0 ? [{ title: 'Recommended for You', icon: <Sparkles className="w-5 h-5 text-[#FF7A00]"/>, customMovies: recommendations }] : []),
     { title: 'Divine Selection', icon: <Sparkles className="w-5 h-5 text-[#FF7A00]"/>, filter: () => true },
     { title: 'Your Divine Watchlist', icon: <Bookmark className="w-5 h-5 text-[#FF7A00]"/>, filter: (m) => watchlist.some(w => (w._id || w) === m._id) },
     { title: 'Trending Spiritual Videos', icon: <TrendingUp className="w-5 h-5"/>, filter: (m) => m.views >= 0 }, // Show even with 0 views if no others
@@ -301,20 +379,24 @@ export default function Movies() {
         {/* Main Content Sections - FIXED: Safe spacing from Hero and TV optimization */}
         <main className={`relative z-20 mt-12 lg:mt-24 tv:mt-32 pb-40 space-y-24 lg:space-y-40 tv:space-y-48 transition-all duration-700 ${hoveredMovieId ? 'brightness-[0.85]' : ''}`}>
           <Suspense fallback={<div className="h-96 w-full skeleton" />}>
-            {categories.map((cat, idx) => (
-              <MovieRowComponent 
-                key={idx} 
-                title={cat.title} 
-                icon={cat.icon}
-                movies={movies.filter(cat.filter)} 
-                onSelect={setSelectedMovie} 
-                setFeaturedMovie={setFeaturedMovie}
-                watchlist={watchlist}
-                toggleWatchlist={toggleWatchlist}
-                featuredMovie={featuredMovie}
-                setHoveredMovieId={setHoveredMovieId}
-              />
-            ))}
+            {categories.map((cat, idx) => {
+              const rowMovies = cat.customMovies ? cat.customMovies : movies.filter(cat.filter);
+              if (rowMovies.length === 0) return null;
+              return (
+                <MovieRowComponent 
+                  key={idx} 
+                  title={cat.title} 
+                  icon={cat.icon}
+                  movies={rowMovies} 
+                  onSelect={setSelectedMovie} 
+                  setFeaturedMovie={setFeaturedMovie}
+                  watchlist={watchlist}
+                  toggleWatchlist={toggleWatchlist}
+                  featuredMovie={featuredMovie}
+                  setHoveredMovieId={setHoveredMovieId}
+                />
+              );
+            })}
           </Suspense>
        </main>
 
@@ -348,7 +430,7 @@ export default function Movies() {
             
             {/* Back Button */}
             <button 
-              onClick={() => setSelectedMovie(null)} 
+              onClick={() => { setSelectedMovie(null); cancelUpNext(); }} 
               className="absolute top-6 left-6 lg:top-10 lg:left-10 p-3 rounded-full bg-black/40 backdrop-blur-md border border-white/10 hover:bg-black/60 hover:border-[#FF7A00]/50 transition-all z-[1010] group shadow-2xl tv-focusable"
             >
                <ChevronLeft className="w-8 h-8 text-white group-hover:-translate-x-1 transition-transform" />
@@ -357,7 +439,7 @@ export default function Movies() {
             <div className="relative w-full min-h-screen flex flex-col pb-24">
               
               {/* Player Area */}
-              <div className="w-full h-[60vh] lg:h-[75vh] ott-player-container group tv-focusable">
+              <div className="w-full h-[60vh] lg:h-[75vh] ott-player-container group tv-focusable relative">
                 <MediaPlayerHLS 
                   key={selectedMovie._id || selectedMovie.id || selectedMovie.videoUrl}
                   url={selectedMovie.videoUrl} 
@@ -367,9 +449,35 @@ export default function Movies() {
                   autoPlay={true}
                   controls={true}
                   youtubeParams="controls=0&modestbranding=1&rel=0&disablekb=1&iv_load_policy=3"
+                  onEnded={handleVideoEnded}
                 />
                 {/* Gradient Overlay linking player to page */}
                 <div className="ott-video-overlay pointer-events-none" />
+
+                {/* Up Next Overlay */}
+                {upNextMode && nextMovie && (
+                   <div className="absolute inset-0 bg-black/80 z-[100] flex flex-col items-center justify-center p-6 text-center backdrop-blur-md animate-in fade-in duration-500">
+                      <p className="text-gray-400 font-bold uppercase tracking-[0.3em] mb-4">Up Next in {countdown}s</p>
+                      <h2 className="text-4xl lg:text-6xl font-black text-white mb-6 uppercase tracking-tighter drop-shadow-2xl max-w-4xl truncate">{nextMovie.title}</h2>
+                      <div className="w-64 lg:w-96 aspect-video rounded-xl overflow-hidden shadow-2xl mb-8 border-2 border-[#FF7A00]/30">
+                         <img src={nextMovie.thumbnail} className="w-full h-full object-cover" alt="" />
+                      </div>
+                      <div className="flex items-center gap-4">
+                         <button 
+                           onClick={() => { setUpNextMode(false); setSelectedMovie(nextMovie); }}
+                           className="px-8 py-4 bg-[#FF7A00] text-black font-black uppercase tracking-widest rounded-lg hover:scale-105 transition-transform tv-focusable shadow-[0_0_20px_rgba(255,122,0,0.4)]"
+                         >
+                           Play Now
+                         </button>
+                         <button 
+                           onClick={cancelUpNext}
+                           className="px-8 py-4 bg-white/10 text-white font-bold uppercase tracking-widest rounded-lg border border-white/20 hover:bg-white/20 transition-colors tv-focusable"
+                         >
+                           Cancel
+                         </button>
+                      </div>
+                   </div>
+                )}
               </div>
               
               {/* Movie Details overlaying bottom of player on desktop */}
@@ -400,6 +508,21 @@ export default function Movies() {
                     <button className="ott-secondary-button tv-focusable p-4 rounded-full">
                        <Heart className="w-5 h-5" />
                     </button>
+                    {selectedMovie.videoUrl && (
+                      <button 
+                        onClick={() => downloadVideo(selectedMovie)}
+                        disabled={downloading[selectedMovie._id] === 'downloading' || downloadedMovies.some(m => m._id === selectedMovie._id)}
+                        className={`ott-secondary-button tv-focusable flex items-center gap-2 px-6 py-4 rounded-md font-bold text-sm uppercase tracking-widest ${downloadedMovies.some(m => m._id === selectedMovie._id) ? 'text-[#F5A623] border-[#F5A623]/50' : ''}`}
+                      >
+                        {downloadedMovies.some(m => m._id === selectedMovie._id) || downloading[selectedMovie._id] === 'done' ? (
+                          <><CheckCircle className="w-5 h-5" /> Downloaded</>
+                        ) : downloading[selectedMovie._id] === 'downloading' ? (
+                          <><span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Downloading...</>
+                        ) : (
+                          <><Download className="w-5 h-5" /> Download</>
+                        )}
+                      </button>
+                    )}
                  </div>
                  
                  <p className="text-white/80 max-w-3xl text-sm lg:text-lg font-serif leading-relaxed" style={{ textShadow: '0 2px 4px rgba(0,0,0,0.8)' }}>

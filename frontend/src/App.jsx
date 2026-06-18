@@ -43,6 +43,8 @@ const SubscriptionSuccess = lazy(() => import('./pages/SubscriptionSuccess'));
 const NotFound = lazy(() => import('./pages/NotFound'));
 const Songs = lazy(() => import('./pages/Songs'));
 const TvHome = lazy(() => import('./pages/TvHome'));
+const ProfileSelection = lazy(() => import('./pages/ProfileSelection'));
+const ManageProfile = lazy(() => import('./pages/ManageProfile'));
 
 
 function AppShell() {
@@ -111,63 +113,10 @@ function AppShell() {
   const needsProfileSelection = user && !selectedProfile && !isAuthRoute && (user.profiles || []).length > 0 && user.role !== 'admin';
 
   if (needsProfileSelection) {
-    const profiles = user.profiles || [];
     return (
-      <div className="fixed inset-0 z-50 bg-[#06101E] flex flex-col items-center justify-center p-6 text-white overflow-y-auto">
-        <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(circle_at_center,rgba(255,215,0,0.1),transparent_50%)]"></div>
-        
-        <div className="relative z-10 max-w-4xl w-full text-center space-y-12 animate-fade-in">
-          <div className="space-y-4">
-            <h1 className="text-4xl sm:text-5xl font-serif font-black uppercase tracking-tight text-[#f7d77d]">
-              Who is seeking wisdom today?
-            </h1>
-            <p className="text-gray-400 text-sm max-w-md mx-auto">
-              Select your seeker profile to customize your path and track your spiritual growth.
-            </p>
-          </div>
-
-          <div className="flex flex-wrap items-center justify-center gap-8">
-            {profiles.map((prof) => (
-              <button
-                key={prof._id || prof.name}
-                onClick={() => selectProfile(prof)}
-                className="group flex flex-col items-center gap-4 transition-transform hover:scale-105"
-              >
-                <div className="w-24 h-24 sm:w-32 sm:h-32 rounded-[2rem] bg-gradient-to-br from-[#B66A2A] via-[#E6C38A] to-[#B66A2A] p-1 shadow-2xl group-hover:shadow-[0_0_20px_rgba(255,215,0,0.4)] transition-all">
-                  <div className="w-full h-full rounded-[1.8rem] bg-[#0d1520] flex items-center justify-center">
-                    <span className="text-3xl sm:text-4xl font-serif font-black text-[#f7d77d]">
-                      {prof.name[0].toUpperCase()}
-                    </span>
-                  </div>
-                </div>
-                <span className="text-base sm:text-lg font-bold text-white group-hover:text-[#f7d77d] transition-colors">
-                  {prof.name}
-                </span>
-              </button>
-            ))}
-          </div>
-
-          <div className="pt-6 flex flex-col items-center gap-4">
-            <button
-              onClick={() => selectProfile({ name: user.name || 'Main', _id: 'default' })}
-              className="text-xs text-[#f7d77d]/70 hover:text-[#f7d77d] uppercase font-bold tracking-widest transition-colors border border-[#f7d77d]/20 rounded-full px-6 py-2"
-            >
-              Continue without profile
-            </button>
-            <button
-              onClick={() => {
-                localStorage.removeItem('token');
-                localStorage.removeItem('user');
-                localStorage.removeItem('gita_wisdom_profile');
-                window.location.reload();
-              }}
-              className="text-xs text-gray-500 hover:text-white uppercase font-black tracking-widest transition-colors"
-            >
-              Sign out of account
-            </button>
-          </div>
-        </div>
-      </div>
+      <Suspense fallback={pageFallback}>
+        <ProfileSelection />
+      </Suspense>
     );
   }
 
@@ -243,6 +192,8 @@ function AppShell() {
                 <Route path="/kids" element={user ? <KidsMode /> : <Navigate to="/login" replace />} />
                 <Route path="/search" element={user ? <Search /> : <Navigate to="/login" replace />} />
                 <Route path="/profile" element={user ? <Profile /> : <Navigate to="/login" replace />} />
+                <Route path="/profiles" element={user ? <ProfileSelection /> : <Navigate to="/login" replace />} />
+                <Route path="/manage-profiles/:id" element={user ? <ManageProfile /> : <Navigate to="/login" replace />} />
                 <Route path="/movies" element={user ? <Movies /> : <Navigate to="/login" replace />} />
                 <Route path="/admin" element={user && user.role === 'admin' ? <AdminDashboard /> : <Navigate to="/home" replace />} />
                 <Route path="/songs" element={user ? <Songs /> : <Navigate to="/login" replace />} />

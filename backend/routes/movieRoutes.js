@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { getMovies, addMovie, deleteMovie, updateMovie, toggleWatchlist, getWatchlist } = require('../controllers/movieController');
+const { getMovies, addMovie, deleteMovie, updateMovie, toggleWatchlist, getWatchlist, getRecommendations } = require('../controllers/movieController');
 const { protect, admin } = require('../middleware/authMiddleware');
 
 router.get('/', getMovies);
@@ -10,5 +10,6 @@ router.delete('/:id', protect, admin, deleteMovie);
 
 router.post('/:id/toggle-watchlist', protect, toggleWatchlist);
 router.get('/watchlist', protect, getWatchlist);
+router.get('/recommendations', protect, getRecommendations);
 
 module.exports = router;

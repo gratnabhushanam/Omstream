@@ -23,6 +23,14 @@ export const AuthProvider = ({ children }) => {
     const token = localStorage.getItem('token');
     if (token) {
       axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+      const savedProfile = localStorage.getItem('gita_wisdom_profile');
+      if (savedProfile) {
+        try {
+          const profile = JSON.parse(savedProfile);
+          axios.defaults.headers.common['x-profile-id'] = profile._id;
+          authApiClient.defaults.headers.common['x-profile-id'] = profile._id;
+        } catch {}
+      }
       fetchUser(token);
     } else {
       setLoading(false);
@@ -106,8 +114,12 @@ export const AuthProvider = ({ children }) => {
     setSelectedProfile(profile);
     if (profile) {
       localStorage.setItem('gita_wisdom_profile', JSON.stringify(profile));
+      axios.defaults.headers.common['x-profile-id'] = profile._id;
+      authApiClient.defaults.headers.common['x-profile-id'] = profile._id;
     } else {
       localStorage.removeItem('gita_wisdom_profile');
+      delete axios.defaults.headers.common['x-profile-id'];
+      delete authApiClient.defaults.headers.common['x-profile-id'];
     }
   };
 
