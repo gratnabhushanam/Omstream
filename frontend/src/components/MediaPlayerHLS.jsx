@@ -360,30 +360,16 @@ export default function MediaPlayer({
         </div>
       )}
 
-      {/* Video Element (ReactPlayer for YouTube, HTML5 for Native) */}
+      {/* Video Element (Iframe for YouTube, HTML5 for Native) */}
       {isYoutube ? (
-        <ReactPlayer
-          ref={reactPlayerRef}
-          url={safeReactPlayerUrl}
-          className={`react-player-wrapper w-full h-full ${instagramMode ? 'object-cover' : 'object-contain'} transition-opacity duration-700 cursor-pointer ${loadingToken ? 'opacity-0' : 'opacity-100'}`}
-          width="100%"
-          height="100%"
-          playing={isPlaying}
-          muted={isMuted}
-          volume={volume}
-          loop={loop}
-          playsinline={playsInline}
-          controls={false} // ALWAYS use our custom controls
-          onProgress={({ playedSeconds }) => setProgress(playedSeconds)}
-          onDuration={(d) => setDuration(d)}
-          onPlay={() => setIsPlaying(true)}
-          onPause={() => setIsPlaying(false)}
-          onEnded={onEnded}
-          config={{
-            youtube: {
-              playerVars: { modestbranding: 1, rel: 0, iv_load_policy: 3, disablekb: 1 }
-            }
-          }}
+        <iframe
+          src={`${getYoutubeEmbedUrl(secureVideoUrl || cdnVideoUrl)}?autoplay=${effectiveShouldPlay ? 1 : 0}&mute=${isMuted ? 1 : 0}&controls=${controls ? 1 : 0}&loop=${loop ? 1 : 0}&playlist=${getYoutubeVideoId(secureVideoUrl || cdnVideoUrl)}&modestbranding=1&rel=0&iv_load_policy=3&playsinline=1`}
+          className={`w-full h-full ${instagramMode ? 'object-cover' : 'object-contain'} transition-opacity duration-700 ${loadingToken ? 'opacity-0' : 'opacity-100'}`}
+          style={{ pointerEvents: controls ? 'auto' : 'none' }}
+          title={title || 'YouTube video player'}
+          frameBorder="0"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+          allowFullScreen
         />
       ) : (
         <video
@@ -403,7 +389,7 @@ export default function MediaPlayer({
       )}
 
       {/* Custom Netflix/JioHotstar UI Overlay */}
-      {!instagramMode && controls && !isIOS && (
+      {!instagramMode && controls && !isIOS && !isYoutube && (
         <div className={`absolute inset-0 pointer-events-none transition-opacity duration-500 ${showControls || !isPlaying ? 'opacity-100' : 'opacity-0'}`}>
           
           {/* Invisible click catcher to toggle play/pause when tapping video area */}
