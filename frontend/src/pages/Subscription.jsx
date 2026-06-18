@@ -45,7 +45,10 @@ export default function Subscription() {
       return;
     }
 
-    if (selectedTier === currentTier) return;
+    if (selectedTier === currentTier) {
+      navigate('/');
+      return;
+    }
 
     if (selectedTier === 'free') {
       try {

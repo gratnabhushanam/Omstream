@@ -44,7 +44,6 @@ export default function PlanCard({ plan, billingCycle, isCurrentPlan, onSelect, 
 
       <button
         onClick={() => onSelect(tier)}
-        disabled={isCurrentPlan}
         className={`plan-cta plan-cta-${tier} transition`}
       >
         {isCurrentPlan ? 'Current Plan' : price === 0 ? 'Get Started' : 'Subscribe Now'}
