@@ -65,6 +65,12 @@ axios.interceptors.response.use(
   (error) => Promise.reject(error)
 );
 
+// Auto-reload if dynamic chunks fail to load (usually means a new deployment happened on Vercel)
+window.addEventListener('vite:preloadError', (event) => {
+  console.warn('Chunk load error detected! Reloading to fetch new version...');
+  window.location.reload(true);
+});
+
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <App />
