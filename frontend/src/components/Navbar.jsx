@@ -82,9 +82,7 @@ export default function Navbar() {
             
             <div className="h-6 w-px bg-white/10 mx-2 xl:mx-4"></div>
             
-            <Link to="/tv" className="tv-focusable group relative px-4 py-2 tv:px-8 tv:py-4 bg-[#F5A623] hover:bg-[#F5A623]/80 text-[#06101E] text-[9px] tv:text-sm font-black uppercase tracking-widest rounded-xl shadow-[0_0_20px_rgba(245,166,35,0.2)] hover:shadow-[0_0_30px_rgba(245,166,35,0.4)] transition-all flex items-center gap-2 overflow-hidden active:scale-95 mr-2 shrink-0">
-               <Tv className="w-4 h-4 tv:w-5 h-5" /> TV MODE
-            </Link>
+
             
             <button onClick={handleInstallClick} className="tv-focusable group relative px-4 py-2 tv:px-8 tv:py-4 bg-gradient-to-br from-[#00A8FF] to-[#7B2FF7] text-white text-[9px] tv:text-sm font-black uppercase tracking-widest rounded-xl shadow-[0_0_20px_rgba(0,168,255,0.2)] hover:shadow-[0_0_30px_rgba(0,168,255,0.4)] transition-all flex items-center gap-2 overflow-hidden active:scale-95">
                <Download className="w-4 h-4 tv:w-5 h-5 group-hover:translate-y-0.5 transition-transform" /> GET APP

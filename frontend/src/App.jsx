@@ -206,38 +206,38 @@ function AppShell() {
             <Suspense fallback={pageFallback}>
               <Routes>
                 {/* Unauthenticated Home / Paywall */}
-                <Route path="/" element={user ? (isSubscribed(user) ? <Navigate to="/home" replace /> : <Navigate to="/subscription" replace />) : <Navigate to="/login" replace />} />
+                <Route path="/" element={user ? <Navigate to="/home" replace /> : <Navigate to="/login" replace />} />
                 
                 {/* Auth Routes */}
                 <Route path="/subscription" element={user ? <Subscription /> : <Navigate to="/login" replace />} />
                 <Route path="/payment" element={user ? <PaymentPage /> : <Navigate to="/login" replace />} />
                 <Route path="/subscription/success" element={user ? <SubscriptionSuccess /> : <Navigate to="/login" replace />} />
-                <Route path="/login" element={user ? (isSubscribed(user) ? <Navigate to="/home" replace /> : <Navigate to="/subscription" replace />) : <Login />} />
-                <Route path="/register" element={user ? (isSubscribed(user) ? <Navigate to="/home" replace /> : <Navigate to="/subscription" replace />) : <Register />} />
-                <Route path="/register/verify-otp" element={user ? (isSubscribed(user) ? <Navigate to="/home" replace /> : <Navigate to="/subscription" replace />) : <RegisterVerifyOtp />} />
-                <Route path="/forgot-password" element={user ? (isSubscribed(user) ? <Navigate to="/home" replace /> : <Navigate to="/subscription" replace />) : <ForgotPassword />} />
+                <Route path="/login" element={user ? <Navigate to="/home" replace /> : <Login />} />
+                <Route path="/register" element={user ? <Navigate to="/home" replace /> : <Register />} />
+                <Route path="/register/verify-otp" element={user ? <Navigate to="/subscription" replace /> : <RegisterVerifyOtp />} />
+                <Route path="/forgot-password" element={user ? <Navigate to="/home" replace /> : <ForgotPassword />} />
                 
                 {/* Protected Routes */}
-                <Route path="/home" element={user ? (isSubscribed(user) ? <Home /> : <Navigate to="/subscription" replace />) : <Navigate to="/login" replace />} />
-                <Route path="/stories" element={user ? (isSubscribed(user) ? <Stories /> : <Navigate to="/subscription" replace />) : <Navigate to="/login" replace />} />
-                <Route path="/chapters" element={user ? (isSubscribed(user) ? <Stories /> : <Navigate to="/subscription" replace />) : <Navigate to="/login" replace />} />
-                <Route path="/videos" element={user ? (isSubscribed(user) ? <Videos /> : <Navigate to="/subscription" replace />) : <Navigate to="/login" replace />} />
-                <Route path="/sloka" element={user ? (isSubscribed(user) ? <Sloka /> : <Navigate to="/subscription" replace />) : <Navigate to="/login" replace />} />
-                <Route path="/about" element={user ? (isSubscribed(user) ? <About /> : <Navigate to="/subscription" replace />) : <Navigate to="/login" replace />} />
-                <Route path="/install" element={user ? (isSubscribed(user) ? <InstallApp /> : <Navigate to="/subscription" replace />) : <Navigate to="/login" replace />} />
-                <Route path="/quiz" element={user ? (isSubscribed(user) ? <Quiz /> : <Navigate to="/subscription" replace />) : <Navigate to="/login" replace />} />
-                <Route path="/quizzes" element={user ? (isSubscribed(user) ? <QuizList /> : <Navigate to="/subscription" replace />) : <Navigate to="/login" replace />} />
-                <Route path="/student" element={user ? (isSubscribed(user) ? <StudentGuide /> : <Navigate to="/subscription" replace />) : <Navigate to="/login" replace />} />
-                <Route path="/mentor" element={user ? (isSubscribed(user) ? <Mentor /> : <Navigate to="/subscription" replace />) : <Navigate to="/login" replace />} />
-                <Route path="/satsangs" element={user ? (isSubscribed(user) ? <Satsangs /> : <Navigate to="/subscription" replace />) : <Navigate to="/login" replace />} />
-                <Route path="/daily-sloka" element={user ? (isSubscribed(user) ? <DailySloka /> : <Navigate to="/subscription" replace />) : <Navigate to="/login" replace />} />
-                <Route path="/kids" element={user ? (isSubscribed(user) ? <KidsMode /> : <Navigate to="/subscription" replace />) : <Navigate to="/login" replace />} />
-                <Route path="/search" element={user ? (isSubscribed(user) ? <Search /> : <Navigate to="/subscription" replace />) : <Navigate to="/login" replace />} />
+                <Route path="/home" element={user ? <Home /> : <Navigate to="/login" replace />} />
+                <Route path="/stories" element={user ? <Stories /> : <Navigate to="/login" replace />} />
+                <Route path="/chapters" element={user ? <Stories /> : <Navigate to="/login" replace />} />
+                <Route path="/videos" element={user ? <Videos /> : <Navigate to="/login" replace />} />
+                <Route path="/sloka" element={user ? <Sloka /> : <Navigate to="/login" replace />} />
+                <Route path="/about" element={user ? <About /> : <Navigate to="/login" replace />} />
+                <Route path="/install" element={user ? <InstallApp /> : <Navigate to="/login" replace />} />
+                <Route path="/quiz" element={user ? <Quiz /> : <Navigate to="/login" replace />} />
+                <Route path="/quizzes" element={user ? <QuizList /> : <Navigate to="/login" replace />} />
+                <Route path="/student" element={user ? <StudentGuide /> : <Navigate to="/login" replace />} />
+                <Route path="/mentor" element={user ? <Mentor /> : <Navigate to="/login" replace />} />
+                <Route path="/satsangs" element={user ? <Satsangs /> : <Navigate to="/login" replace />} />
+                <Route path="/daily-sloka" element={user ? <DailySloka /> : <Navigate to="/login" replace />} />
+                <Route path="/kids" element={user ? <KidsMode /> : <Navigate to="/login" replace />} />
+                <Route path="/search" element={user ? <Search /> : <Navigate to="/login" replace />} />
                 <Route path="/profile" element={user ? <Profile /> : <Navigate to="/login" replace />} />
-                <Route path="/movies" element={user ? (isSubscribed(user) ? <Movies /> : <Navigate to="/subscription" replace />) : <Navigate to="/login" replace />} />
-                <Route path="/admin" element={user && user.role === 'admin' ? <AdminDashboard /> : <Navigate to="/subscription" replace />} />
+                <Route path="/movies" element={user ? <Movies /> : <Navigate to="/login" replace />} />
+                <Route path="/admin" element={user && user.role === 'admin' ? <AdminDashboard /> : <Navigate to="/home" replace />} />
                 <Route path="/songs" element={user ? <Songs /> : <Navigate to="/login" replace />} />
-                <Route path="/tv" element={user ? (isSubscribed(user) ? <TvHome /> : <Navigate to="/subscription" replace />) : <Navigate to="/login" replace />} />
+                <Route path="/tv" element={user ? <TvHome /> : <Navigate to="/login" replace />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </Suspense>
