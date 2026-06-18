@@ -658,26 +658,6 @@ export default function Stories() {
                            >
                              <Bookmark className={`w-5 h-5 ${isInWatchlist ? 'fill-current' : ''}`} />
                            </button>
-                           
-                           <div className="hidden sm:flex items-center gap-1 bg-[#051121] rounded-xl p-1 border border-white/5">
-                             {[
-                               { id: 'saikumar', label: 'Tollywood' },
-                               { id: 'krishna', label: 'Soothing' },
-                               { id: 'ram', label: 'Gentle' },
-                               { id: 'hanuman', label: 'Strong' }
-                             ].map(v => (
-                               <button
-                                 key={v.id}
-                                 onClick={() => {
-                                   setSelectedVoice(v.id);
-                                   if (isSpeaking && audioRef.current) { audioRef.current.pause(); audioRef.current = null; if ('speechSynthesis' in window) window.speechSynthesis.cancel(); setIsSpeaking(false); }
-                                 }}
-                                 className={`px-3 py-2 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all ${selectedVoice === v.id ? 'bg-[#FF7A00] text-[#06101E] shadow-md' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}
-                               >
-                                 {v.label}
-                               </button>
-                             ))}
-                           </div>
                        </div>
                    </div>
 
