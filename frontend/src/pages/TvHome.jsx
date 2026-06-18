@@ -6,6 +6,8 @@ import {
 } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import { useAuth } from '../context/AuthContext';
+import axios from 'axios';
+import MediaPlayerHLS from '../components/MediaPlayerHLS';
 
 export default function TvHome() {
   const navigate = useNavigate();
@@ -21,6 +23,8 @@ export default function TvHome() {
   const [currentHeroIndex, setCurrentHeroIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const [selectedMovie, setSelectedMovie] = useState(null);
+  const [movies, setMovies] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   const containerRef = useRef(null);
 
@@ -47,100 +51,68 @@ export default function TvHome() {
     { label: 'Settings', icon: Settings, path: '/profile' }
   ];
 
-  // Hero scenes
-  const heroScenes = [
+  // Default static fallback scenes
+  const fallbackHeroScenes = [
     {
       title: "Discover Eternal Wisdom",
       subtitle: "Stream Bhagavad Gita chapters, spiritual discourses, devotional music, and timeless stories.",
       bg: "/krishna_arjuna_banner.png",
-      videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4"
+      videoUrl: ""
     },
     {
       title: "The Legend of Mahabharat",
       subtitle: "Experience the epic battle of righteousness and the ultimate guidance of Lord Krishna.",
       bg: "https://images.unsplash.com/photo-1608889175123-8ec330b86f84?auto=format&fit=crop&w=1920&q=80",
-      videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4"
+      videoUrl: ""
     }
   ];
 
-  // Data rows
+  const displayHeroScenes = movies.length > 0 
+    ? movies.slice(0, 3).map(m => ({
+        _id: m._id,
+        title: m.title,
+        subtitle: m.description || "Experience timeless stories reimagined with state-of-the-art cinematic storytelling.",
+        bg: m.thumbnail || "/krishna_arjuna_banner.png",
+        videoUrl: m.videoUrl || m.youtubeUrl || '',
+        hlsUrl: m.hlsUrl,
+        genre: m.genre
+      }))
+    : fallbackHeroScenes;
+
+  const tvMovies = movies.filter(m => !m.isKids);
+  const kidsMovies = movies.filter(m => m.isKids);
+  const trendingMovies = [...movies].sort((a, b) => (b.views || 0) - (a.views || 0));
+
   const contentRows = [
-    {
-      title: "Continue Watching",
-      cards: [
-        { title: "Bhagavad Gita", desc: "Chapter 2", progress: 50, bg: "https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?auto=format&fit=crop&w=500&q=80" },
-        { title: "Mahabharat", desc: "Episode 12", progress: 30, bg: "https://images.unsplash.com/photo-1460881680858-30d872d5b530?auto=format&fit=crop&w=500&q=80" },
-        { title: "Spiritual Discourses", desc: "Sadhguru Live", progress: 75, bg: "https://images.unsplash.com/photo-1506126613408-eca07ce68773?auto=format&fit=crop&w=500&q=80" },
-        { title: "Bhajan Collection", desc: "Morning Kirtan", progress: 60, bg: "https://images.unsplash.com/photo-1518609878373-06d740f60d8b?auto=format&fit=crop&w=500&q=80" },
-        { title: "Stories for Kids", desc: "Krishna & Sudama", progress: 20, bg: "https://images.unsplash.com/photo-1509062522246-3755977927d7?auto=format&fit=crop&w=500&q=80" },
-        { title: "Guided Meditation", desc: "Inner Peace", progress: 40, bg: "https://images.unsplash.com/photo-1508672019048-805c876b67e2?auto=format&fit=crop&w=500&q=80" }
-      ]
-    },
-    {
-      title: "Trending Now",
-      cards: [
-        { title: "Bhagavad Gita Movie", desc: "Divine Journey", bg: "https://images.unsplash.com/photo-1478760329108-5c3ed9d495a0?auto=format&fit=crop&w=500&q=80" },
-        { title: "The Ramayana Chronicles", desc: "Epic Saga", bg: "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=500&q=80" },
-        { title: "Divine Teachings", desc: "Eternal Truths", bg: "https://images.unsplash.com/photo-1490730141103-6cac27aaab94?auto=format&fit=crop&w=500&q=80" },
-        { title: "Top Morning Bhajans", desc: "Krishna Bhakti", bg: "https://images.unsplash.com/photo-1446776811953-b23d57bd21aa?auto=format&fit=crop&w=500&q=80" },
-        { title: "Kids Krishna Cartoon", desc: "Makhan Chor", bg: "https://images.unsplash.com/photo-1488590528505-98d2b5aba04b?auto=format&fit=crop&w=500&q=80" },
-        { title: "Spiritual Cinema", desc: "Light of India", bg: "https://images.unsplash.com/photo-1536440136628-849c177e76a1?auto=format&fit=crop&w=500&q=80" }
-      ]
-    },
-    {
-      title: "Recommended for You",
-      cards: [
-        { title: "Aurobindo's Vision", desc: "Evolution", bg: "https://images.unsplash.com/photo-1519681393784-d120267933ba?auto=format&fit=crop&w=500&q=80" },
-        { title: "Yoga Sutras Masterclass", desc: "Patanjali", bg: "https://images.unsplash.com/photo-1545205597-3d9d02c29597?auto=format&fit=crop&w=500&q=80" },
-        { title: "Upanishad Wisdom", desc: "Philosophy", bg: "https://images.unsplash.com/photo-1518241353330-0f7941c2d9b5?auto=format&fit=crop&w=500&q=80" },
-        { title: "Hanuman Chalisa Beats", desc: "Bhakti Rock", bg: "https://images.unsplash.com/photo-1470225620780-dba8ba36b745?auto=format&fit=crop&w=500&q=80" },
-        { title: "Saints of India", desc: "Documentary", bg: "https://images.unsplash.com/photo-1459749411175-04bf5292ceea?auto=format&fit=crop&w=500&q=80" },
-        { title: "Mind and Soul Healing", desc: "Chakra Activation", bg: "https://images.unsplash.com/photo-1528319725582-ddc096101511?auto=format&fit=crop&w=500&q=80" }
-      ]
-    },
-    {
-      title: "Devotional Music",
-      cards: [
-        { title: "Flute Meditation", desc: "Krishna Melody", bg: "https://images.unsplash.com/photo-1507838153414-b4b713384a76?auto=format&fit=crop&w=500&q=80" },
-        { title: "Hare Krishna Maha Mantra", desc: "108 Chants", bg: "https://images.unsplash.com/photo-1465847899084-d164df4dedc6?auto=format&fit=crop&w=500&q=80" },
-        { title: "Shiv Tandav Stotram", desc: "Powerful energy", bg: "https://images.unsplash.com/photo-1483412033650-1015ddeb83d1?auto=format&fit=crop&w=500&q=80" },
-        { title: "Sitar Devotionals", desc: "Traditional Ragas", bg: "https://images.unsplash.com/photo-1511192336575-5a79af67a629?auto=format&fit=crop&w=500&q=80" },
-        { title: "Divine Sufi Soul", desc: "Mystic devotional", bg: "https://images.unsplash.com/photo-1498038432885-c6f3f1b912ee?auto=format&fit=crop&w=500&q=80" },
-        { title: "Soothing Temple Bells", desc: "Evening Aarti", bg: "https://images.unsplash.com/photo-1447069387593-a5de0862481e?auto=format&fit=crop&w=500&q=80" }
-      ]
-    },
-    {
-      title: "Spiritual Discourses",
-      cards: [
-        { title: "The Art of Letting Go", desc: "Sadhguru Wisdom", bg: "https://images.unsplash.com/photo-1499209974431-9dddcece7f88?auto=format&fit=crop&w=500&q=80" },
-        { title: "Overcoming Fear & Anxiety", desc: "Gaur Gopal Das", bg: "https://images.unsplash.com/photo-1515378791036-0648a3ef77b2?auto=format&fit=crop&w=500&q=80" },
-        { title: "Secrets of Karma", desc: "BK Shivani", bg: "https://images.unsplash.com/photo-1506126613408-eca07ce68773?auto=format&fit=crop&w=500&q=80" },
-        { title: "Living with Purpose", desc: "Dandapani Insights", bg: "https://images.unsplash.com/photo-1518241353330-0f7941c2d9b5?auto=format&fit=crop&w=500&q=80" },
-        { title: "Gita in Modern Times", desc: "Swami Mukundananda", bg: "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&w=500&q=80" },
-        { title: "Spiritual Evolution", desc: "Jiddu Krishnamurti", bg: "https://images.unsplash.com/photo-1490730141103-6cac27aaab94?auto=format&fit=crop&w=500&q=80" }
-      ]
-    },
-    {
-      title: "Kids Stories",
-      cards: [
-        { title: "Little Krishna Makhan Chor", desc: "Animated Adventures", bg: "https://images.unsplash.com/photo-1488590528505-98d2b5aba04b?auto=format&fit=crop&w=500&q=80" },
-        { title: "Ganesha & the Sweet Modak", desc: "Fun cartoon tales", bg: "https://images.unsplash.com/photo-1509062522246-3755977927d7?auto=format&fit=crop&w=500&q=80" },
-        { title: "Hanuman's Mighty Flight", desc: "Epic child legends", bg: "https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?auto=format&fit=crop&w=500&q=80" },
-        { title: "The Wise Rabbit and Lion", desc: "Panchatantra classics", bg: "https://images.unsplash.com/photo-1460881680858-30d872d5b530?auto=format&fit=crop&w=500&q=80" },
-        { title: "Prahalad's Unshakable Faith", desc: "Lessons in truth", bg: "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=500&q=80" },
-        { title: "The Magical Flute of Vrindavan", desc: "Musical stories", bg: "https://images.unsplash.com/photo-1507838153414-b4b713384a76?auto=format&fit=crop&w=500&q=80" }
-      ]
-    }
+    ...(tvMovies.length > 0 ? [{ title: "Divine Movies", cards: tvMovies }] : []),
+    ...(kidsMovies.length > 0 ? [{ title: "Kids Special", cards: kidsMovies }] : []),
+    ...(trendingMovies.length > 0 ? [{ title: "Trending Now", cards: trendingMovies }] : [])
   ];
+
+  useEffect(() => {
+    const fetchMovies = async () => {
+      try {
+        const res = await axios.get('/api/movies');
+        if (Array.isArray(res.data)) {
+          setMovies(res.data);
+        }
+      } catch (err) {
+        console.error('Error fetching movies for TV:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchMovies();
+  }, []);
 
   // Rotate hero content every 10 seconds automatically unless playing
   useEffect(() => {
     if (isPlaying) return;
     const interval = setInterval(() => {
-      setCurrentHeroIndex(prev => (prev + 1) % heroScenes.length);
+      setCurrentHeroIndex(prev => (prev + 1) % displayHeroScenes.length);
     }, 10000);
     return () => clearInterval(interval);
-  }, [isPlaying]);
+  }, [isPlaying, displayHeroScenes.length]);
 
   // Spatial Keyboard D-Pad Navigation Engine
   useEffect(() => {
@@ -196,8 +168,9 @@ export default function TvHome() {
             // Hero buttons limits (Watch, Info)
             setActiveCol(prev => Math.min(1, prev + 1));
           } else {
-            // Row cards limits (6 cards per row)
-            setActiveCol(prev => Math.min(5, prev + 1));
+            // Row cards limits
+            const cardCount = contentRows[activeRow]?.cards?.length || 0;
+            setActiveCol(prev => Math.min(Math.max(0, cardCount - 1), prev + 1));
           }
           break;
 
@@ -221,7 +194,8 @@ export default function TvHome() {
             if (nextRow === -1) {
               setActiveCol(prev => Math.min(1, prev));
             } else if (nextRow >= 0) {
-              setActiveCol(prev => Math.min(5, prev));
+              const cardCount = contentRows[nextRow]?.cards?.length || 0;
+              setActiveCol(prev => Math.min(Math.max(0, cardCount - 1), prev));
             }
           }
           break;
@@ -270,21 +244,16 @@ export default function TvHome() {
       // Hero banner buttons
       if (activeCol === 0) {
         // Watch Now
-        setSelectedMovie(heroScenes[currentHeroIndex]);
+        setSelectedMovie(displayHeroScenes[currentHeroIndex]);
         setIsPlaying(true);
       } else {
         // More Info
-        setSelectedMovie(heroScenes[currentHeroIndex]);
+        setSelectedMovie(displayHeroScenes[currentHeroIndex]);
       }
     } else {
       // Movie card pressed
-      const card = contentRows[activeRow].cards[activeCol];
-      setSelectedMovie({
-        title: card.title,
-        subtitle: card.desc,
-        bg: card.bg,
-        videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4"
-      });
+      const movie = contentRows[activeRow].cards[activeCol];
+      setSelectedMovie(movie);
     }
   };
 
@@ -429,7 +398,7 @@ export default function TvHome() {
         {/* ============================================================== */}
         <section 
           className="relative h-[55vh] rounded-[2.5rem] overflow-hidden border border-white/5 shadow-[0_30px_60px_rgba(0,0,0,0.6)] mb-12 bg-cover bg-center transition-all duration-1000"
-          style={{ backgroundImage: `url(${heroScenes[currentHeroIndex].bg})` }}
+          style={{ backgroundImage: `url(${displayHeroScenes[currentHeroIndex]?.bg})` }}
         >
           {/* Black gradients overlay for that immersive theater feel */}
           <div className="absolute inset-0 bg-gradient-to-r from-[#060B12] via-[#060B12]/80 to-transparent z-10"></div>
@@ -442,18 +411,18 @@ export default function TvHome() {
             </span>
 
             <h1 className="text-4xl lg:text-5xl xl:text-6xl font-serif font-black tracking-tight leading-[1.1] text-white">
-              {heroScenes[currentHeroIndex].title}
+              {displayHeroScenes[currentHeroIndex]?.title}
             </h1>
 
             <p className="text-gray-300 text-sm lg:text-base xl:text-lg font-light leading-relaxed">
-              {heroScenes[currentHeroIndex].subtitle}
+              {displayHeroScenes[currentHeroIndex]?.subtitle}
             </p>
 
             <div className="flex items-center gap-4 pt-3">
               {/* Watch Now Button */}
               <button 
                 onClick={() => {
-                  setSelectedMovie(heroScenes[currentHeroIndex]);
+                  setSelectedMovie(displayHeroScenes[currentHeroIndex]);
                   setIsPlaying(true);
                 }}
                 className={`px-8 py-3.5 rounded-xl text-xs uppercase tracking-widest font-black flex items-center gap-2.5 transition-all ${
@@ -468,7 +437,7 @@ export default function TvHome() {
 
               {/* More Info Button */}
               <button 
-                onClick={() => setSelectedMovie(heroScenes[currentHeroIndex])}
+                onClick={() => setSelectedMovie(displayHeroScenes[currentHeroIndex])}
                 className={`px-8 py-3.5 rounded-xl text-xs uppercase tracking-widest font-black border flex items-center gap-2.5 transition-all ${
                   !isSidebarFocused && activeRow === -1 && activeCol === 1
                     ? 'bg-white/10 text-white border-white scale-105 shadow-[0_0_20px_rgba(255,255,255,0.15)]'
@@ -483,7 +452,7 @@ export default function TvHome() {
 
           {/* TV Carousel Indicators */}
           <div className="absolute right-12 bottom-12 z-20 flex items-center gap-2">
-            {heroScenes.map((_, idx) => (
+            {displayHeroScenes.map((_, idx) => (
               <span 
                 key={idx}
                 className={`h-2.5 rounded-full transition-all duration-300 ${
@@ -511,15 +480,13 @@ export default function TvHome() {
                 <div className="flex gap-6 overflow-x-auto py-4 px-2 -mx-2 mask-fade-right scroll-smooth no-scrollbar">
                   {row.cards.map((card, cIdx) => {
                     const isCardFocused = isRowFocused && activeCol === cIdx;
+                    const cardTitle = card.title;
+                    const cardDesc = card.genre || card.description || '';
+                    const cardBg = card.thumbnail || "/scene-krishna.svg";
                     return (
                       <div
-                        key={card.title + cIdx}
-                        onClick={() => setSelectedMovie({
-                          title: card.title,
-                          subtitle: card.desc,
-                          bg: card.bg,
-                          videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4"
-                        })}
+                        key={card._id || cIdx}
+                        onClick={() => setSelectedMovie(card)}
                         className={`flex-shrink-0 w-72 aspect-video rounded-2xl overflow-hidden bg-[#0F172A] border relative group transition-all duration-300 cursor-pointer ${
                           isCardFocused 
                             ? 'scale-110 border-[#F5A623] shadow-[0_0_30px_rgba(245,166,35,0.4)] z-30' 
@@ -529,26 +496,16 @@ export default function TvHome() {
                       >
                         {/* Thumbnail */}
                         <img 
-                          src={card.bg} 
-                          alt={card.title} 
+                          src={cardBg} 
+                          alt={cardTitle} 
                           loading="lazy"
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                         />
 
                         {/* Text Gradient Overlay */}
                         <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent flex flex-col justify-end p-4">
-                          <h3 className="text-sm font-bold text-white leading-tight">{card.title}</h3>
-                          <p className="text-[11px] text-gray-400 font-medium">{card.desc}</p>
-
-                          {/* Progress bar (if applicable) */}
-                          {card.progress !== undefined && (
-                            <div className="w-full h-1 bg-white/20 rounded-full mt-2 overflow-hidden">
-                              <div 
-                                className="h-full bg-[#F5A623]" 
-                                style={{ width: `${card.progress}%` }}
-                              />
-                            </div>
-                          )}
+                          <h3 className="text-sm font-bold text-white leading-tight">{cardTitle}</h3>
+                          <p className="text-[11px] text-gray-400 font-medium">{cardDesc}</p>
                         </div>
                       </div>
                     );
@@ -567,11 +524,14 @@ export default function TvHome() {
         <div className="fixed inset-0 z-50 bg-[#04080D]/98 flex flex-col items-center justify-center p-8">
           {isPlaying ? (
             <div className="w-full h-full relative flex items-center justify-center">
-              <video 
-                src={selectedMovie.videoUrl} 
-                autoPlay 
-                controls 
+              <MediaPlayerHLS 
+                key={selectedMovie._id || selectedMovie.id || selectedMovie.videoUrl || selectedMovie.youtubeUrl}
+                url={selectedMovie.videoUrl || selectedMovie.youtubeUrl} 
+                hlsUrl={selectedMovie.hlsUrl}
+                title={selectedMovie.title}
                 className="w-full max-h-full aspect-video rounded-3xl border border-white/10"
+                autoPlay={true}
+                controls={true}
               />
               <button 
                 onClick={() => {
@@ -586,17 +546,18 @@ export default function TvHome() {
           ) : (
             <div className="max-w-4xl w-full bg-[#0A121C] rounded-[2.5rem] border border-white/5 overflow-hidden flex flex-col md:flex-row shadow-[0_30px_100px_rgba(0,0,0,0.8)]">
               <img 
-                src={selectedMovie.bg} 
+                src={selectedMovie.thumbnail || selectedMovie.bg || "/scene-krishna.svg"} 
                 alt={selectedMovie.title} 
                 className="w-full md:w-1/2 aspect-video object-cover"
               />
               <div className="p-8 sm:p-12 flex flex-col justify-between flex-1 space-y-6">
                 <div className="space-y-4">
-                  <span className="text-[10px] tracking-[0.2em] font-black uppercase text-[#F5A623]">{selectedMovie.subtitle}</span>
+                  <span className="text-[10px] tracking-[0.2em] font-black uppercase text-[#F5A623]">
+                    {selectedMovie.genre || selectedMovie.subtitle || 'Divine'}
+                  </span>
                   <h2 className="text-3xl sm:text-4xl font-serif font-black text-white">{selectedMovie.title}</h2>
                   <p className="text-gray-400 text-sm font-light leading-relaxed">
-                    Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aliquam nec finibus urna, sed semper ligula. 
-                    Sed pulvinar arcu vel pretium porttitor. Stream the divine lessons of life directly in full high-definition.
+                    {selectedMovie.description || "Stream the divine lessons of life directly in full high-definition."}
                   </p>
                 </div>
 
