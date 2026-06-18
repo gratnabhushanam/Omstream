@@ -51,6 +51,12 @@ function AppShell() {
   const { tier, status } = useSubscription();
   const { immersiveNotification, setImmersiveNotification } = useNotifications();
   const [minSplashTimeReached, setMinSplashTimeReached] = useState(false);
+  const [showSplash, setShowSplash] = useState(() => !sessionStorage.getItem('splashShown'));
+
+  const handleSplashComplete = () => {
+    setShowSplash(false);
+    sessionStorage.setItem('splashShown', 'true');
+  };
 
   useEffect(() => {
     const timer = setTimeout(() => setMinSplashTimeReached(true), 2500);
@@ -175,6 +181,9 @@ function AppShell() {
 
   return (
     <div className={`app-shell flex justify-center min-h-[100dvh] bg-[#06101E] overflow-x-hidden text-white transition-all duration-1000 relative ${getAuraColor()}`}>
+      
+      {showSplash && <SplashScreen onComplete={handleSplashComplete} />}
+
       {/* Magic Sparkles */}
       {sparkles.map(s => (
         <div key={s.id} className="magic-sparkle" style={{ left: s.x, top: s.y }}>

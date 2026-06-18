@@ -286,3 +286,37 @@
   animation: loaderProgress 2s ease-in-out infinite;
 }
 .animate-shimmer { animation: shimmer 3s infinite ease-in-out; }
+
+/* Cinematic Splash Screen */
+.cinematic-zoom {
+  animation: cinematicZoom 6s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+}
+
+@keyframes cinematicZoom {
+  0% { transform: scale(0.8) translateZ(0); opacity: 0; filter: blur(10px); }
+  20% { opacity: 1; filter: blur(0px); }
+  100% { transform: scale(1.1) translateZ(0); filter: blur(0px); }
+}
+
+.animate-sweep-slow {
+  animation: sweepSlow 4s linear infinite;
+}
+
+@keyframes sweepSlow {
+  0% { transform: translateX(-150%) rotate(45deg); }
+  100% { transform: translateX(250%) rotate(45deg); }
+}
+
+.shimmer-text {
+  background-size: 200% auto;
+  animation: shimmerSweep 3s linear infinite;
+}
+
+@keyframes shimmerSweep {
+  0% { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+
+.radial-gradient-glow {
+  background: radial-gradient(circle at center, rgba(212,175,55,0.15) 0%, rgba(2,5,10,0) 70%);
+}
