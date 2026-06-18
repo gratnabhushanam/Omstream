@@ -359,6 +359,7 @@ export default function Movies() {
               {/* Player Area */}
               <div className="w-full h-[60vh] lg:h-[75vh] ott-player-container group tv-focusable">
                 <MediaPlayerHLS 
+                  key={selectedMovie._id || selectedMovie.id || selectedMovie.videoUrl}
                   url={selectedMovie.videoUrl} 
                   hlsUrl={selectedMovie.hlsUrl}
                   title={selectedMovie.title}

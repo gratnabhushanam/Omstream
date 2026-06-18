@@ -340,6 +340,7 @@ export default function MediaPlayer({
   }
 
   const isYoutube = isYoutubeUrl(secureVideoUrl || cdnVideoUrl);
+  const safeReactPlayerUrl = isYoutube ? `https://www.youtube.com/watch?v=${getYoutubeVideoId(secureVideoUrl || cdnVideoUrl)}` : (secureVideoUrl || cdnVideoUrl);
   const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
 
   return (
@@ -360,7 +361,7 @@ export default function MediaPlayer({
       {isYoutube ? (
         <ReactPlayer
           ref={reactPlayerRef}
-          url={secureVideoUrl || cdnVideoUrl}
+          url={safeReactPlayerUrl}
           className={`react-player-wrapper w-full h-full ${instagramMode ? 'object-cover' : 'object-contain'} transition-opacity duration-700 cursor-pointer ${loadingToken ? 'opacity-0' : 'opacity-100'}`}
           width="100%"
           height="100%"
@@ -380,7 +381,6 @@ export default function MediaPlayer({
               playerVars: { modestbranding: 1, rel: 0, iv_load_policy: 3, disablekb: 1 }
             }
           }}
-          style={{ pointerEvents: 'none' }} // Prevent clicking raw iframe to pause, so our overlay catches it
         />
       ) : (
         <video
@@ -410,8 +410,8 @@ export default function MediaPlayer({
 
           {/* Large Center Play Button when Paused */}
           {!isPlaying && !loadingToken && (
-            <div className="absolute inset-0 flex items-center justify-center bg-black/30 pointer-events-auto" onClick={togglePlay}>
-               <div className="w-20 h-20 rounded-full bg-devotion-gold/20 backdrop-blur-md border border-devotion-gold/50 flex items-center justify-center text-devotion-gold hover:scale-110 transition-transform cursor-pointer shadow-[0_0_50px_rgba(255,215,0,0.2)]">
+            <div className="absolute inset-0 flex items-center justify-center bg-black/30 pointer-events-none">
+               <div className="w-20 h-20 rounded-full bg-devotion-gold/20 backdrop-blur-md border border-devotion-gold/50 flex items-center justify-center text-devotion-gold hover:scale-110 transition-transform cursor-pointer shadow-[0_0_50px_rgba(255,215,0,0.2)] pointer-events-auto" onClick={togglePlay}>
                   <Play className="w-10 h-10 ml-2 fill-current" />
                </div>
             </div>
