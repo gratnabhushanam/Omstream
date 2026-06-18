@@ -316,7 +316,12 @@ export default function Login() {
       if (isNewUser) {
         goTo(STEPS.ONBOARDING);
       } else {
-        navigate(returnTo, { replace: true });
+        const userData = result.user || result;
+        if (userData?.role === 'admin') {
+          navigate('/admin', { replace: true });
+        } else {
+          navigate(returnTo, { replace: true });
+        }
       }
     } catch (err) {
       if (err.response?.data?.status === 'device_limit_reached') {
@@ -571,8 +576,13 @@ export default function Login() {
                         setError('');
                         setLoading(true);
                         try {
-                          await login(email ? email : fullPhone, password);
-                          navigate(returnTo, { replace: true });
+                          const data = await login(email ? email : fullPhone, password);
+                          const userData = data?.user || data;
+                          if (userData?.role === 'admin') {
+                            navigate('/admin', { replace: true });
+                          } else {
+                            navigate(returnTo, { replace: true });
+                          }
                         } catch (err) {
                           setError(err.response?.data?.message || 'Invalid password');
                         } finally {
