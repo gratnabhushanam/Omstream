@@ -152,7 +152,7 @@ export default function Search() {
             <ExternalLink className="w-4 h-4 text-white/20 group-hover:text-[#FF7A00] transition-colors" />
          </div>
          <h4 className="text-xl font-black text-white mb-3 group-hover:text-[#FF7A00] transition-colors uppercase tracking-tight">
-            {t(item, 'title') || item.title || (item.chapter ? `Chapter ${item.chapter}, Verse ${item.verse}` : 'Gita Wisdom')}
+            {t(item, 'title') || item.title || (item.chapter ? `Chapter ${item.chapter}, Verse ${item.verse}` : 'Omstream')}
          </h4>
          <p className="text-white/50 text-sm line-clamp-2 leading-relaxed font-serif italic">
             {t(item, 'description') || item.englishMeaning || item.summary || item.description || 'Dive into the ancient wisdom of Lord Krishna.'}

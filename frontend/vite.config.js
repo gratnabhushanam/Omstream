@@ -18,9 +18,9 @@ export default defineConfig({
       },
       includeAssets: ['logo-om-v2.png', 'screenshot-640x480.png', 'screenshot-1280x800.png'],
       manifest: {
-        name: 'Gita Wisdom Devotion',
-        short_name: 'Gita Wisdom',
-        description: 'Immersive divine spiritual journey and reels',
+        name: 'Omstream',
+        short_name: 'Omstream',
+        description: 'Stream spiritual knowledge, devotional music, stories, and timeless wisdom',
         theme_color: '#06101E',
         background_color: '#06101E',
         display: 'standalone',

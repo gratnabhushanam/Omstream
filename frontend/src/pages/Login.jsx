@@ -1,8 +1,9 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import axios from 'axios';
 import DeviceLimitResolver from '../components/DeviceLimitResolver';
+import { Mail, Phone, Eye, EyeOff } from 'lucide-react';
 
 // ─── Country data ────────────────────────────────────────────────────────────
 const COUNTRIES = [
@@ -16,6 +17,22 @@ const COUNTRIES = [
   { name: 'Singapore',      dial: '+65', flag: '🇸🇬', code: 'SG' },
   { name: 'Germany',        dial: '+49', flag: '🇩🇪', code: 'DE' },
   { name: 'Malaysia',       dial: '+60', flag: '🇲🇾', code: 'MY' },
+  { name: 'Bangladesh',     dial: '+880',flag: '🇧🇩', code: 'BD' },
+  { name: 'Pakistan',       dial: '+92', flag: '🇵🇰', code: 'PK' },
+  { name: 'Sri Lanka',      dial: '+94', flag: '🇱🇰', code: 'LK' },
+  { name: 'Nepal',          dial: '+977',flag: '🇳🇵', code: 'NP' },
+  { name: 'Indonesia',      dial: '+62', flag: '🇮🇩', code: 'ID' },
+  { name: 'South Africa',   dial: '+27', flag: '🇿🇦', code: 'ZA' },
+  { name: 'New Zealand',    dial: '+64', flag: '🇳🇿', code: 'NZ' },
+  { name: 'Japan',          dial: '+81', flag: '🇯🇵', code: 'JP' },
+  { name: 'France',         dial: '+33', flag: '🇫🇷', code: 'FR' },
+  { name: 'Italy',          dial: '+39', flag: '🇮🇹', code: 'IT' },
+  { name: 'Brazil',         dial: '+55', flag: '🇧🇷', code: 'BR' },
+  { name: 'Mexico',         dial: '+52', flag: '🇲🇽', code: 'MX' },
+  { name: 'Netherlands',    dial: '+31', flag: '🇳🇱', code: 'NL' },
+  { name: 'Switzerland',    dial: '+41', flag: '🇨🇭', code: 'CH' },
+  { name: 'Sweden',         dial: '+46', flag: '🇸🇪', code: 'SE' },
+  { name: 'Spain',          dial: '+34', flag: '🇪🇸', code: 'ES' }
 ];
 
 const LANGUAGES = [
@@ -84,9 +101,11 @@ function OtpBoxes({ value, onChange, onKeyDown, refs, loading }) {
 // ─── Main Component ───────────────────────────────────────────────────────────
 export default function Login() {
   const [step, setStep]                   = useState(STEPS.WELCOME);
+  const [identifier, setIdentifier]       = useState('');
   const [direction, setDirection]         = useState(1); // 1=forward, -1=back
   const [country, setCountry]             = useState(COUNTRIES[0]);
   const [showCountryPicker, setShowCountryPicker] = useState(false);
+  const [countrySearchQuery, setCountrySearchQuery] = useState('');
   const [phone, setPhone]                 = useState('');
   const [userExists, setUserExists]       = useState(null);
   const [otp, setOtp]                     = useState(['', '', '', '', '', '']);
@@ -99,12 +118,15 @@ export default function Login() {
   const [animating, setAnimating]         = useState(false);
   const [email, setEmail]                 = useState('');
   const [password, setPassword]           = useState('');
+  const [showPassword, setShowPassword]   = useState(false);
+  const [showEmailPassword, setShowEmailPassword] = useState(false);
 
   const otpRefs    = useRef([]);
   const phoneRef   = useRef(null);
   const navigate   = useNavigate();
   const location   = useLocation();
-  const returnTo   = location.state?.returnTo || '/home';
+  const rawReturnTo = location.state?.returnTo || '/home';
+  const returnTo   = rawReturnTo.includes('subscription') ? '/home' : rawReturnTo;
   const { sendOtpLogin, verifyOtpLogin, login } = useAuth();
 
   const fullPhone = country.dial + phone.replace(/\D/g, '');
@@ -142,8 +164,13 @@ export default function Login() {
     setError('');
     setLoading(true);
     try {
-      await login(email, password);
-      navigate('/admin', { replace: true });
+      const data = await login(email, password);
+      const userData = data.user || data;
+      if (userData.role === 'admin') {
+        navigate('/admin', { replace: true });
+      } else {
+        navigate(returnTo, { replace: true });
+      }
     } catch (err) {
       setError(err.response?.data?.message || 'Invalid credentials');
     } finally {
@@ -151,20 +178,67 @@ export default function Login() {
     }
   };
 
-  // ── Step handlers ──────────────────────────────────────────────────────────
-  const handlePhoneContinue = async () => {
-    const digits = phone.replace(/\D/g, '');
-    if (digits.length < 7) { setError('Please enter a valid mobile number'); return; }
-    setError('');
-    setLoading(true);
-    try {
-      const { data } = await axios.post('/api/auth/check-phone', { phone: fullPhone });
-      setUserExists(data.exists);
-      goTo(STEPS.DETECTED);
-    } catch (err) {
-      setError(err.response?.data?.message || 'Network error. Please try again.');
-    } finally {
-      setLoading(false);
+  const handleContinue = async (e) => {
+    if (e) e.preventDefault();
+    const val = identifier.trim();
+    if (!val) { setError('Please enter your email or mobile number'); return; }
+
+    const containsAt = val.includes('@');
+    if (containsAt) {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(val)) {
+        setError('Please enter a valid email address');
+        return;
+      }
+      setError('');
+      setLoading(true);
+      setEmail(val.toLowerCase());
+      setPhone('');
+      try {
+        const { data } = await axios.post('/api/auth/check-phone', { email: val.toLowerCase() });
+        setUserExists(data.exists);
+        if (data.exists) {
+          goTo(STEPS.DETECTED);
+        } else {
+          setError('This email is not registered. Please sign up to create an account.');
+        }
+      } catch (err) {
+        setError(err.response?.data?.message || 'Network error. Please try again.');
+      } finally {
+        setLoading(false);
+      }
+    } else {
+      const digits = val.replace(/\D/g, '');
+      if (digits.length < 7 || digits.length > 12) {
+        setError('Please enter a valid mobile number');
+        return;
+      }
+      setError('');
+      setLoading(true);
+      setPhone(digits);
+      setEmail('');
+      
+      const fullPhoneNumber = country.dial + digits;
+      
+      try {
+        const { data } = await axios.post('/api/auth/check-phone', { phone: fullPhoneNumber });
+        setUserExists(data.exists);
+        
+        const res = await sendOtpLogin({ phone: fullPhoneNumber });
+        setPreviewCode(res.previewCode || '');
+        if (res.previewCode) {
+          const otpDigits = res.previewCode.toString().split('');
+          setOtp(otpDigits.length === 6 ? otpDigits : ['', '', '', '', '', '']);
+        } else {
+          setOtp(['', '', '', '', '', '']);
+        }
+        setResendCooldown(30);
+        goTo(STEPS.OTP);
+      } catch (err) {
+        setError(err.response?.data?.message || 'Failed to send OTP. Try again.');
+      } finally {
+        setLoading(false);
+      }
     }
   };
 
@@ -277,7 +351,7 @@ export default function Login() {
     } catch (_) { /* non-critical, continue */ }
     finally {
       setLoading(false);
-      navigate(returnTo, { replace: true });
+      navigate('/subscription', { replace: true });
     }
   };
 
@@ -338,14 +412,14 @@ export default function Login() {
           <span className="text-3xl sm:text-4xl">🪈</span>
         </div>
         <h1 className="text-xl sm:text-2xl font-black uppercase tracking-[0.2em] text-amber-400">
-          Gita Wisdom
+          Omstream
         </h1>
-        <p className="text-xs text-white/40 tracking-widest uppercase mt-0.5">Divine Content Platform</p>
+        <p className="text-xs text-white/40 tracking-widest uppercase mt-0.5">Spiritual Streaming Platform</p>
       </div>
 
       {/* ── Card ── */}
       <div className="relative z-10 w-full max-w-sm">
-        <div className="rounded-3xl border border-white/10 shadow-2xl overflow-hidden"
+        <div className="rounded-3xl border border-white/10 shadow-2xl overflow-visible"
           style={{ background: 'rgba(10,18,35,0.85)', backdropFilter: 'blur(24px)' }}>
 
           {/* Step progress dots */}
@@ -365,126 +439,62 @@ export default function Login() {
             {/* ════════════════════════════════════════════════
                 STEP 0 — WELCOME
             ════════════════════════════════════════════════ */}
-            {step === STEPS.WELCOME && (
-              <div className={`${slideClass} flex flex-col items-center text-center gap-6`}>
-                <div>
-                  <h2 className="text-2xl sm:text-3xl font-black text-white leading-tight mb-3">
-                    Watch, Listen & Learn<br/>
+            {(step === STEPS.WELCOME || step === STEPS.PHONE) && (
+              <div className={`${slideClass} space-y-6`}>
+                <div className="text-center">
+                  <h2 className="text-2xl sm:text-3xl font-black text-white leading-tight mb-2">
+                    Watch, Listen & Experience<br/>
                     <span className="text-transparent bg-clip-text"
                       style={{ backgroundImage: 'linear-gradient(90deg, #fbbf24, #f59e0b, #d97706)' }}>
-                      Divine Content
+                      Spiritual Content
                     </span>
                   </h2>
                   <p className="text-sm text-white/55 leading-relaxed max-w-xs mx-auto">
-                    Experience Bhagavad Gita, devotional music, spiritual stories and timeless wisdom — all in one place.
+                    Stream spiritual knowledge, devotional music, stories, and timeless wisdom — all in one place.
                   </p>
                 </div>
 
-                {/* Feature pills */}
-                <div className="flex flex-wrap justify-center gap-2">
-                  {['🎵 Music', '📖 Stories', '🧘 Yoga', '🎬 Videos'].map(f => (
-                    <span key={f} className="text-xs font-semibold text-white/70 bg-white/5 border border-white/10 px-3 py-1 rounded-full">
-                      {f}
-                    </span>
-                  ))}
-                </div>
-
-                <button
-                  onClick={() => goTo(STEPS.PHONE)}
-                  className="w-full py-4 rounded-2xl text-base font-black uppercase tracking-widest text-[#0d1520] transition-all duration-200 active:scale-95 hover:shadow-[0_0_30px_rgba(251,191,36,0.5)]"
-                  style={{ background: 'linear-gradient(135deg, #fbbf24 0%, #f59e0b 50%, #d97706 100%)' }}
-                >
-                  Continue with Mobile Number
-                </button>
-
-                <p className="text-xs text-white/30">
-                  By continuing, you agree to our Terms & Privacy Policy
-                </p>
-              </div>
-            )}
-
-            {/* ════════════════════════════════════════════════
-                STEP 1 — PHONE NUMBER
-            ════════════════════════════════════════════════ */}
-            {step === STEPS.PHONE && (
-              <div className={`${slideClass}`}>
-                <button onClick={() => goTo(STEPS.WELCOME, -1)}
-                  className="text-white/40 hover:text-white text-xs uppercase tracking-wider font-semibold flex items-center gap-1 mb-5 transition-colors">
-                  ← Back
-                </button>
-
-                <h2 className="text-xl sm:text-2xl font-black text-white mb-1">Enter Mobile Number</h2>
-                <p className="text-sm text-white/45 mb-6">We'll send an OTP to verify your number</p>
-
                 {error && (
-                  <div className="mb-4 bg-red-500/10 border border-red-400/25 rounded-2xl px-4 py-3 text-sm text-red-300">
+                  <div className="bg-red-500/10 border border-red-400/25 rounded-2xl px-4 py-3 text-sm text-red-300">
                     {error}
                   </div>
                 )}
 
-                {/* Phone input with country picker */}
-                <div className="flex gap-2 mb-5">
-                  {/* Country button */}
+                <form onSubmit={handleContinue} className="space-y-4">
                   <div className="relative">
-                    <button
-                      type="button"
-                      onClick={() => setShowCountryPicker(p => !p)}
-                      className="h-14 px-3 rounded-2xl border border-white/15 bg-white/5 flex items-center gap-2 text-white hover:border-amber-400/40 transition-colors whitespace-nowrap"
-                    >
-                      <span className="text-xl">{country.flag}</span>
-                      <span className="text-sm font-bold">{country.dial}</span>
-                      <span className="text-white/40 text-xs">▾</span>
-                    </button>
-
-                    {showCountryPicker && (
-                      <div className="absolute top-16 left-0 z-50 w-56 rounded-2xl border border-white/15 shadow-2xl overflow-y-auto max-h-56"
-                        style={{ background: 'rgba(10,18,35,0.97)', backdropFilter: 'blur(20px)' }}>
-                        {COUNTRIES.map(c => (
-                          <button key={c.code} type="button"
-                            onClick={() => { setCountry(c); setShowCountryPicker(false); }}
-                            className={`w-full flex items-center gap-3 px-4 py-3 text-sm text-left hover:bg-white/8 transition-colors ${c.code === country.code ? 'text-amber-400' : 'text-white/80'}`}>
-                            <span className="text-lg">{c.flag}</span>
-                            <span className="flex-1">{c.name}</span>
-                            <span className="text-white/40 font-mono text-xs">{c.dial}</span>
-                          </button>
-                        ))}
-                      </div>
-                    )}
+                    <input
+                      type="text"
+                      value={identifier}
+                      onChange={e => { setIdentifier(e.target.value); setError(''); }}
+                      placeholder="Email or Mobile Number"
+                      className="w-full h-14 rounded-2xl border border-white/15 bg-white/5 pl-12 pr-4 text-white text-base font-semibold outline-none focus:border-amber-400/60 transition-colors placeholder-white/25"
+                    />
+                    <div className="absolute left-4 top-1/2 -translate-y-1/2 text-white/40 pointer-events-none">
+                      {identifier.includes('@') ? (
+                        <Mail className="w-5 h-5 text-amber-400" />
+                      ) : (
+                        <Phone className="w-5 h-5 text-amber-400" />
+                      )}
+                    </div>
                   </div>
 
-                  {/* Number input */}
-                  <input
-                    ref={phoneRef}
-                    type="tel"
-                    value={phone}
-                    onChange={e => { setPhone(e.target.value.replace(/\D/g, '')); setError(''); }}
-                    onKeyDown={e => e.key === 'Enter' && handlePhoneContinue()}
-                    placeholder="Mobile Number"
-                    maxLength={12}
-                    className="flex-1 h-14 rounded-2xl border border-white/15 bg-white/5 px-4 text-white text-base font-semibold outline-none focus:border-amber-400/60 transition-colors placeholder-white/25"
-                  />
-                </div>
+                  <p className="text-xs text-white/35 text-left pl-1">
+                    Enter your email or mobile number
+                  </p>
 
-                <p className="text-xs text-white/35 mb-5 text-center">
-                  {country.flag} {country.name} • OTP via SMS
+                  <button
+                    type="submit"
+                    disabled={loading || !identifier.trim()}
+                    className="w-full py-4 rounded-2xl text-base font-black uppercase tracking-widest text-[#0d1520] transition-all duration-200 active:scale-95 disabled:opacity-50"
+                    style={{ background: 'linear-gradient(135deg, #fbbf24 0%, #f59e0b 50%, #d97706 100%)' }}
+                  >
+                    {loading ? 'Continuing...' : 'Continue'}
+                  </button>
+                </form>
+
+                <p className="text-[11px] text-white/30 text-center">
+                  By continuing, you agree to our Terms & Privacy Policy
                 </p>
-
-                <button
-                  onClick={handlePhoneContinue}
-                  disabled={loading || phone.replace(/\D/g,'').length < 7}
-                  className="w-full py-4 rounded-2xl text-base font-black uppercase tracking-widest text-[#0d1520] transition-all duration-200 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
-                  style={{ background: 'linear-gradient(135deg, #fbbf24 0%, #f59e0b 50%, #d97706 100%)' }}
-                >
-                  {loading ? (
-                    <span className="flex items-center justify-center gap-2">
-                      <svg className="animate-spin w-5 h-5" viewBox="0 0 24 24" fill="none">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4l3-3-3-3v4a8 8 0 00-8 8h4z"/>
-                      </svg>
-                      Checking...
-                    </span>
-                  ) : 'Continue'}
-                </button>
               </div>
             )}
 
@@ -498,14 +508,18 @@ export default function Login() {
                   ← Change Number
                 </button>
 
-                {/* Phone display */}
+                {/* User details display */}
                 <div className="flex items-center gap-3 bg-white/5 border border-white/10 rounded-2xl px-4 py-3 mb-6">
-                  <span className="text-xl">{country.flag}</span>
+                  {!email && <span className="text-xl">{country.flag}</span>}
                   <div>
-                    <p className="text-[10px] uppercase tracking-widest text-white/40 font-semibold">Mobile Number</p>
-                    <p className="text-base font-black text-white">{maskPhone(country.dial, phone)}</p>
+                    <p className="text-[10px] uppercase tracking-widest text-white/40 font-semibold">
+                      {email ? 'Email Address' : 'Mobile Number'}
+                    </p>
+                    <p className="text-base font-black text-white">
+                      {email ? email : maskPhone(country.dial, phone)}
+                    </p>
                   </div>
-                  <button onClick={() => goTo(STEPS.PHONE, -1)} className="ml-auto text-amber-400 text-xs font-bold uppercase tracking-wider hover:underline">
+                  <button onClick={() => goTo(STEPS.WELCOME, -1)} className="ml-auto text-amber-400 text-xs font-bold uppercase tracking-wider hover:underline">
                     Edit
                   </button>
                 </div>
@@ -522,8 +536,8 @@ export default function Login() {
                   </h3>
                   <p className="text-sm text-white/60">
                     {userExists
-                      ? 'We found your account. Verify with OTP to continue.'
-                      : 'Create your account in seconds — just verify your number.'}
+                      ? 'We found your account. Enter your password to log in.'
+                      : 'Create your account in seconds.'}
                   </p>
                 </div>
 
@@ -533,18 +547,61 @@ export default function Login() {
                   </div>
                 )}
 
-                <button
-                  onClick={handleSendOtp}
-                  disabled={loading}
-                  className="w-full py-4 rounded-2xl text-base font-black uppercase tracking-widest text-[#0d1520] transition-all duration-200 active:scale-95 disabled:opacity-50"
-                  style={{ background: 'linear-gradient(135deg, #fbbf24 0%, #f59e0b 50%, #d97706 100%)' }}
-                >
-                  {loading ? 'Sending OTP...' : userExists ? '🔐 Login with OTP' : '✨ Create Account'}
-                </button>
-
-                <p className="text-xs text-white/35 text-center mt-4">
-                  OTP will be sent to your mobile number via SMS
-                </p>
+                {userExists ? (
+                  <div className="space-y-4">
+                    <div className="relative">
+                      <input
+                        type={showPassword ? 'text' : 'password'}
+                        value={password}
+                        onChange={e => setPassword(e.target.value)}
+                        placeholder="Enter Password"
+                        className="w-full h-14 rounded-2xl border border-white/15 bg-white/5 pl-4 pr-12 text-white text-base font-semibold outline-none focus:border-amber-400/60 transition-colors placeholder-white/25"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-4 top-1/2 -translate-y-1/2 text-white/40 hover:text-white transition-colors"
+                      >
+                        {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                      </button>
+                    </div>
+                    <button
+                      onClick={async () => {
+                        if (!password) { setError('Please enter password'); return; }
+                        setError('');
+                        setLoading(true);
+                        try {
+                          await login(email ? email : fullPhone, password);
+                          navigate(returnTo, { replace: true });
+                        } catch (err) {
+                          setError(err.response?.data?.message || 'Invalid password');
+                        } finally {
+                          setLoading(false);
+                        }
+                      }}
+                      disabled={loading || !password}
+                      className="w-full py-4 rounded-2xl text-base font-black uppercase tracking-widest text-[#0d1520] transition-all duration-200 active:scale-95 disabled:opacity-50"
+                      style={{ background: 'linear-gradient(135deg, #fbbf24 0%, #f59e0b 50%, #d97706 100%)' }}
+                    >
+                      {loading ? 'Signing In...' : 'Verify Password'}
+                    </button>
+                  </div>
+                ) : (
+                  /* New User - OTP Verification flow */
+                  <div className="space-y-4">
+                    <button
+                      onClick={handleSendOtp}
+                      disabled={loading}
+                      className="w-full py-4 rounded-2xl text-base font-black uppercase tracking-widest text-[#0d1520] transition-all duration-200 active:scale-95 disabled:opacity-50"
+                      style={{ background: 'linear-gradient(135deg, #fbbf24 0%, #f59e0b 50%, #d97706 100%)' }}
+                    >
+                      {loading ? 'Sending OTP...' : '✨ Create Account'}
+                    </button>
+                    <p className="text-xs text-white/35 text-center">
+                      OTP will be sent to your mobile number via SMS
+                    </p>
+                  </div>
+                )}
               </div>
             )}
 
@@ -562,21 +619,7 @@ export default function Login() {
                 <p className="text-sm text-white/45 mb-1">OTP sent to</p>
                 <p className="text-base font-bold text-amber-400 mb-6">{maskPhone(country.dial, phone)}</p>
 
-                {/* Dev preview code */}
-                {previewCode && (
-                  <div className="mb-5 rounded-2xl border-2 border-amber-400/40 bg-amber-500/8 px-4 py-3 flex items-center justify-between gap-3">
-                    <div>
-                      <p className="text-[10px] uppercase tracking-widest text-amber-400/70 font-bold mb-0.5">⚠️ Dev Mode — SMS not configured</p>
-                      <p className="text-2xl font-black text-amber-400 tracking-[0.4em] font-mono">{previewCode}</p>
-                    </div>
-                    <button onClick={() => {
-                      const d = previewCode.toString().split('');
-                      setOtp(d.length === 6 ? d : ['','','','','','']);
-                    }} className="text-xs bg-amber-400/15 hover:bg-amber-400/25 text-amber-300 px-3 py-2 rounded-xl font-bold transition-colors shrink-0">
-                      Use Code
-                    </button>
-                  </div>
-                )}
+
 
                 {error && (
                   <div className="mb-4 bg-red-500/10 border border-red-400/25 rounded-2xl px-4 py-3 text-sm text-red-300">
@@ -706,7 +749,7 @@ export default function Login() {
                   {loading ? 'Setting Up...' : '🚀 Start My Journey'}
                 </button>
 
-                <button onClick={() => navigate(returnTo, { replace: true })}
+                <button onClick={() => navigate('/subscription', { replace: true })}
                   className="w-full mt-3 py-2 text-xs text-white/30 hover:text-white/50 transition-colors">
                   Skip for now
                 </button>
@@ -743,13 +786,22 @@ export default function Login() {
                     />
                   </div>
                   <div className="mb-6">
-                    <input
-                      type="password"
-                      value={password}
-                      onChange={e => setPassword(e.target.value)}
-                      placeholder="Password"
-                      className="w-full h-14 rounded-2xl border border-white/15 bg-white/5 px-4 text-white text-base font-semibold outline-none focus:border-amber-400/60 transition-colors placeholder-white/25"
-                    />
+                    <div className="relative">
+                      <input
+                        type={showEmailPassword ? 'text' : 'password'}
+                        value={password}
+                        onChange={e => setPassword(e.target.value)}
+                        placeholder="Password"
+                        className="w-full h-14 rounded-2xl border border-white/15 bg-white/5 pl-4 pr-12 text-white text-base font-semibold outline-none focus:border-amber-400/60 transition-colors placeholder-white/25"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowEmailPassword(!showEmailPassword)}
+                        className="absolute right-4 top-1/2 -translate-y-1/2 text-white/40 hover:text-white transition-colors"
+                      >
+                        {showEmailPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                      </button>
+                    </div>
                   </div>
 
                   <button type="submit" disabled={loading}
@@ -764,15 +816,16 @@ export default function Login() {
         </div>
 
         {/* Footer */}
-        <div className="flex flex-col items-center gap-2 mt-5">
-          <p className="text-center text-xs text-white/25">
+        <div className="flex flex-col items-center gap-3 mt-5">
+          {(step === STEPS.WELCOME || step === STEPS.PHONE || step === STEPS.EMAIL_LOGIN) && (
+            <p className="text-center text-xs text-white/50">
+              New to Omstream?{' '}
+              <Link to="/register" className="text-amber-400 font-bold hover:underline">Sign up</Link>
+            </p>
+          )}
+          <p className="text-center text-xs text-white/30">
             🔒 Your data is encrypted and secure
           </p>
-          {step !== STEPS.EMAIL_LOGIN && (
-            <button onClick={() => goTo(STEPS.EMAIL_LOGIN)} className="text-[10px] uppercase tracking-widest text-white/20 hover:text-white/50 transition-colors font-bold">
-              Email Login
-            </button>
-          )}
         </div>
       </div>
 

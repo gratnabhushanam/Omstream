@@ -138,7 +138,7 @@ export default function ForgotPassword() {
                   Reset Access
                 </h1>
                 <p className="auth-quote max-w-xl text-lg leading-relaxed sm:text-xl">
-                  Recover your Gita Wisdom account with OTP verification and return to your spiritual learning journey.
+                  Recover your Omstream account with OTP verification and return to your spiritual learning journey.
                 </p>
               </div>
 

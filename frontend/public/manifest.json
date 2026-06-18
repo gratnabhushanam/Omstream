@@ -1,7 +1,7 @@
 {
-  "name": "Gita Wisdom - Devotional Learning",
-  "short_name": "GitaWisdom",
-  "description": "Learn Gita wisdom, daily slokas, stories, and spiritual guidance",
+  "name": "Omstream - Spiritual Streaming Platform",
+  "short_name": "Omstream",
+  "description": "Stream spiritual knowledge, devotional music, stories, and timeless wisdom",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

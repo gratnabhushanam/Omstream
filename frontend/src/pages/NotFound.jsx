@@ -22,7 +22,7 @@ export default function NotFound() {
           <div className="relative w-32 h-32 sm:w-48 sm:h-48 rounded-full border border-devotion-gold/30 bg-[#06101E]/50 backdrop-blur-xl flex items-center justify-center shadow-[0_0_60px_rgba(255,215,0,0.15)] group transition-transform duration-1000 hover:scale-110">
             <img 
               src="/logo-om-v2.png" 
-              alt="Gita Wisdom Logo" 
+              alt="Omstream Logo" 
               className="w-full h-full object-contain scale-90 drop-shadow-[0_0_20px_rgba(255,215,0,0.4)]"
             />
           </div>
@@ -67,7 +67,7 @@ export default function NotFound() {
 
       {/* Decorative footer text */}
       <div className="absolute bottom-12 left-0 right-0 opacity-20 pointer-events-none">
-        <p className="text-[10px] uppercase font-black tracking-[0.6em] text-white">Gita Wisdom • Divine Cinema • Eternal Truth</p>
+        <p className="text-[10px] uppercase font-black tracking-[0.6em] text-white">Omstream • Divine Cinema • Eternal Truth</p>
       </div>
     </div>
   );

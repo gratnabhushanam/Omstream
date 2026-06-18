@@ -210,7 +210,7 @@ const processTrialExpirations = async () => {
       if (user.email) {
         await sendEmail({
           to: user.email,
-          subject: 'Gita Wisdom - Your Free Trial Has Expired',
+          subject: 'Omstream - Your Free Trial Has Expired',
           html: `<p>Dear ${user.name || 'Seeker'},</p><p>Your 30-day free trial has expired.</p><p>Please subscribe to continue accessing premium spiritual content.</p>`
         }).catch(err => console.error(`[CRON] Failed to send expiry email to ${user.email}:`, err.message));
       }

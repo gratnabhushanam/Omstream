@@ -1,6 +1,6 @@
 const { User, Sloka, Movie, Video, Story } = require('../models');
 const mongoose = require('mongoose');
-const generateToken = require('../utils/generateToken');
+const { generateAccessToken, generateRefreshToken } = require('../utils/generateToken');
 const bcrypt = require('bcryptjs');
 const nodemailer = require('nodemailer');
 const mockContentStore = require('../utils/mockContentStore');
@@ -105,7 +105,7 @@ exports.registerUser = async (req, res) => {
       sendOtpEmail({ email: safeEmail, name, otp }).catch(e => console.error('[AUTH] Async email error:', e));
     }
     
-    const isPreview = process.env.EMAIL_PROVIDER === 'preview' || process.env.ALLOW_OTP_PREVIEW === 'true' || process.env.NODE_ENV === 'development';
+    const isPreview = process.env.EMAIL_PROVIDER === 'preview' || process.env.ALLOW_OTP_PREVIEW === 'true';
     return res.status(200).json({ message: 'OTP sent', email: safeEmail, previewCode: isPreview ? otp : undefined });
   } catch (error) { 
     console.error(`[AUTH] Registration error: ${error.message}`);
@@ -133,7 +133,7 @@ exports.resendRegistrationOtp = async (req, res) => {
       sendOtpEmail({ email: safeEmail, name: pending.name, otp }).catch(e => console.error('[AUTH] Async resend email error:', e));
     }
 
-    const isPreview = process.env.EMAIL_PROVIDER === 'preview' || process.env.ALLOW_OTP_PREVIEW === 'true' || process.env.NODE_ENV === 'development';
+    const isPreview = process.env.EMAIL_PROVIDER === 'preview' || process.env.ALLOW_OTP_PREVIEW === 'true';
     res.json({ message: 'OTP resent', previewCode: isPreview ? otp : undefined });
   } catch (error) { res.status(500).json({ message: error.message }); }
 };
@@ -148,17 +148,40 @@ exports.verifyRegistrationOtp = async (req, res) => {
     const user = await createPersistentUser({ name: pending.name, email: pending.email, password: pending.password, phone: pending.phoneNumber });
     pendingRegistrations.delete(safeEmail);
 
+    // Create Subscription record for the new user
+    const Subscription = require('../models/Subscription');
+    const { PLANS } = require('./subscriptionController');
+    const trialEndDate = new Date();
+    trialEndDate.setDate(trialEndDate.getDate() + PLANS.free.trialDays);
+
+    await Subscription.create({
+      userId: user._id,
+      tier: 'free',
+      billingCycle: 'none',
+      status: 'trial',
+      trialStartDate: new Date(),
+      trialEndDate,
+      features: PLANS.free.features
+    });
+
     const { checkAndRegisterDevice } = require('../middleware/authMiddleware');
     const checkResult = await checkAndRegisterDevice(user, req.headers, req.ip || req.connection.remoteAddress);
     if (!checkResult.allowed) {
       return res.status(403).json({ 
         status: 'device_limit_reached',
         deviceRequestId: checkResult.deviceRequestId,
-        message: "Maximum device limit reached. This account can be used on up to 3 devices only." 
+        message: "Maximum device limit reached." 
       });
     }
 
-    res.status(201).json({ ...sanitizeUserForResponse(user), token: generateToken(user.id) });
+    const accessToken = generateAccessToken(user.id);
+    const refreshToken = await generateRefreshToken(user.id);
+
+    res.status(201).json({ 
+      ...sanitizeUserForResponse(user), 
+      token: accessToken, 
+      refreshToken 
+    });
   } catch (error) { res.status(500).json({ message: error.message }); }
 };
 
@@ -190,7 +213,7 @@ exports.loginUser = async (req, res) => {
           return res.status(403).json({ 
             status: 'device_limit_reached',
             deviceRequestId: checkResult.deviceRequestId,
-            message: "Maximum device limit reached. This account can be used on up to 3 devices only." 
+            message: `Maximum device limit reached. Your plan allows up to ${checkResult.limit} device(s).` 
           });
         }
 
@@ -202,8 +225,14 @@ exports.loginUser = async (req, res) => {
         
         user.lastActive = new Date();
         user.streak = (user.streak || 0) + 1;
-        console.log(`[AUTH] Login successful: ${email}`);
-        return res.json({ ...sanitizeUserForResponse(user), token: generateToken(user.id) });
+        const accessToken = generateAccessToken(user.id);
+        const refreshToken = await generateRefreshToken(user.id);
+
+        return res.json({ 
+          ...sanitizeUserForResponse(user), 
+          token: accessToken, 
+          refreshToken 
+        });
       } else {
         console.warn(`[AUTH] Password mismatch for: ${email}`);
       }
@@ -219,9 +248,18 @@ exports.getUserProfile = async (req, res) => {
   try {
     const user = await findPersistentUserById(req.user.id);
     if (!user) return res.status(404).json({ message: 'User not found' });
-    res.json(sanitizeUserForResponse(user));
+    
+    const Subscription = require('../models/Subscription');
+    let subscription = await Subscription.findOne({ userId: user._id });
+    
+    const sanitizedUser = sanitizeUserForResponse(user);
+    res.json({
+      ...sanitizedUser,
+      subscription: subscription || null
+    });
   } catch (error) { res.status(500).json({ message: error.message }); }
 };
+
 
 exports.updateUserProfile = async (req, res) => {
   try {
@@ -336,7 +374,7 @@ exports.requestPasswordResetOtp = async (req, res) => {
     pendingPasswordResets.set(normalizeEmail(email), { otp, expiresAt: getOtpExpiryTime() });
     
     sendOtpEmail({ email: user.email, name: user.name, otp }).catch(e => console.error('[AUTH] Async email error:', e));
-    const isPreview = process.env.EMAIL_PROVIDER === 'preview' || process.env.ALLOW_OTP_PREVIEW === 'true' || process.env.NODE_ENV === 'development';
+    const isPreview = process.env.EMAIL_PROVIDER === 'preview' || process.env.ALLOW_OTP_PREVIEW === 'true';
     res.json({ message: 'Reset OTP sent', previewCode: isPreview ? otp : undefined });
   } catch (error) { res.status(500).json({ message: error.message }); }
 };
@@ -428,8 +466,13 @@ exports.createUserProfile = async (req, res) => {
     const user = await findPersistentUserById(req.user.id);
     if (!user) return res.status(404).json({ message: 'User not found' });
     
-    if ((user.profiles || []).length >= 3) {
-      return res.status(400).json({ message: "Maximum member limit reached." });
+    // Look up Subscription to get dynamic profile limit
+    const Subscription = require('../models/Subscription');
+    const subscription = await Subscription.findOne({ userId: user._id });
+    const maxProfiles = (subscription && subscription.features && subscription.features.maxProfiles) ? subscription.features.maxProfiles : 1;
+
+    if ((user.profiles || []).length >= maxProfiles) {
+      return res.status(400).json({ message: `Maximum member limit reached. Your plan allows up to ${maxProfiles} profile(s).` });
     }
 
     const { name, avatar } = req.body;
@@ -462,3 +505,40 @@ exports.activateSubscription = async (req, res) => {
     res.json({ message: 'Subscription activated successfully', subscriptionStatus: user.subscriptionStatus });
   } catch (error) { res.status(500).json({ message: error.message }); }
 };
+
+exports.refreshSessionToken = async (req, res) => {
+  try {
+    const { refreshToken } = req.body;
+    if (!refreshToken) return res.status(400).json({ message: 'Refresh token required' });
+
+    const RefreshToken = require('../models/RefreshToken');
+    const tokenDoc = await RefreshToken.findOne({ token: refreshToken });
+    if (!tokenDoc || tokenDoc.expiryDate < new Date()) {
+      return res.status(401).json({ message: 'Refresh token expired or invalid' });
+    }
+
+    const newAccessToken = generateAccessToken(tokenDoc.userId);
+    const newRefreshToken = await generateRefreshToken(tokenDoc.userId);
+
+    res.json({ token: newAccessToken, refreshToken: newRefreshToken });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+exports.logoutAllDevices = async (req, res) => {
+  try {
+    const user = await findPersistentUserById(req.user.id);
+    if (!user) return res.status(404).json({ message: 'User not found' });
+
+    user.devices = [];
+    await user.save();
+
+    const RefreshToken = require('../models/RefreshToken');
+    await RefreshToken.deleteMany({ userId: user._id });
+
+    res.json({ message: 'Logged out from all devices successfully' });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};

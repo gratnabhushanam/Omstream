@@ -12,14 +12,14 @@ export default function SplashScreen() {
         <div className="relative w-32 h-32 sm:w-40 sm:h-40 mb-8 rounded-full shadow-[0_0_60px_rgba(247,215,125,0.2)]">
             <img 
               src="/logo-om-v2.png" 
-              alt="Gita Wisdom Logo" 
+              alt="Omstream Logo" 
               className="w-full h-full object-contain animate-pulse-slow drop-shadow-[0_0_15px_rgba(247,215,125,0.5)]"
             />
         </div>
         
         {/* App Title typography appearing softly */}
         <h1 className="text-3xl sm:text-4xl font-serif font-black uppercase tracking-[0.15em] text-transparent bg-clip-text bg-gradient-to-r from-[#f7d77d] via-[#f5a623] to-[#f7d77d] drop-shadow-lg mb-8">
-          Gita Wisdom
+          Omstream
         </h1>
 
         {/* Premium subtle loader */}

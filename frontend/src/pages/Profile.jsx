@@ -3,20 +3,25 @@ import axios from 'axios';
 import { 
   User, Users, Mail, Bell, Shield, Heart, Flame, Trophy, Settings, LogOut, Camera, 
   Edit2, Check, ExternalLink, Sparkles, BookOpen, Share2, Bookmark, Video, Trash2, 
-  Library, Play, Monitor, Smartphone, Laptop, Plus, Lock, Unlock, Smile, Baby 
+  Library, Play, Monitor, Smartphone, Laptop, Plus, Lock, Unlock, Smile, Baby, CreditCard 
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { useSubscription } from '../context/SubscriptionContext';
+import PaymentHistory from '../components/subscription/PaymentHistory';
 import { useNavigate } from 'react-router-dom';
 import { requestNotificationPermission } from '../utils/notificationService';
 import JapaCounter from '../components/JapaCounter';
 import { io } from 'socket.io-client';
+
 
 const INTEREST_OPTIONS = ['Karma Yoga', 'Bhakti Yoga', 'Meditation', 'Stress Relief', 'Motivation', 'Leadership'];
 
 export default function Profile() {
   const DAILY_SAVED_KEY = 'daily_saved_verses_v1';
   const { user, setUser, logout, loading: authLoading, selectedProfile, selectProfile } = useAuth();
+  const { subscription, tier, status, refreshSubscription } = useSubscription();
   const navigate = useNavigate();
+
   const [loading, setLoading] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -38,6 +43,35 @@ export default function Profile() {
   const [watchlistMovies, setWatchlistMovies] = useState([]);
   const [watchlistStories, setWatchlistStories] = useState([]);
   const [watchlistLoading, setWatchlistLoading] = useState(false);
+
+  const handleCancelSubscription = async () => {
+    if (window.confirm("Are you sure you want to cancel your subscription auto-renewal?")) {
+      try {
+        const token = localStorage.getItem('token');
+        await axios.post('/api/subscription/cancel', { reason: 'User cancellation' }, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        alert('Auto-renewal cancelled.');
+        refreshSubscription();
+      } catch (err) {
+        alert(err.response?.data?.message || 'Cancellation failed');
+      }
+    }
+  };
+
+  const handleReactivateSubscription = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      await axios.post('/api/subscription/reactivate', {}, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      alert('Subscription reactivated successfully!');
+      refreshSubscription();
+    } catch (err) {
+      alert(err.response?.data?.message || 'Reactivation failed');
+    }
+  };
+
   
   // Device & Profile additions
   const [deviceRequests, setDeviceRequests] = useState([]);
@@ -400,6 +434,20 @@ export default function Profile() {
 
   const renderMeaning = (sloka) => sloka?.englishMeaning || sloka?.teluguMeaning || 'No meaning available';
 
+  const saveProfileChanges = async (profileId) => {
+    try {
+      const token = localStorage.getItem('token');
+      const { data } = await axios.put(`/api/auth/profiles/${profileId}`, editProfileForm, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setUser(prev => ({ ...prev, profiles: data.profiles }));
+      setEditingProfileId(null);
+      alert('Profile updated successfully!');
+    } catch (err) {
+      alert(err.response?.data?.message || 'Failed to update profile');
+    }
+  };
+
   const handleShareSavedVerse = async (sloka) => {
     if (!sloka) return;
     const title = `Bhagavad Gita ${sloka.chapter}:${sloka.verse}`;
@@ -558,31 +606,52 @@ export default function Profile() {
                </div>
 
                {/* Subscription Status Block */}
-               <div className="mb-8 bg-gradient-to-br from-devotion-darkBlue to-[#0a192f] border border-devotion-gold/20 p-5 rounded-2xl text-left relative overflow-hidden">
-                 <div className="absolute -right-4 -top-4 opacity-10">
-                   <Shield className="w-24 h-24 text-devotion-gold" />
-                 </div>
-                 <h4 className="text-devotion-gold font-black text-[10px] uppercase tracking-[0.2em] mb-2 flex items-center gap-2">
-                   <Sparkles className="w-3 h-3" /> Current Plan
-                 </h4>
-                 <div className="flex items-center justify-between mb-3">
-                   <p className="text-lg font-serif font-bold text-white uppercase">{user?.subscriptionStatus || 'No Active Plan'}</p>
-                   {user?.subscriptionStatus?.includes('Active') && (
-                     <span className="bg-green-500/20 text-green-400 px-2 py-1 rounded text-[10px] font-black uppercase">Active</span>
-                   )}
-                 </div>
-                 {user?.trialEndDate && (
-                   <p className="text-xs text-gray-400 mb-4">
-                     Valid until: <span className="text-gray-200 font-bold">{new Date(user.trialEndDate).toLocaleDateString()}</span>
-                   </p>
-                 )}
-                 <button
-                   onClick={() => navigate('/subscription')}
-                   className="w-full bg-devotion-gold/10 border border-devotion-gold/30 text-devotion-gold hover:bg-devotion-gold hover:text-devotion-darkBlue transition-colors py-2 rounded-xl text-xs font-black uppercase tracking-widest"
-                 >
-                   Upgrade / Renew Plan
-                 </button>
-               </div>
+                <div className="mb-8 bg-gradient-to-br from-devotion-darkBlue to-[#0a192f] border border-devotion-gold/20 p-5 rounded-2xl text-left relative overflow-hidden">
+                  <div className="absolute -right-4 -top-4 opacity-10">
+                    <Shield className="w-24 h-24 text-devotion-gold" />
+                  </div>
+                  <h4 className="text-devotion-gold font-black text-[10px] uppercase tracking-[0.2em] mb-2 flex items-center gap-2">
+                    <Sparkles className="w-3 h-3" /> Current Plan
+                  </h4>
+                  <div className="flex items-center justify-between mb-3">
+                    <p className="text-lg font-serif font-bold text-white uppercase">{subscription?.tier ? `${subscription.tier} - ${status}` : user?.subscriptionStatus || 'Sadhak (Free)'}</p>
+                    {(status === 'active' || status === 'trial') && (
+                      <span className="bg-green-500/20 text-green-400 px-2 py-1 rounded text-[10px] font-black uppercase">Active</span>
+                    )}
+                  </div>
+                  {(subscription?.endDate || user?.trialEndDate) && (
+                    <p className="text-xs text-gray-400 mb-4">
+                      Valid until: <span className="text-gray-200 font-bold">{new Date(subscription?.endDate || user.trialEndDate).toLocaleDateString()}</span>
+                    </p>
+                  )}
+                  
+                  <div className="space-y-2">
+                    <button
+                      onClick={() => navigate('/subscription')}
+                      className="w-full bg-devotion-gold/15 border border-devotion-gold/30 text-devotion-gold hover:bg-devotion-gold hover:text-devotion-darkBlue transition-colors py-2 rounded-xl text-xs font-black uppercase tracking-widest"
+                    >
+                      Upgrade / Renew Plan
+                    </button>
+
+                    {subscription && status === 'active' && (
+                      subscription.autoRenew ? (
+                        <button
+                          onClick={handleCancelSubscription}
+                          className="w-full bg-red-950/20 border border-red-900/30 text-red-400 hover:bg-red-900 hover:text-white transition-colors py-2 rounded-xl text-[10px] font-black uppercase tracking-widest"
+                        >
+                          Cancel Auto-Renewal
+                        </button>
+                      ) : (
+                        <button
+                          onClick={handleReactivateSubscription}
+                          className="w-full bg-emerald-950/20 border border-emerald-900/30 text-emerald-400 hover:bg-emerald-900 hover:text-white transition-colors py-2 rounded-xl text-[10px] font-black uppercase tracking-widest"
+                        >
+                          Reactivate Auto-Renewal
+                        </button>
+                      )
+                    )}
+                  </div>
+                </div>
 
                <div className="space-y-3">
                   {isEditing ? (
@@ -943,22 +1012,25 @@ export default function Profile() {
                    <Users className="text-devotion-gold w-8 h-8" />
                    <h3 className="text-3xl font-serif font-bold text-white uppercase tracking-tighter">Family Profiles</h3>
                 </div>
-                {(user?.profiles || []).length < 3 && !isAddingProfile && (
-                  <button
-                    onClick={() => {
-                      setIsAddingProfile(true);
-                      setNewProfileForm({ name: '', avatar: '', pin: '', isKids: false });
-                    }}
-                    className="flex items-center gap-2 px-4 py-2 bg-devotion-gold/10 hover:bg-devotion-gold text-devotion-gold hover:text-devotion-darkBlue border border-devotion-gold/30 rounded-xl text-xs font-black uppercase tracking-wider transition-all"
-                  >
-                    <Plus className="w-4 h-4" /> Add Member
-                  </button>
-                )}
+                {(() => {
+                   const maxProfiles = (subscription && subscription.features && subscription.features.maxProfiles) ? subscription.features.maxProfiles : 1;
+                   return (user?.profiles || []).length < maxProfiles && !isAddingProfile && (
+                     <button
+                       onClick={() => {
+                         setIsAddingProfile(true);
+                         setNewProfileForm({ name: '', avatar: '', pin: '', isKids: false });
+                       }}
+                       className="flex items-center gap-2 px-4 py-2 bg-devotion-gold/10 hover:bg-devotion-gold text-devotion-gold hover:text-devotion-darkBlue border border-devotion-gold/30 rounded-xl text-xs font-black uppercase tracking-wider transition-all"
+                     >
+                       <Plus className="w-4 h-4" /> Add Member
+                     </button>
+                   );
+                 })()}
              </div>
 
              <div className="space-y-6">
                 <p className="text-xs text-gray-400">
-                  Share your spiritual journey with your family. Create up to 3 custom member profiles.
+                  Share your spiritual journey with your family. Create up to {(subscription && subscription.features && subscription.features.maxProfiles) ? subscription.features.maxProfiles : 1} custom member profile(s).
                 </p>
 
                 {/* Add Profile Form */}
@@ -1307,12 +1379,22 @@ export default function Profile() {
                     );
                   })}
                 </div>
+              </div>
+           </section>
+
+          {/* Payment History Section */}
+          <section className="bg-glass-gradient backdrop-blur-3xl rounded-[2.5rem] border border-devotion-gold/20 p-10 shadow-2xl mt-10">
+             <div className="flex items-center gap-4 mb-8">
+                <CreditCard className="text-devotion-gold w-8 h-8" />
+                <h3 className="text-3xl font-serif font-bold text-white uppercase tracking-tighter">Billing & Transactions</h3>
              </div>
+             <PaymentHistory />
           </section>
 
         </div>
       </div>
     </div>
+
   );
 }
 

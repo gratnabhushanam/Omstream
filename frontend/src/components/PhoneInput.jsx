@@ -115,13 +115,13 @@ export default function PhoneInput({ value, onChange, selectedCountry, setSelect
                     setShowDropdown(false);
                     setSearchQuery('');
                   }}
-                  className="w-full flex items-center justify-between rounded-xl px-3 py-2 text-sm text-white/80 hover:bg-white/5 hover:text-[#f7d77d] transition-colors text-left"
+                  className="w-full flex items-center justify-between rounded-xl px-3 py-2 text-sm text-white hover:bg-white/10 hover:text-[#f7d77d] transition-colors text-left"
                 >
                   <span className="flex items-center gap-2">
                     <span className="text-lg">{c.flag}</span>
-                    <span className="truncate max-w-[140px]">{c.name}</span>
+                    <span className="truncate max-w-[140px] text-white font-semibold">{c.name}</span>
                   </span>
-                  <span className="font-semibold text-[#f7d77d]">{c.dial}</span>
+                  <span className="font-extrabold text-amber-400">{c.dial}</span>
                 </button>
               ))
             }

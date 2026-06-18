@@ -92,7 +92,7 @@ export default function ImmersiveNotification({ notification, onClose, onAction 
           </div>
           
           <div className="mt-8 flex items-center gap-2 text-[9px] font-bold text-white/20 uppercase tracking-widest">
-            <span>Powered by Gita Wisdom</span>
+            <span>Powered by Omstream</span>
             <ChevronRight className="w-3 h-3" />
           </div>
         </div>

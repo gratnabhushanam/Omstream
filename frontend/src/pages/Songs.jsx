@@ -328,7 +328,7 @@ export default function Songs() {
     if ('mediaSession' in navigator && currentSong) {
       navigator.mediaSession.metadata = new window.MediaMetadata({
         title: currentSong.title || 'Divine Track',
-        artist: currentSong.artist || 'Gita Wisdom',
+        artist: currentSong.artist || 'Omstream',
         album: 'Divine Playlist',
         artwork: [{ src: currentSong.cover, sizes: '512x512', type: 'image/jpeg' }]
       });

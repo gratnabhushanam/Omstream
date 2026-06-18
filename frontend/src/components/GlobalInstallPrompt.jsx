@@ -94,7 +94,7 @@ export default function GlobalInstallPrompt() {
             
             {/* Content */}
             <div className="flex-1 pt-1">
-              <h3 className="text-lg font-bold text-white mb-1 font-serif leading-tight">Gita Wisdom App</h3>
+              <h3 className="text-lg font-bold text-white mb-1 font-serif leading-tight">Omstream App</h3>
               <p className="text-[11px] text-gray-300 leading-relaxed max-w-[200px]">
                 Install our native app for the best spiritual guidance experience, right on your home screen.
               </p>

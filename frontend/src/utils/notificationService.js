@@ -92,10 +92,10 @@ export const scheduleDailyNotification = (hour = 8, minute = 0, sloka = null) =>
         return;
       }
 
-      const title = 'Daily Sloka from Gita Wisdom';
+      const title = 'Daily Sloka from Omstream';
       const body = sloka
         ? sloka.sanskrit
-        : 'Your daily verse awaits. Visit Gita Wisdom to receive today\'s guidance.';
+        : 'Your daily verse awaits. Visit Omstream to receive today\'s guidance.';
 
       sendNotification(title, {
         body: body,

@@ -21,6 +21,8 @@ const {
   createUserProfile,
   removeUserProfile,
   activateSubscription,
+  refreshSessionToken,
+  logoutAllDevices,
 } = require('../controllers/authController');
 const { protect, admin } = require('../middleware/authMiddleware');
 const rateLimit = require('express-rate-limit');
@@ -55,6 +57,8 @@ router.post('/forgot-password/request-otp', otpLimiter, requestPasswordResetOtp)
 router.post('/forgot-password/verify-otp', authLimiter, verifyPasswordResetOtp);
 router.get('/email-health', getEmailHealth);
 router.post('/login', authLimiter, loginUser);
+router.post('/refresh-token', refreshSessionToken);
+router.post('/logout-all', protect, logoutAllDevices);
 router.route('/profile').get(protect, getUserProfile).put(protect, updateUserProfile);
 router.get('/community', protect, getCommunityProfiles);
 router.post('/bookmarks', protect, toggleBookmark);

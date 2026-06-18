@@ -10,9 +10,10 @@ const aiService = require('../utils/aiService');
  * Processes pending translation and media jobs
  */
 async function processJobs() {
+  let job;
   try {
     // Atomic lock to prevent multiple cluster workers from processing the same job
-    const job = await Job.findOneAndUpdate(
+    job = await Job.findOneAndUpdate(
       { status: 'pending' },
       { $set: { status: 'processing' } },
       { new: true, sort: { createdAt: 1 } }

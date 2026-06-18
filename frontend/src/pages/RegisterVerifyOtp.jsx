@@ -74,7 +74,7 @@ export default function RegisterVerifyOtp() {
       setLoading(true);
       await verifyRegisterOtp(email, otpCode);
       sessionStorage.removeItem('pending_registration_v1');
-      navigate('/home', { replace: true });
+      navigate('/subscription', { replace: true });
     } catch (err) {
       if (err.response?.data?.status === 'device_limit_reached') {
         setPendingRequestId(err.response.data.deviceRequestId);
@@ -124,7 +124,7 @@ export default function RegisterVerifyOtp() {
           deviceRequestId={pendingRequestId}
           onSuccess={() => {
             sessionStorage.removeItem('pending_registration_v1');
-            navigate('/home', { replace: true });
+            navigate('/subscription', { replace: true });
             window.location.reload();
           }}
           onCancel={() => setPendingRequestId(null)}

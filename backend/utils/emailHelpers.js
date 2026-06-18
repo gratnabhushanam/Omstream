@@ -16,15 +16,20 @@ const getTransporter = () => {
 
   if (!user || !pass) return null;
 
-  cachedTransporter = nodemailer.createTransport({
-    host,
-    port,
-    secure: port === 465,
-    pool: true, // Reuse connections
-    maxConnections: 5,
-    maxMessages: 100,
-    auth: { user, pass },
-  });
+  const config = {};
+  if (host.includes('gmail.com')) {
+    config.service = 'gmail';
+  } else {
+    config.host = host;
+    config.port = port;
+    config.secure = port === 465;
+    config.pool = true;
+    config.maxConnections = 5;
+    config.maxMessages = 100;
+  }
+  
+  config.auth = { user, pass };
+  cachedTransporter = nodemailer.createTransport(config);
 
   return cachedTransporter;
 };
@@ -33,14 +38,19 @@ const sendViaSmtp = async ({ email, name, otp }) => {
   try {
     const transporter = getTransporter();
     if (!transporter) {
-      return { delivered: false, error: 'SMTP credentials not configured' };
+      const isDev = process.env.NODE_ENV !== 'production' || process.env.ALLOW_OTP_PREVIEW === 'true';
+      if (isDev) {
+        console.warn('[EMAIL] SMTP credentials missing, falling back to development preview OTP');
+        return { delivered: true, provider: 'preview', previewCode: otp };
+      }
+      return { delivered: false, error: 'SMTP credentials not configured. Please add EMAIL_USER and EMAIL_PASS to your env.' };
     }
 
     const user = process.env.EMAIL_USER;
-    const fromName = process.env.EMAIL_FROM_NAME || 'Gita Wisdom';
+    const fromName = process.env.EMAIL_FROM_NAME || 'Omstream';
     const fromAddress = process.env.EMAIL_FROM || user;
 
-    const subject = 'Your Gita Wisdom OTP';
+    const subject = 'Your Omstream OTP';
     const text = `Hello ${name || ''},\n\nYour verification code is: ${otp}\n\nThis code expires shortly.`;
     const html = `<p>Hello ${name || ''},</p><p>Your verification code is: <strong>${otp}</strong></p><p>This code expires shortly.</p>`;
 
@@ -71,9 +81,9 @@ const sendViaResend = async ({ email, name, otp }) => {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        from: `${process.env.RESEND_FROM_NAME || 'Gita Wisdom'} <${process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev'}>`,
+        from: `${process.env.RESEND_FROM_NAME || 'Omstream'} <${process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev'}>`,
         to: [email],
-        subject: 'Your Gita Wisdom OTP',
+        subject: 'Your Omstream OTP',
         html: `<p>Hello ${name || ''},</p><p>Your verification code is: <strong>${otp}</strong></p><p>This code expires shortly.</p>`
       })
     });
@@ -101,11 +111,11 @@ const sendViaBrevo = async ({ email, name, otp }) => {
       },
       body: JSON.stringify({
         sender: { 
-          name: process.env.BREVO_FROM_NAME || 'Gita Wisdom', 
+          name: process.env.BREVO_FROM_NAME || 'Omstream', 
           email: process.env.BREVO_FROM_EMAIL || 'gitawisdom143@gmail.com' 
         },
         to: [{ email: email, name: name || 'User' }],
-        subject: 'Your Gita Wisdom OTP',
+        subject: 'Your Omstream OTP',
         htmlContent: `<p>Hello ${name || ''},</p><p>Your verification code is: <strong>${otp}</strong></p><p>This code expires shortly.</p>`
       })
     });

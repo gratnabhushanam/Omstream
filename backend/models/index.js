@@ -12,6 +12,10 @@ const Group = require('./Group');
 const Post = require('./Post');
 const Job = require('./Job');
 const Song = require('./Song');
+const Subscription = require('./Subscription');
+const Transaction = require('./Transaction');
+const RefreshToken = require('./RefreshToken');
+
 // Performance Indexes
 Story.schema.index({ category: 1, isKids: 1, tags: 1, status: 1 });
 Story.schema.index({ title: 'text', description: 'text', content: 'text', tags: 'text' }, { weights: { title: 10, tags: 5, description: 3, content: 1 }, name: "StoryTextIndex" });
@@ -39,5 +43,9 @@ module.exports = {
   Post,
   Job,
   Song,
-  AccessRequest
+  AccessRequest,
+  Subscription,
+  Transaction,
+  RefreshToken
 };
+

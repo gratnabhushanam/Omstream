@@ -11,17 +11,21 @@ const resolveJwtSecret = () => {
 };
 
 const checkAndRegisterDevice = async (user, headers, ipAddress = '127.0.0.1') => {
-  if (user.role === 'admin') return { allowed: true };
+  if (user.role === 'admin') return { allowed: true, limit: 99 };
   const deviceId = headers['x-device-id'];
   const deviceName = headers['x-device-name'] || 'Unknown Device';
   const osVersion = headers['x-os-version'] || 'Unknown OS';
   const browserVersion = headers['x-browser-version'] || 'Unknown Browser';
 
-  if (!deviceId) return { allowed: true };
+  if (!deviceId) return { allowed: true, limit: 1 };
+
+  const Subscription = require('../models/Subscription');
+  const subscription = await Subscription.findOne({ userId: user._id });
+  const maxDevices = (subscription && subscription.features && subscription.features.maxDevices) ? subscription.features.maxDevices : 1;
 
   const isDeviceRegistered = user.devices.some(d => d.deviceId === deviceId);
   if (!isDeviceRegistered) {
-    if (user.devices.length >= 3) {
+    if (user.devices.length >= maxDevices) {
       const { AccessRequest, Notification } = require('../models');
       const { sendRealtimeEvent } = require('../services/socketService');
 
@@ -59,7 +63,7 @@ const checkAndRegisterDevice = async (user, headers, ipAddress = '127.0.0.1') =>
         createdAt: request.createdAt
       });
 
-      return { allowed: false, deviceRequestId: request._id };
+      return { allowed: false, deviceRequestId: request._id, limit: maxDevices };
     }
 
     // Push new device details
@@ -86,15 +90,20 @@ const checkAndRegisterDevice = async (user, headers, ipAddress = '127.0.0.1') =>
       }
     ).catch(err => console.error('Device lastLogin update failed:', err.message));
   }
-  return { allowed: true };
+  return { allowed: true, limit: maxDevices };
 };
 
 const protect = async (req, res, next) => {
   let token;
 
   if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
+    token = req.headers.authorization.split(' ')[1];
+  } else if (req.query && req.query.token) {
+    token = req.query.token;
+  }
+
+  if (token) {
     try {
-      token = req.headers.authorization.split(' ')[1];
       const jwtSecret = resolveJwtSecret();
       if (!jwtSecret) {
         return res.status(500).json({ message: 'Server auth configuration error' });
@@ -106,6 +115,26 @@ const protect = async (req, res, next) => {
       if (!req.user) {
          return res.status(401).json({ message: 'User not found' });
       }
+
+      // Load subscription
+      const Subscription = require('../models/Subscription');
+      let subscription = await Subscription.findOne({ userId: req.user._id });
+      if (!subscription) {
+        // Create free trial sub on the fly
+        const { PLANS } = require('../controllers/subscriptionController');
+        const trialEndDate = new Date();
+        trialEndDate.setDate(trialEndDate.getDate() + PLANS.free.trialDays);
+        subscription = await Subscription.create({
+          userId: req.user._id,
+          tier: 'free',
+          billingCycle: 'none',
+          status: 'trial',
+          trialStartDate: new Date(),
+          trialEndDate,
+          features: PLANS.free.features
+        });
+      }
+      req.subscription = subscription;
 
       // Check trial expiration automatically on request
       if (req.user.subscriptionStatus === 'Trial Active' && req.user.trialEndDate && new Date() > req.user.trialEndDate) {
@@ -119,7 +148,7 @@ const protect = async (req, res, next) => {
         return res.status(403).json({ 
           status: 'device_limit_reached',
           deviceRequestId: checkResult.deviceRequestId,
-          message: "Maximum device limit reached. This account can be used on up to 3 devices only." 
+          message: `Maximum device limit reached. Your plan allows up to ${checkResult.limit} device(s).` 
         });
       }
 
@@ -132,6 +161,7 @@ const protect = async (req, res, next) => {
     res.status(401).json({ message: 'Not authorized, no token' });
   }
 };
+
 
 const admin = (req, res, next) => {
   if (req.user && req.user.role === 'admin') {

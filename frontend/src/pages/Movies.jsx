@@ -103,7 +103,7 @@ export default function Movies() {
              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#FF7A00] to-[#F5C542] flex items-center justify-center shadow-[0_0_20px_rgba(255,122,0,0.6)] group-hover:scale-110 transition-transform">
                 <Play className="w-6 h-6 text-navy-deep fill-current" />
              </div>
-             <span className="text-2xl font-black tracking-tight premium-text-gradient uppercase italic">Gita Wisdom</span>
+             <span className="text-2xl font-black tracking-tight premium-text-gradient uppercase italic">Omstream</span>
           </div>
           <div className="hidden lg:flex items-center gap-10 text-xs font-black uppercase tracking-[0.25em] text-white/50">
              {['Home', 'Movies', 'Library'].map(m => (
@@ -326,7 +326,7 @@ export default function Movies() {
                <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#FF7A00] to-[#F5C542] flex items-center justify-center shadow-2xl group-hover:rotate-[360deg] transition-transform duration-1000">
                   <Play className="w-6 h-6 text-navy-deep fill-current" />
                </div>
-               <span className="text-3xl font-black tracking-tighter uppercase premium-text-gradient italic">Gita Wisdom</span>
+               <span className="text-3xl font-black tracking-tighter uppercase premium-text-gradient italic">Omstream</span>
             </div>
             <div className="flex flex-wrap justify-center gap-10 text-xs font-black uppercase tracking-[0.3em] text-white/30">
                {['About', 'Categories', 'Privacy Policy', 'Terms of Use', 'Support', 'Contact'].map(l => (

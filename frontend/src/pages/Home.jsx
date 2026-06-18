@@ -136,12 +136,12 @@ export default function Home() {
           {/* Floating Branded Logo */}
           <div className="mb-10 animate-float flex justify-center">
             <div className="w-24 h-24 sm:w-32 sm:h-32 rounded-full border border-devotion-gold/30 bg-devotion-gold/5 backdrop-blur-xl flex items-center justify-center shadow-[0_0_50px_rgba(255,215,0,0.15)] group hover:scale-110 transition-transform duration-700">
-               <img src="/logo-om-v2.png" alt="Gita Wisdom Logo" loading="lazy" className="w-full h-full object-contain scale-90 drop-shadow-[0_0_15px_rgba(255,215,0,0.4)]" />
+               <img src="/logo-om-v2.png" alt="Omstream Logo" loading="lazy" className="w-full h-full object-contain scale-90 drop-shadow-[0_0_15px_rgba(255,215,0,0.4)]" />
             </div>
           </div>
 
           <h1 className="text-6xl sm:text-8xl md:text-9xl tv:text-[10rem] font-serif font-black text-devotion-gold drop-shadow-[0_10px_10px_rgba(0,0,0,0.5)] tracking-tighter leading-tight">
-            Gita <span className="text-white opacity-90 italic font-light drop-shadow-none tracking-normal">Wisdom</span>
+            Om <span className="text-white opacity-90 italic font-light drop-shadow-none tracking-normal">stream</span>
           </h1>
 
           <p className="text-lg sm:text-2xl md:text-3xl tv:text-4xl text-gray-200 font-light max-w-3xl tv:max-w-5xl mx-auto leading-relaxed font-serif italic">

@@ -511,7 +511,7 @@ export const useDailySloka = () => {
     const meaning = getMeaningByLanguage(dailySloka, language);
     try {
       await navigator.share({
-        title: 'Daily Sloka from Gita Wisdom',
+        title: 'Daily Sloka from Omstream',
         text: `${dailySloka.sanskrit}\n\n${meaning}`,
         url: window.location.href,
       });

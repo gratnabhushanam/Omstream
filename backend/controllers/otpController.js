@@ -1,6 +1,6 @@
 const bcrypt = require('bcryptjs');
 const mongoose = require('mongoose');
-const jwt = require('jsonwebtoken');
+const { generateAccessToken, generateRefreshToken } = require('../utils/generateToken');
 const { User } = require('../models');
 const { resolveEmailProvider, sendViaResend, sendViaBrevo, sendViaSmtp } = require('../utils/emailHelpers');
 const { sendSmsOtp } = require('../utils/smsHelpers');
@@ -64,8 +64,7 @@ exports.sendOtp = async (req, res) => {
 
         const isPreview = 
             process.env.EMAIL_PROVIDER === 'preview' || 
-            process.env.ALLOW_OTP_PREVIEW === 'true' || 
-            process.env.NODE_ENV === 'development';
+            process.env.ALLOW_OTP_PREVIEW === 'true';
 
         if (!deliveryResult.delivered && !isPreview) {
             return res.status(400).json({ message: deliveryResult.error || 'Failed to send OTP. Please check your number or try again later.' });
@@ -96,7 +95,12 @@ exports.verifyOtp = async (req, res) => {
         }
 
         const user = await User.findOne(query);
-        if (!user || !user.otpHash || new Date() > user.otpExpiry) {
+        if (!user) {
+            // Check if there is a pending registration
+            return require('./authController').verifyRegistrationOtp(req, res);
+        }
+
+        if (!user.otpHash || new Date() > user.otpExpiry) {
             return res.status(400).json({ message: 'Invalid or expired OTP' });
         }
 
@@ -117,26 +121,47 @@ exports.verifyOtp = async (req, res) => {
             return res.status(403).json({ 
                 status: 'device_limit_reached',
                 deviceRequestId: checkResult.deviceRequestId,
-                message: "Maximum device limit reached. This account can be used on up to 3 devices only." 
+                message: `Maximum device limit reached. Your plan allows up to ${checkResult.limit} device(s).` 
             });
         }
 
         // Detect new user (auto-created with default name)
         const isNewUser = !user.name || user.name.startsWith('Member ') || user.name === '';
 
+        // Create subscription if it doesn't exist yet
+        const Subscription = require('../models/Subscription');
+        let subscription = await Subscription.findOne({ userId: user._id });
+        if (!subscription) {
+            const { PLANS } = require('./subscriptionController');
+            const trialEndDate = new Date();
+            trialEndDate.setDate(trialEndDate.getDate() + PLANS.free.trialDays);
+            subscription = await Subscription.create({
+                userId: user._id,
+                tier: 'free',
+                billingCycle: 'none',
+                status: 'trial',
+                trialStartDate: new Date(),
+                trialEndDate,
+                features: PLANS.free.features
+            });
+        }
+
         user.otpHash = undefined;
         user.otpExpiry = undefined;
         await user.save();
 
-        const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET || 'secret', { expiresIn: '7d' });
+        const token = generateAccessToken(user._id);
+        const refreshToken = await generateRefreshToken(user._id);
         
         // Format response
         const userObj = user.toObject();
         delete userObj.password;
         delete userObj.__v;
         userObj.id = String(userObj._id);
+        userObj.subscription = subscription;
 
-        res.json({ token, user: userObj, isNew: isNewUser });
+        res.json({ token, refreshToken, user: userObj, isNew: isNewUser });
+
     } catch (error) { 
         console.error('[OTP] verifyOtp error:', error);
         res.status(500).json({ message: error.message }); 

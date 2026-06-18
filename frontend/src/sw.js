@@ -43,7 +43,7 @@ self.addEventListener('push', function(event) {
   if (event.data) {
     try {
       const data = event.data.json();
-      const title = data.title || 'Gita Wisdom';
+      const title = data.title || 'Omstream';
       const options = {
         body: data.body || 'You have a new message.',
         icon: data.icon || '/logo-om-v2.png',

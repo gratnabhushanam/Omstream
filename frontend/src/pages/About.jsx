@@ -6,14 +6,14 @@ export default function About() {
       <div className="max-w-4xl mx-auto">
         <div className="text-center mb-16">
           <h1 className="text-4xl md:text-5xl font-serif font-bold text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-yellow-600 mb-4">
-            About Gita Wisdom
+            About Omstream
           </h1>
           <div className="w-24 h-1 bg-gradient-to-r from-yellow-500 to-transparent mx-auto rounded-full"></div>
         </div>
 
         <div className="bg-[#0B1F3A]/40 backdrop-blur rounded-2xl border border-yellow-500/20 p-8 md:p-12 text-gray-300 leading-relaxed space-y-6 shadow-2xl">
           <p className="text-xl text-yellow-100 font-light mb-8">
-            Gita Wisdom is a digital sanctuary dedicated to presenting the timeless teachings of the Bhagavad Gita in an accessible, beautiful, and profound way.
+            Omstream is a digital sanctuary dedicated to presenting the timeless teachings of the Bhagavad Gita in an accessible, beautiful, and profound way.
           </p>
           
           <div className="space-y-4">

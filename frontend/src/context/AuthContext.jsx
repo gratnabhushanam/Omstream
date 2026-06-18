@@ -1,6 +1,7 @@
 /* eslint-disable react-refresh/only-export-components */
 import React, { createContext, useState, useEffect, useContext } from 'react';
 import axios from 'axios';
+import { authApiClient } from '../api/client';
 
 const AuthContext = createContext();
 
@@ -30,12 +31,13 @@ export const AuthProvider = ({ children }) => {
 
   const fetchUser = async (token) => {
     try {
-      const { data } = await axios.get('/api/auth/profile');
+      const { data } = await authApiClient.get('/api/auth/profile');
       setUser(data);
       localStorage.setItem('user', JSON.stringify(data));
     } catch (error) {
       console.error('Failed to fetch user', error);
       localStorage.removeItem('token');
+      localStorage.removeItem('refreshToken');
       localStorage.removeItem('user');
       localStorage.removeItem('gita_wisdom_profile');
       setUser(null);
@@ -49,6 +51,9 @@ export const AuthProvider = ({ children }) => {
     const { data } = await axios.post('/api/auth/login', { email, password });
     const userData = data.user || data;
     localStorage.setItem('token', data.token);
+    if (data.refreshToken) {
+      localStorage.setItem('refreshToken', data.refreshToken);
+    }
     localStorage.setItem('user', JSON.stringify(userData));
     axios.defaults.headers.common['Authorization'] = `Bearer ${data.token}`;
     setUser(userData);
@@ -62,10 +67,12 @@ export const AuthProvider = ({ children }) => {
 
   const verifyRegisterOtp = async (email, otp) => {
     const { data } = await axios.post('/api/auth/register/verify-otp', { email, otp });
-    // Backend returns flat: { token, id, name, email, role, ... }
     const { token, ...rest } = data;
-    const userData = rest.user || rest; // handle both shapes
+    const userData = rest.user || rest;
     localStorage.setItem('token', token);
+    if (data.refreshToken) {
+      localStorage.setItem('refreshToken', data.refreshToken);
+    }
     localStorage.setItem('user', JSON.stringify(userData));
     axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
     setUser(userData);
@@ -84,9 +91,11 @@ export const AuthProvider = ({ children }) => {
 
   const verifyOtpLogin = async (payload) => {
     const { data } = await axios.post('/api/auth/verify-otp', payload);
-    // otpController returns { token, user: userObj }
     const userData = data.user || data;
     localStorage.setItem('token', data.token);
+    if (data.refreshToken) {
+      localStorage.setItem('refreshToken', data.refreshToken);
+    }
     localStorage.setItem('user', JSON.stringify(userData));
     axios.defaults.headers.common['Authorization'] = `Bearer ${data.token}`;
     setUser(userData);
@@ -104,10 +113,20 @@ export const AuthProvider = ({ children }) => {
 
   const logout = () => {
     localStorage.removeItem('token');
+    localStorage.removeItem('refreshToken');
     localStorage.removeItem('user');
     localStorage.removeItem('gita_wisdom_profile');
     setUser(null);
     setSelectedProfile(null);
+  };
+
+  const logoutAll = async () => {
+    try {
+      await axios.post('/api/auth/logout-all');
+    } catch (error) {
+      console.error('Logout all devices error', error);
+    }
+    logout();
   };
 
   const value = {
@@ -122,7 +141,9 @@ export const AuthProvider = ({ children }) => {
     sendOtpLogin,
     verifyOtpLogin,
     logout,
-    setUser
+    logoutAll,
+    setUser,
+    fetchUser
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

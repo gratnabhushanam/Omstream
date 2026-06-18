@@ -25,7 +25,7 @@ const sendViaFast2SMS = async (phone, otp) => {
 
     const postData = querystring.stringify({
       route: 'q',
-      message: `Your Gita Wisdom OTP is ${otp}. Valid for 10 minutes. Do not share.`,
+      message: `Your Omstream OTP is ${otp}. Valid for 10 minutes. Do not share.`,
       language: 'english',
       numbers: mobileNumber,
     });
@@ -106,7 +106,7 @@ const sendViaTwilio = async (phone, otp) => {
     }
 
     const message = await client.messages.create({
-      body: `Your Gita Wisdom verification code is: ${otp}. It expires in 10 minutes. Do not share it.`,
+      body: `Your Omstream verification code is: ${otp}. It expires in 10 minutes. Do not share it.`,
       from: twilioPhone.trim(),
       to: formattedPhone,
     });

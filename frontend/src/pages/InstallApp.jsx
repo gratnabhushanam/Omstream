@@ -40,9 +40,9 @@ export default function InstallApp() {
           <div className="text-center mb-8">
             <div className="w-20 h-20 mx-auto bg-gradient-to-br from-devotion-gold/20 to-devotion-gold/5 rounded-[2rem] border border-devotion-gold/30 flex items-center justify-center mb-6 shadow-[0_0_30px_rgba(255,215,0,0.15)] relative group cursor-pointer" onClick={handleInstallClick}>
               <div className="absolute inset-0 bg-devotion-gold/10 rounded-[2rem] opacity-0 group-hover:opacity-100 transition-opacity"></div>
-              <img src="/logo-om-v2.png" alt="Gita Wisdom Logo" className="w-12 h-12 object-contain drop-shadow-lg scale-110" />
+              <img src="/logo-om-v2.png" alt="Omstream Logo" className="w-12 h-12 object-contain drop-shadow-lg scale-110" />
             </div>
-            <h1 className="text-3xl font-bold text-white mb-2 font-serif bg-gradient-to-r from-devotion-gold to-[#FFE6A5] bg-clip-text text-transparent">Gita Wisdom</h1>
+            <h1 className="text-3xl font-bold text-white mb-2 font-serif bg-gradient-to-r from-devotion-gold to-[#FFE6A5] bg-clip-text text-transparent">Omstream</h1>
             <p className="text-gray-400 text-sm">Your Spiritual Companion</p>
           </div>
 

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { BookOpen, Book, Menu, X, BrainCircuit, User, Star, Heart, Search, Film, Shield, Users, Bell, Download, CheckCheck, Info, Megaphone, Gift, Sparkles, ChevronRight, Music } from 'lucide-react';
+import { BookOpen, Book, Menu, X, BrainCircuit, User, Star, Heart, Search, Film, Shield, Users, Bell, Download, CheckCheck, Info, Megaphone, Gift, Sparkles, ChevronRight, Music, Tv } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useInstallPrompt } from '../hooks/useInstallPrompt';
 import { DesktopNotificationPanel, MobileNotificationSheet } from './Notifications';
@@ -25,7 +25,7 @@ export default function Navbar() {
   }, []);
 
   const getInitials = (name) => {
-    if (!name) return 'G';
+    if (!name) return 'O';
     return name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 1);
   };
 
@@ -54,8 +54,8 @@ export default function Navbar() {
               <img src="/logo-om-v2.png" alt="Logo" className="w-full h-full object-cover scale-90 group-hover:scale-105 transition-transform" />
             </div>
             <div className="flex flex-col">
-              <span className="text-base sm:text-lg tv:text-2xl font-black bg-gradient-to-r from-devotion-gold to-white bg-clip-text text-transparent tracking-tighter uppercase leading-none">GitaWisdom</span>
-              <span className="text-[7px] sm:text-[8px] tv:text-xs font-black text-devotion-gold uppercase tracking-[0.4em] opacity-60">Divine Path</span>
+              <span className="text-base sm:text-lg tv:text-2xl font-black bg-gradient-to-r from-devotion-gold to-white bg-clip-text text-transparent tracking-tighter uppercase leading-none">Omstream</span>
+              <span className="text-[7px] sm:text-[8px] tv:text-xs font-black text-devotion-gold uppercase tracking-[0.4em] opacity-60">Streaming Platform</span>
             </div>
           </Link>
           
@@ -81,6 +81,10 @@ export default function Navbar() {
             <div className="flex items-center gap-1 xl:gap-2 shrink-0">
             
             <div className="h-6 w-px bg-white/10 mx-2 xl:mx-4"></div>
+            
+            <Link to="/tv" className="tv-focusable group relative px-4 py-2 tv:px-8 tv:py-4 bg-[#F5A623] hover:bg-[#F5A623]/80 text-[#06101E] text-[9px] tv:text-sm font-black uppercase tracking-widest rounded-xl shadow-[0_0_20px_rgba(245,166,35,0.2)] hover:shadow-[0_0_30px_rgba(245,166,35,0.4)] transition-all flex items-center gap-2 overflow-hidden active:scale-95 mr-2 shrink-0">
+               <Tv className="w-4 h-4 tv:w-5 h-5" /> TV MODE
+            </Link>
             
             <button onClick={handleInstallClick} className="tv-focusable group relative px-4 py-2 tv:px-8 tv:py-4 bg-gradient-to-br from-[#00A8FF] to-[#7B2FF7] text-white text-[9px] tv:text-sm font-black uppercase tracking-widest rounded-xl shadow-[0_0_20px_rgba(0,168,255,0.2)] hover:shadow-[0_0_30px_rgba(0,168,255,0.4)] transition-all flex items-center gap-2 overflow-hidden active:scale-95">
                <Download className="w-4 h-4 tv:w-5 h-5 group-hover:translate-y-0.5 transition-transform" /> GET APP
@@ -242,7 +246,7 @@ export default function Navbar() {
                  <img src="/logo-om-v2.png" alt="Logo" className="w-14 h-14 object-contain relative z-10 group-hover:scale-110 transition-transform duration-500" />
               </div>
               <h3 className="text-2xl font-black text-white mb-4 uppercase tracking-tighter font-serif">Divine Installation</h3>
-              <p className="text-[13px] text-gray-400 leading-relaxed mb-8 font-medium italic font-serif">"Carry the Gita Wisdom in your pocket. Fast, secure, and always available offline."</p>
+              <p className="text-[13px] text-gray-400 leading-relaxed mb-8 font-medium italic font-serif">"Carry the Omstream app in your pocket. Fast, secure, and always available offline."</p>
               <div className="space-y-4 mb-8">
                  <div className="p-4 bg-white/5 rounded-2xl border border-white/10 text-left">
                     <p className="text-[10px] font-black text-devotion-gold uppercase tracking-[0.2em] mb-2">Instructions</p>

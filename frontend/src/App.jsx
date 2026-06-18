@@ -2,6 +2,7 @@ import React, { lazy, Suspense, useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { useAuth } from './context/AuthContext';
+import { SubscriptionProvider, useSubscription } from './context/SubscriptionContext';
 import Navbar from './components/Navbar';
 import BottomNav from './components/BottomNav';
 import Footer from './components/Footer';
@@ -37,11 +38,17 @@ const Movies = lazy(() => import('./pages/Movies'));
 const Satsangs = lazy(() => import('./pages/Satsangs'));
 const InstallApp = lazy(() => import('./pages/InstallApp'));
 const Subscription = lazy(() => import('./pages/Subscription'));
+const PaymentPage = lazy(() => import('./pages/PaymentPage'));
+const SubscriptionSuccess = lazy(() => import('./pages/SubscriptionSuccess'));
 const NotFound = lazy(() => import('./pages/NotFound'));
 const Songs = lazy(() => import('./pages/Songs'));
+const TvHome = lazy(() => import('./pages/TvHome'));
+
+
 function AppShell() {
   const location = useLocation();
   const { user, loading: authLoading, selectedProfile, selectProfile } = useAuth();
+  const { tier, status } = useSubscription();
   const { immersiveNotification, setImmersiveNotification } = useNotifications();
   const [minSplashTimeReached, setMinSplashTimeReached] = useState(false);
 
@@ -53,10 +60,7 @@ function AppShell() {
   const loading = authLoading || !minSplashTimeReached;
 
   const isSubscribed = (u) => {
-    if (!u) return false;
-    if (u.role === 'admin') return true;
-    if (u.subscriptionStatus === 'Trial Expired' || u.subscriptionStatus === 'Subscription Cancelled') return false;
-    return true; // Trial Active or Subscription Active
+    return !!u && status === 'active';
   };
 
   const [sparkles, setSparkles] = useState([]);
@@ -73,9 +77,9 @@ function AppShell() {
     return () => window.removeEventListener('click', handleGlobalClick);
   }, []);
 
-  // Auto-select default profile for admin users and users with no profiles
-  // Must be in useEffect to avoid side-effects during render
   const isAuthRoute = location.pathname === '/login' || location.pathname === '/register' || location.pathname === '/register/verify-otp' || location.pathname === '/forgot-password';
+  const isTvRoute = location.pathname === '/tv';
+
 
   useEffect(() => {
     if (!user || selectedProfile || isAuthRoute) return;
@@ -98,8 +102,6 @@ function AppShell() {
     return <SplashScreen />;
   }
 
-  // Show profile selector ONLY for users who have profiles and haven't selected one
-  // Admin users and users with no profiles skip this and go directly to the app
   const needsProfileSelection = user && !selectedProfile && !isAuthRoute && (user.profiles || []).length > 0 && user.role !== 'admin';
 
   if (needsProfileSelection) {
@@ -182,7 +184,7 @@ function AppShell() {
         </div>
       ))}
 
-      {!isAuthRoute && (
+      {!isAuthRoute && !isTvRoute && (
         <>
           <div className="fixed inset-0 z-0 bg-[#06101E]"></div>
           <div className="fixed inset-0 z-0 opacity-30 pointer-events-none dynamic-aura-field"></div>
@@ -190,11 +192,12 @@ function AppShell() {
         </>
       )}
 
+
       {/* Primary Responsive Layout Container */}
       <div className="relative z-10 w-full min-h-[100dvh] flex flex-col flex-1">
         
         <div>
-           {!isAuthRoute && <Navbar />}
+           {!isAuthRoute && !isTvRoute && <Navbar />}
         </div>
         <GlobalInstallPrompt />
         
@@ -203,50 +206,52 @@ function AppShell() {
             <Suspense fallback={pageFallback}>
               <Routes>
                 {/* Unauthenticated Home / Paywall */}
-                <Route path="/" element={<Navigate to={isSubscribed(user) ? '/kids' : '/subscription'} replace />} />
+                <Route path="/" element={user ? (isSubscribed(user) ? <Navigate to="/home" replace /> : <Navigate to="/subscription" replace />) : <Navigate to="/login" replace />} />
                 
                 {/* Auth Routes */}
-                <Route path="/subscription" element={<Subscription />} />
-                <Route path="/login" element={<Login />} />
-                <Route path="/register" element={<Register />} />
-                <Route path="/register/verify-otp" element={<RegisterVerifyOtp />} />
-                <Route path="/forgot-password" element={<ForgotPassword />} />
+                <Route path="/subscription" element={user ? <Subscription /> : <Navigate to="/login" replace />} />
+                <Route path="/payment" element={user ? <PaymentPage /> : <Navigate to="/login" replace />} />
+                <Route path="/subscription/success" element={user ? <SubscriptionSuccess /> : <Navigate to="/login" replace />} />
+                <Route path="/login" element={user ? (isSubscribed(user) ? <Navigate to="/home" replace /> : <Navigate to="/subscription" replace />) : <Login />} />
+                <Route path="/register" element={user ? (isSubscribed(user) ? <Navigate to="/home" replace /> : <Navigate to="/subscription" replace />) : <Register />} />
+                <Route path="/register/verify-otp" element={user ? (isSubscribed(user) ? <Navigate to="/home" replace /> : <Navigate to="/subscription" replace />) : <RegisterVerifyOtp />} />
+                <Route path="/forgot-password" element={user ? (isSubscribed(user) ? <Navigate to="/home" replace /> : <Navigate to="/subscription" replace />) : <ForgotPassword />} />
                 
                 {/* Protected Routes */}
-                <Route path="/home" element={isSubscribed(user) ? <Home /> : <Navigate to="/subscription" replace />} />
-                <Route path="/stories" element={isSubscribed(user) ? <Stories /> : <Navigate to="/subscription" replace />} />
-                <Route path="/chapters" element={isSubscribed(user) ? <Stories /> : <Navigate to="/subscription" replace />} />
-                <Route path="/videos" element={isSubscribed(user) ? <Videos /> : <Navigate to="/subscription" replace />} />
-                <Route path="/sloka" element={isSubscribed(user) ? <Sloka /> : <Navigate to="/subscription" replace />} />
-                <Route path="/about" element={isSubscribed(user) ? <About /> : <Navigate to="/subscription" replace />} />
-                <Route path="/install" element={<InstallApp />} />
-                <Route path="/quiz" element={isSubscribed(user) ? <Quiz /> : <Navigate to="/subscription" replace />} />
-                <Route path="/quizzes" element={isSubscribed(user) ? <QuizList /> : <Navigate to="/subscription" replace />} />
-                <Route path="/student" element={isSubscribed(user) ? <StudentGuide /> : <Navigate to="/subscription" replace />} />
-                <Route path="/mentor" element={isSubscribed(user) ? <Mentor /> : <Navigate to="/subscription" replace />} />
-                <Route path="/satsangs" element={isSubscribed(user) ? <Satsangs /> : <Navigate to="/subscription" replace />} />
-                <Route path="/daily-sloka" element={isSubscribed(user) ? <DailySloka /> : <Navigate to="/subscription" replace />} />
-                <Route path="/kids" element={isSubscribed(user) ? <KidsMode /> : <Navigate to="/subscription" replace />} />
-                <Route path="/search" element={isSubscribed(user) ? <Search /> : <Navigate to="/subscription" replace />} />
-                <Route path="/profile" element={isSubscribed(user) ? <Profile /> : <Navigate to="/subscription" replace />} />
-                <Route path="/movies" element={isSubscribed(user) ? <Movies /> : <Navigate to="/subscription" replace />} />
+                <Route path="/home" element={user ? (isSubscribed(user) ? <Home /> : <Navigate to="/subscription" replace />) : <Navigate to="/login" replace />} />
+                <Route path="/stories" element={user ? (isSubscribed(user) ? <Stories /> : <Navigate to="/subscription" replace />) : <Navigate to="/login" replace />} />
+                <Route path="/chapters" element={user ? (isSubscribed(user) ? <Stories /> : <Navigate to="/subscription" replace />) : <Navigate to="/login" replace />} />
+                <Route path="/videos" element={user ? (isSubscribed(user) ? <Videos /> : <Navigate to="/subscription" replace />) : <Navigate to="/login" replace />} />
+                <Route path="/sloka" element={user ? (isSubscribed(user) ? <Sloka /> : <Navigate to="/subscription" replace />) : <Navigate to="/login" replace />} />
+                <Route path="/about" element={user ? (isSubscribed(user) ? <About /> : <Navigate to="/subscription" replace />) : <Navigate to="/login" replace />} />
+                <Route path="/install" element={user ? (isSubscribed(user) ? <InstallApp /> : <Navigate to="/subscription" replace />) : <Navigate to="/login" replace />} />
+                <Route path="/quiz" element={user ? (isSubscribed(user) ? <Quiz /> : <Navigate to="/subscription" replace />) : <Navigate to="/login" replace />} />
+                <Route path="/quizzes" element={user ? (isSubscribed(user) ? <QuizList /> : <Navigate to="/subscription" replace />) : <Navigate to="/login" replace />} />
+                <Route path="/student" element={user ? (isSubscribed(user) ? <StudentGuide /> : <Navigate to="/subscription" replace />) : <Navigate to="/login" replace />} />
+                <Route path="/mentor" element={user ? (isSubscribed(user) ? <Mentor /> : <Navigate to="/subscription" replace />) : <Navigate to="/login" replace />} />
+                <Route path="/satsangs" element={user ? (isSubscribed(user) ? <Satsangs /> : <Navigate to="/subscription" replace />) : <Navigate to="/login" replace />} />
+                <Route path="/daily-sloka" element={user ? (isSubscribed(user) ? <DailySloka /> : <Navigate to="/subscription" replace />) : <Navigate to="/login" replace />} />
+                <Route path="/kids" element={user ? (isSubscribed(user) ? <KidsMode /> : <Navigate to="/subscription" replace />) : <Navigate to="/login" replace />} />
+                <Route path="/search" element={user ? (isSubscribed(user) ? <Search /> : <Navigate to="/subscription" replace />) : <Navigate to="/login" replace />} />
+                <Route path="/profile" element={user ? <Profile /> : <Navigate to="/login" replace />} />
+                <Route path="/movies" element={user ? (isSubscribed(user) ? <Movies /> : <Navigate to="/subscription" replace />) : <Navigate to="/login" replace />} />
                 <Route path="/admin" element={user && user.role === 'admin' ? <AdminDashboard /> : <Navigate to="/subscription" replace />} />
-                <Route path="/songs" element={<Songs />} />
+                <Route path="/songs" element={user ? (isSubscribed(user) ? <Songs /> : <Navigate to="/subscription" replace />) : <Navigate to="/login" replace />} />
+                <Route path="/tv" element={user ? (isSubscribed(user) ? <TvHome /> : <Navigate to="/subscription" replace />) : <Navigate to="/login" replace />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </Suspense>
           </LayoutWrapper>
         </main>
         
-        {!isAuthRoute && <Footer />}
-        {!isAuthRoute && <BottomNav />}
+        {!isAuthRoute && !isTvRoute && <Footer />}
+        {!isAuthRoute && !isTvRoute && <BottomNav />}
         
         {/* Global Immersive Notification Overlay */}
         <ImmersiveNotification 
           notification={immersiveNotification} 
           onClose={() => setImmersiveNotification(null)}
           onAction={(n) => {
-            // Mark as read and maybe navigate
             setImmersiveNotification(null);
             if (n.data?.url) {
               window.location.href = n.data.url;
@@ -266,7 +271,7 @@ function App() {
       if (r) {
         setInterval(() => {
           r.update();
-        }, 60 * 60 * 1000); // Check for updates every hour
+        }, 60 * 60 * 1000);
       }
     },
     onRegisterError(error) {
@@ -283,22 +288,24 @@ function App() {
   }, [needRefresh, updateServiceWorker]);
 
   useEffect(() => {
-      // Trigger background sync exactly once on app boot natively
       OtaSyncService.syncContent();
   }, []);
 
   return (
     <AuthProvider>
-      <LanguageProvider>
-        <NotificationProvider>
-          <Router>
-            <AppShell />
-          </Router>
-        </NotificationProvider>
-      </LanguageProvider>
+      <SubscriptionProvider>
+        <LanguageProvider>
+          <NotificationProvider>
+            <Router>
+              <AppShell />
+            </Router>
+          </NotificationProvider>
+        </LanguageProvider>
+      </SubscriptionProvider>
     </AuthProvider>
   );
 }
 
 export default App;
+
 

@@ -10,7 +10,7 @@ async function sendEmail({ to, subject, html, text }) {
   if (!transporter) return;
   
   await transporter.sendMail({
-    from: `${process.env.EMAIL_FROM_NAME || 'Gita Wisdom'} <${process.env.EMAIL_USER}>`,
+    from: `${process.env.EMAIL_FROM_NAME || 'Omstream'} <${process.env.EMAIL_USER}>`,
     to,
     subject,
     html,
@@ -56,8 +56,8 @@ async function sendInApp({ userId, type, title, body, data }) {
   const Notification = require('../models/Notification');
   if (!userId) return;
   const safeType = String(type || 'system').trim() || 'system';
-  const safeTitle = String(title || '').trim() || 'Gita Wisdom Update';
-  const safeBody = String(body || '').trim() || 'You have a new update from Gita Wisdom.';
+  const safeTitle = String(title || '').trim() || 'Omstream Update';
+  const safeBody = String(body || '').trim() || 'You have a new update from Omstream.';
 
   await Notification.create({
     userId,

@@ -217,9 +217,23 @@ const initializeApp = async () => {
       await initializeAdminCredentials();
       console.log('Admin credentials initialized/verified.');
 
+      // Run Subscription migrations
+      try {
+        const { migrateExistingUsers } = require('./scripts/migrateSubscriptions');
+        await migrateExistingUsers();
+      } catch (err) {
+        console.error('[MIGRATION] Subscription migration failed:', err.message);
+      }
+
       // Start Cron Jobs (Automated Sloka, sloka rotation etc)
       if (!cluster.isWorker || cluster.worker.id === 1) {
         require('./services/cronJobs').initializeCronJobs();
+        try {
+          const { initializeSubscriptionCrons } = require('./services/subscriptionCron');
+          initializeSubscriptionCrons();
+        } catch (err) {
+          console.error('[CRON] Subscription cron initialization failed:', err.message);
+        }
         console.log('[CRON] Jobs initialized by Worker 1 (or Primary).');
       } else {
         console.log(`[CRON] Worker ${cluster.worker.id} bypassing cron initialization to prevent duplication.`);
@@ -247,7 +261,31 @@ app.use((req, res, next) => {
 });
 
 // API Routes
+const otpController = require('./controllers/otpController');
+const authController = require('./controllers/authController');
+const subscriptionController = require('./controllers/subscriptionController');
+const { protect } = require('./middleware/authMiddleware');
+
+app.post('/send-otp', otpController.sendOtp);
+app.post('/verify-otp', otpController.verifyOtp);
+app.post('/signup', authController.registerUser);
+app.post('/login', authController.loginUser);
+app.post('/create-order', protect, subscriptionController.subscribeToPlan);
+app.post('/create-payment-link', protect, subscriptionController.createPaymentLink);
+app.post('/verify-payment', protect, subscriptionController.verifyAndActivate);
+app.post('/webhook', subscriptionController.handleWebhook);
+
+app.post('/api/send-otp', otpController.sendOtp);
+app.post('/api/verify-otp', otpController.verifyOtp);
+app.post('/api/signup', authController.registerUser);
+app.post('/api/login', authController.loginUser);
+app.post('/api/create-order', protect, subscriptionController.subscribeToPlan);
+app.post('/api/create-payment-link', protect, subscriptionController.createPaymentLink);
+app.post('/api/verify-payment', protect, subscriptionController.verifyAndActivate);
+app.post('/api/webhook', subscriptionController.handleWebhook);
+
 app.use('/api/auth', require('./routes/authRoutes'));
+app.use('/api/subscription', require('./routes/subscriptionRoutes'));
 app.use('/api/payments', require('./routes/payments'));
 app.use('/api/content', require('./routes/syncRoutes'));
 app.use('/api/admin', require('./routes/adminRoutes'));
