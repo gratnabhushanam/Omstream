@@ -39,9 +39,7 @@ export default function Navbar() {
     { name: 'Home', path: '/home', icon: <BookOpen className="w-4 h-4 mr-2" /> },
     { name: 'TV', path: '/tv', icon: <Tv className="w-4 h-4 mr-2" /> },
     { name: 'Movies', path: '/movies', icon: <Film className="w-4 h-4 mr-2" /> },
-    { name: 'Sports', path: '/sports', icon: <Users className="w-4 h-4 mr-2" /> },
     { name: 'Kids', path: '/kids', icon: <Star className="w-4 h-4 mr-2" /> },
-    { name: 'Categories', path: '/categories', icon: <LayoutGrid className="w-4 h-4 mr-2" /> },
     ...(user?.role === 'admin' ? [{ name: 'Admin', path: '/admin', icon: <Shield className="w-4 h-4 mr-2" /> }] : []),
   ];
 

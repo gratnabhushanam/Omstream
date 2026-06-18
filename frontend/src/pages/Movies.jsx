@@ -27,6 +27,7 @@ export default function Movies() {
   const [currentHeroIndex, setCurrentHeroIndex] = useState(0);
   const [scrolled, setScrolled] = useState(false);
   const [hoveredMovieId, setHoveredMovieId] = useState(null);
+  const [featuredMovie, setFeaturedMovie] = useState(null);
 
   const [downloading, setDownloading] = useState({});
   const [downloadedMovies, setDownloadedMovies] = useState(() => {
