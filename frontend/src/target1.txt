@@ -1,0 +1,124 @@
+                <div className="lg:col-span-8 space-y-8">
+                   <div className="relative aspect-video rounded-[3rem] overflow-hidden border border-white/10 shadow-2xl">
+                      {activeStory.thumbnail && (
+                        <img src={activeStory.thumbnail} alt="" loading="lazy" className="w-full h-full object-cover" />
+                      )}
+                      <div className="absolute inset-0 bg-gradient-to-t from-[#06101E] via-[#06101E]/20 to-transparent" />
+                      <div className="absolute bottom-10 left-10 right-10">
+                         <div className="flex items-center gap-3 mb-4">
+                            <span className="px-3 py-1 bg-devotion-gold text-[#06101E] rounded-full text-[10px] font-black uppercase tracking-widest">
+                               {activeStory.category || 'Spiritual'}
+                            </span>
+                            {activeStory.isKids && <span className="px-3 py-1 bg-blue-500 text-white rounded-full text-[10px] font-black uppercase tracking-widest">KIDS MODE</span>}
+                         </div>
+                          <h1 className={`text-4xl sm:text-5xl font-serif font-black text-white transition-all duration-500 ${isTranslating ? 'animate-pulse opacity-50' : ''}`}>
+                             {isTranslating ? 'Translating Divine Wisdom...' : (getLocalizedContent(activeStory.chapters?.[activeChapterIndex], 'chapter')?.title || getLocalizedContent(activeStory)?.title)}
+                          </h1>
+                      </div>
+                   </div>
+
+                   <div className="bg-[#0B1F3A]/40 backdrop-blur-xl border border-white/10 rounded-[3rem] p-10 sm:p-14">
+                      <div className="flex flex-wrap items-center justify-between gap-6 mb-12">
+                          <div className="flex flex-wrap gap-2">
+                             {languages.map(lang => (
+                                <button
+                                  key={lang.code}
+                                  onClick={() => handleLanguageChange(lang.code)}
+                                  className={`px-4 py-2 rounded-xl border text-[10px] font-black uppercase tracking-widest transition-all ${selectedLanguage === lang.code ? 'bg-devotion-gold text-[#06101E] border-devotion-gold shadow-[0_0_20px_rgba(255,215,0,0.3)]' : 'border-white/10 text-gray-400 hover:bg-white/5'}`}
+                                >
+                                  {lang.native}
+                                </button>
+                             ))}
+                          </div>
+
+                          <div className="flex flex-col gap-2">
+                            <span className="text-[9px] font-black uppercase tracking-[0.25em] text-devotion-gold/80">AI Voice Style</span>
+                            <div className="flex flex-wrap gap-1 bg-[#051121] rounded-2xl p-1 border border-white/5 backdrop-blur-md">
+                              {[
+                                { id: 'saikumar', label: 'Tollywood' },
+                                { id: 'krishna', label: 'Soothing' },
+                                { id: 'ram', label: 'Gentle' },
+                                { id: 'hanuman', label: 'Strong' }
+                              ].map(v => (
+                                <button
+                                  key={v.id}
+                                  onClick={() => {
+                                    setSelectedVoice(v.id);
+                                    if (isSpeaking) {
+                                      if (audioRef.current) {
+                                        audioRef.current.pause();
+                                        audioRef.current = null;
+                                      }
+                                      if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+                                      setIsSpeaking(false);
+                                    }
+                                  }}
+                                  className={`px-3 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${selectedVoice === v.id ? 'bg-[#FF7A00] text-devotion-darkBlue font-black shadow-md' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}
+                                >
+                                  {v.label}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+
+                          {translationWarning && (
+                             <div className="w-full mt-4 p-4 bg-red-500/10 border border-red-500/20 rounded-2xl flex items-center gap-3 animate-in fade-in slide-in-from-top-2">
+                                <Sparkles className="w-4 h-4 text-red-400" />
+                                <p className="text-[10px] font-bold text-red-300 uppercase tracking-widest">Translation failed. Please try again or switch language.</p>
+                             </div>
+                          )}
+
+                           <div className="flex items-center gap-3 mt-6 lg:mt-0">
+                            <button
+                              onClick={toggleWatchlist}
+                              className={`inline-flex items-center gap-3 px-6 py-4 rounded-2xl font-black text-sm uppercase tracking-widest transition-all ${isInWatchlist ? 'bg-devotion-gold/20 text-devotion-gold border border-devotion-gold' : 'bg-white/5 text-gray-400 border border-white/10 hover:bg-white/10'}`}
+                            >
+                              <Bookmark className={`w-5 h-5 ${isInWatchlist ? 'fill-current' : ''}`} />
+                              {isInWatchlist ? 'Saved' : 'Save Story'}
+                            </button>
+
+                            <button
+                              onClick={() => handleToggleAudio(getLocalizedContent(activeStory.chapters?.[activeChapterIndex], 'chapter')?.content || getLocalizedContent(activeStory)?.content)}
+                              className="inline-flex items-center gap-3 px-8 py-4 bg-devotion-gold text-[#06101E] rounded-2xl font-black text-sm uppercase tracking-widest hover:bg-yellow-400 transition-all shadow-[0_0_30px_rgba(255,215,0,0.2)]"
+                            >
+                              {isSpeaking ? <PauseCircle className="w-5 h-5" /> : <Volume2 className="w-5 h-5" />}
+                              {isSpeaking ? 'Stop AI Narration' : 'Listen with AI'}
+                            </button>
+                          </div>
+                      </div>
+
+                       <div className="prose prose-invert max-w-none min-h-[300px]">
+                          {isTranslating ? (
+                            <div className="space-y-4 animate-pulse">
+                              <div className="h-4 bg-white/10 rounded-full w-full" />
+                              <div className="h-4 bg-white/10 rounded-full w-full" />
+                              <div className="h-4 bg-white/10 rounded-full w-3/4" />
+                              <div className="h-4 bg-white/10 rounded-full w-full" />
+                              <div className="h-4 bg-white/10 rounded-full w-5/6" />
+                            </div>
+                          ) : (
+                            <p className="text-xl sm:text-2xl leading-relaxed text-white/90 font-serif whitespace-pre-wrap transition-all duration-700 ease-in-out">
+                               {getLocalizedContent(activeStory.chapters?.[activeChapterIndex], 'chapter')?.content || getLocalizedContent(activeStory)?.content || 'Seeking wisdom...'}
+                            </p>
+                          )}
+                       </div>
+
+                      {getLocalizedContent(activeStory.chapters?.[activeChapterIndex])?.takeaways?.length > 0 && (
+                        <div className="mt-16 pt-12 border-t border-white/10">
+                           <h4 className="flex items-center gap-3 text-devotion-gold font-black text-xs uppercase tracking-[0.3em] mb-8">
+                              <Sparkles className="w-5 h-5" /> Spiritual Takeaways
+                           </h4>
+                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                              {getLocalizedContent(activeStory.chapters[activeChapterIndex]).takeaways.map((item, i) => (
+                                <div key={i} className="bg-white/5 border border-white/5 p-6 rounded-2xl flex items-start gap-4">
+                                   <div className="w-8 h-8 rounded-full bg-devotion-gold/10 flex items-center justify-center text-devotion-gold shrink-0">
+                                      {i === 0 ? <Heart className="w-4 h-4" /> : i === 1 ? <Star className="w-4 h-4" /> : <Award className="w-4 h-4" />}
+                                   </div>
+                                   <p className="text-sm text-gray-300 leading-relaxed">{item}</p>
+                                </div>
+                              ))}
+                           </div>
+                        </div>
+                      )}
+                   </div>
+                </div>

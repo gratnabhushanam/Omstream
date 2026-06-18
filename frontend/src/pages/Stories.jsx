@@ -41,6 +41,20 @@ export default function Stories() {
   const chatEndRef = useRef(null);
   const audioRef = useRef(null);
 
+  // Cinematic Reading states
+  const [scrollProgress, setScrollProgress] = useState(0);
+
+  useEffect(() => {
+    if (!activeStory) return;
+    const handleScroll = () => {
+      const scrollHeight = document.documentElement.scrollHeight - window.innerHeight;
+      const progress = scrollHeight > 0 ? (window.scrollY / scrollHeight) * 100 : 0;
+      setScrollProgress(progress);
+    };
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [activeStory]);
+
   const fetchStories = async () => {
     try {
       setLoading(true);
@@ -441,6 +455,24 @@ export default function Stories() {
     return { accent: 'from-[#9FD9F0] to-[#6FA9C8]', bg: 'bg-[#9FD9F0]/10', border: 'border-[#9FD9F0]/30' };
   };
 
+  const getCinematicParagraphs = () => {
+    if (isTranslating) return [];
+    const content = getLocalizedContent(activeStory?.chapters?.[activeChapterIndex], 'chapter')?.content || getLocalizedContent(activeStory)?.content || '';
+    return content.split('\n').filter(p => p.trim().length > 0);
+  };
+
+  const cinematicParagraphs = getCinematicParagraphs();
+  const highlightedWords = ['Karma', 'Dharma', 'Krishna', 'Arjuna', 'Yoga', 'Bhakti', 'Moksha', 'Soul', 'Divine'];
+
+  const renderCinematicText = (text) => {
+    let result = text;
+    highlightedWords.forEach(word => {
+      const regex = new RegExp(`\\b${word}\\b`, 'gi');
+      result = result.replace(regex, `<span class="text-devotion-gold font-bold glowing-text">$&</span>`);
+    });
+    return <span dangerouslySetInnerHTML={{ __html: result }} />;
+  };
+
   return (
     <div className="min-h-screen bg-[#06101E] pt-20 sm:pt-28 pb-28 px-4 sm:px-6 lg:px-8 text-white relative overflow-x-hidden">
       {/* Dynamic Backgrounds */}
@@ -563,133 +595,167 @@ export default function Stories() {
 
              <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
                  {/* Left: Content Area */}
-                <div className="lg:col-span-8 space-y-8">
-                   <div className="relative aspect-video rounded-[3rem] overflow-hidden border border-white/10 shadow-2xl">
+                <div className="lg:col-span-8 space-y-8 pb-32">
+                   {/* Cinematic Hero Header */}
+                   <div className="relative rounded-[3rem] overflow-hidden border border-white/10 shadow-[0_30px_100px_rgba(0,0,0,0.8)] holographic-glow group" style={{ height: '60vh', minHeight: '400px' }}>
                       {activeStory.thumbnail && (
-                        <img src={activeStory.thumbnail} alt="" loading="lazy" className="w-full h-full object-cover" />
+                        <div 
+                          className="absolute inset-0 bg-cover bg-center transition-transform duration-[10s] group-hover:scale-110"
+                          style={{ 
+                            backgroundImage: `url(${activeStory.thumbnail})`,
+                            transform: `translateY(${scrollProgress * 0.5}px) scale(1.1)` // Parallax
+                          }} 
+                        />
                       )}
-                      <div className="absolute inset-0 bg-gradient-to-t from-[#06101E] via-[#06101E]/20 to-transparent" />
+                      <div className="absolute inset-0 bg-gradient-to-t from-[#06101E] via-[#06101E]/40 to-transparent" />
                       <div className="absolute bottom-10 left-10 right-10">
-                         <div className="flex items-center gap-3 mb-4">
-                            <span className="px-3 py-1 bg-devotion-gold text-[#06101E] rounded-full text-[10px] font-black uppercase tracking-widest">
+                         <div className="flex items-center gap-3 mb-6 animate-fade-in-up">
+                            <span className="px-4 py-1.5 bg-devotion-gold text-[#06101E] rounded-full text-[10px] font-black uppercase tracking-widest shadow-[0_0_20px_rgba(255,215,0,0.4)]">
                                {activeStory.category || 'Spiritual'}
                             </span>
-                            {activeStory.isKids && <span className="px-3 py-1 bg-blue-500 text-white rounded-full text-[10px] font-black uppercase tracking-widest">KIDS MODE</span>}
+                            {activeStory.isKids && <span className="px-4 py-1.5 bg-blue-500 text-white rounded-full text-[10px] font-black uppercase tracking-widest">KIDS MODE</span>}
                          </div>
-                          <h1 className={`text-4xl sm:text-5xl font-serif font-black text-white transition-all duration-500 ${isTranslating ? 'animate-pulse opacity-50' : ''}`}>
+                          <h1 className={`text-5xl sm:text-7xl font-serif font-black text-white leading-tight mb-8 drop-shadow-2xl transition-all duration-500 ${isTranslating ? 'animate-pulse opacity-50' : 'animate-fade-in-up'}`} style={{ animationDelay: '0.2s' }}>
                              {isTranslating ? 'Translating Divine Wisdom...' : (getLocalizedContent(activeStory.chapters?.[activeChapterIndex], 'chapter')?.title || getLocalizedContent(activeStory)?.title)}
                           </h1>
+                          <div className="flex items-center gap-4 animate-fade-in-up" style={{ animationDelay: '0.4s' }}>
+                            <button
+                              onClick={() => handleToggleAudio(getLocalizedContent(activeStory.chapters?.[activeChapterIndex], 'chapter')?.content || getLocalizedContent(activeStory)?.content)}
+                              className="inline-flex items-center gap-3 px-8 py-4 bg-devotion-gold text-[#06101E] rounded-full font-black text-sm uppercase tracking-widest hover:bg-yellow-400 transition-all shadow-[0_0_30px_rgba(255,215,0,0.4)] hover:scale-105"
+                            >
+                              {isSpeaking ? <PauseCircle className="w-5 h-5" /> : <PlayCircle className="w-5 h-5" />}
+                              {isSpeaking ? 'Pause Audio' : 'Play Audio'}
+                            </button>
+                            <button
+                               onClick={() => window.scrollTo({ top: window.innerHeight * 0.7, behavior: 'smooth' })}
+                               className="inline-flex items-center gap-3 px-8 py-4 bg-white/10 backdrop-blur-md text-white border border-white/20 rounded-full font-black text-sm uppercase tracking-widest hover:bg-white/20 transition-all hover:scale-105"
+                            >
+                               <BookOpenText className="w-5 h-5" /> Start Reading
+                            </button>
+                          </div>
                       </div>
                    </div>
 
-                   <div className="bg-[#0B1F3A]/40 backdrop-blur-xl border border-white/10 rounded-[3rem] p-10 sm:p-14">
-                      <div className="flex flex-wrap items-center justify-between gap-6 mb-12">
-                          <div className="flex flex-wrap gap-2">
-                             {languages.map(lang => (
-                                <button
-                                  key={lang.code}
-                                  onClick={() => handleLanguageChange(lang.code)}
-                                  className={`px-4 py-2 rounded-xl border text-[10px] font-black uppercase tracking-widest transition-all ${selectedLanguage === lang.code ? 'bg-devotion-gold text-[#06101E] border-devotion-gold shadow-[0_0_20px_rgba(255,215,0,0.3)]' : 'border-white/10 text-gray-400 hover:bg-white/5'}`}
-                                >
-                                  {lang.native}
-                                </button>
-                             ))}
-                          </div>
-
-                          <div className="flex flex-col gap-2">
-                            <span className="text-[9px] font-black uppercase tracking-[0.25em] text-devotion-gold/80">AI Voice Style</span>
-                            <div className="flex flex-wrap gap-1 bg-[#051121] rounded-2xl p-1 border border-white/5 backdrop-blur-md">
-                              {[
-                                { id: 'saikumar', label: 'Tollywood' },
-                                { id: 'krishna', label: 'Soothing' },
-                                { id: 'ram', label: 'Gentle' },
-                                { id: 'hanuman', label: 'Strong' }
-                              ].map(v => (
-                                <button
-                                  key={v.id}
-                                  onClick={() => {
-                                    setSelectedVoice(v.id);
-                                    if (isSpeaking) {
-                                      if (audioRef.current) {
-                                        audioRef.current.pause();
-                                        audioRef.current = null;
-                                      }
-                                      if ('speechSynthesis' in window) window.speechSynthesis.cancel();
-                                      setIsSpeaking(false);
-                                    }
-                                  }}
-                                  className={`px-3 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${selectedVoice === v.id ? 'bg-[#FF7A00] text-devotion-darkBlue font-black shadow-md' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}
-                                >
-                                  {v.label}
-                                </button>
-                              ))}
-                            </div>
-                          </div>
-
-                          {translationWarning && (
-                             <div className="w-full mt-4 p-4 bg-red-500/10 border border-red-500/20 rounded-2xl flex items-center gap-3 animate-in fade-in slide-in-from-top-2">
-                                <Sparkles className="w-4 h-4 text-red-400" />
-                                <p className="text-[10px] font-bold text-red-300 uppercase tracking-widest">Translation failed. Please try again or switch language.</p>
-                             </div>
-                          )}
-
-                           <div className="flex items-center gap-3 mt-6 lg:mt-0">
-                            <button
-                              onClick={toggleWatchlist}
-                              className={`inline-flex items-center gap-3 px-6 py-4 rounded-2xl font-black text-sm uppercase tracking-widest transition-all ${isInWatchlist ? 'bg-devotion-gold/20 text-devotion-gold border border-devotion-gold' : 'bg-white/5 text-gray-400 border border-white/10 hover:bg-white/10'}`}
-                            >
-                              <Bookmark className={`w-5 h-5 ${isInWatchlist ? 'fill-current' : ''}`} />
-                              {isInWatchlist ? 'Saved' : 'Save Story'}
-                            </button>
-
-                            <button
-                              onClick={() => handleToggleAudio(getLocalizedContent(activeStory.chapters?.[activeChapterIndex], 'chapter')?.content || getLocalizedContent(activeStory)?.content)}
-                              className="inline-flex items-center gap-3 px-8 py-4 bg-devotion-gold text-[#06101E] rounded-2xl font-black text-sm uppercase tracking-widest hover:bg-yellow-400 transition-all shadow-[0_0_30px_rgba(255,215,0,0.2)]"
-                            >
-                              {isSpeaking ? <PauseCircle className="w-5 h-5" /> : <Volume2 className="w-5 h-5" />}
-                              {isSpeaking ? 'Stop AI Narration' : 'Listen with AI'}
-                            </button>
-                          </div>
-                      </div>
-
-                       <div className="prose prose-invert max-w-none min-h-[300px]">
-                          {isTranslating ? (
-                            <div className="space-y-4 animate-pulse">
-                              <div className="h-4 bg-white/10 rounded-full w-full" />
-                              <div className="h-4 bg-white/10 rounded-full w-full" />
-                              <div className="h-4 bg-white/10 rounded-full w-3/4" />
-                              <div className="h-4 bg-white/10 rounded-full w-full" />
-                              <div className="h-4 bg-white/10 rounded-full w-5/6" />
-                            </div>
-                          ) : (
-                            <p className="text-xl sm:text-2xl leading-relaxed text-white/90 font-serif whitespace-pre-wrap transition-all duration-700 ease-in-out">
-                               {getLocalizedContent(activeStory.chapters?.[activeChapterIndex], 'chapter')?.content || getLocalizedContent(activeStory)?.content || 'Seeking wisdom...'}
-                            </p>
-                          )}
+                   {/* Story Options Toolbar */}
+                   <div className="bg-[#0B1F3A]/60 backdrop-blur-xl border border-white/10 rounded-[2rem] p-6 flex flex-wrap items-center justify-between gap-6 sticky top-24 z-40 shadow-2xl">
+                       <div className="flex items-center gap-2 overflow-x-auto hide-scrollbar pb-2 sm:pb-0">
+                          {languages.map(lang => (
+                             <button
+                               key={lang.code}
+                               onClick={() => handleLanguageChange(lang.code)}
+                               className={`shrink-0 px-4 py-2 rounded-xl border text-[10px] font-black uppercase tracking-widest transition-all ${selectedLanguage === lang.code ? 'bg-devotion-gold text-[#06101E] border-devotion-gold shadow-[0_0_20px_rgba(255,215,0,0.3)]' : 'border-white/10 text-gray-400 hover:bg-white/5 hover:text-white'}`}
+                             >
+                               {lang.native}
+                             </button>
+                          ))}
                        </div>
-
-                      {getLocalizedContent(activeStory.chapters?.[activeChapterIndex])?.takeaways?.length > 0 && (
-                        <div className="mt-16 pt-12 border-t border-white/10">
-                           <h4 className="flex items-center gap-3 text-devotion-gold font-black text-xs uppercase tracking-[0.3em] mb-8">
-                              <Sparkles className="w-5 h-5" /> Spiritual Takeaways
-                           </h4>
-                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                              {getLocalizedContent(activeStory.chapters[activeChapterIndex]).takeaways.map((item, i) => (
-                                <div key={i} className="bg-white/5 border border-white/5 p-6 rounded-2xl flex items-start gap-4">
-                                   <div className="w-8 h-8 rounded-full bg-devotion-gold/10 flex items-center justify-center text-devotion-gold shrink-0">
-                                      {i === 0 ? <Heart className="w-4 h-4" /> : i === 1 ? <Star className="w-4 h-4" /> : <Award className="w-4 h-4" />}
-                                   </div>
-                                   <p className="text-sm text-gray-300 leading-relaxed">{item}</p>
-                                </div>
-                              ))}
+                       
+                       <div className="flex items-center gap-4">
+                           <button
+                             onClick={toggleWatchlist}
+                             className={`p-3 rounded-xl border transition-all ${isInWatchlist ? 'bg-devotion-gold/20 text-devotion-gold border-devotion-gold' : 'border-white/10 text-gray-400 hover:bg-white/10 hover:text-white'}`}
+                             title="Save Story"
+                           >
+                             <Bookmark className={`w-5 h-5 ${isInWatchlist ? 'fill-current' : ''}`} />
+                           </button>
+                           
+                           <div className="hidden sm:flex items-center gap-1 bg-[#051121] rounded-xl p-1 border border-white/5">
+                             {[
+                               { id: 'saikumar', label: 'Tollywood' },
+                               { id: 'krishna', label: 'Soothing' },
+                               { id: 'ram', label: 'Gentle' },
+                               { id: 'hanuman', label: 'Strong' }
+                             ].map(v => (
+                               <button
+                                 key={v.id}
+                                 onClick={() => {
+                                   setSelectedVoice(v.id);
+                                   if (isSpeaking && audioRef.current) { audioRef.current.pause(); audioRef.current = null; if ('speechSynthesis' in window) window.speechSynthesis.cancel(); setIsSpeaking(false); }
+                                 }}
+                                 className={`px-3 py-2 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all ${selectedVoice === v.id ? 'bg-[#FF7A00] text-[#06101E] shadow-md' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}
+                               >
+                                 {v.label}
+                               </button>
+                             ))}
                            </div>
+                       </div>
+                   </div>
+
+                   {/* Cinematic Reading Content */}
+                   <div className="px-4 sm:px-10 py-10 relative">
+                      {/* Left timeline tracking line */}
+                      <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-transparent via-devotion-gold/20 to-transparent hidden sm:block" />
+                      <div 
+                        className="absolute left-0 top-0 w-1 bg-devotion-gold shadow-[0_0_15px_rgba(255,215,0,0.8)] hidden sm:block transition-all duration-300"
+                        style={{ height: `${scrollProgress}%` }}
+                      />
+
+                      {isTranslating ? (
+                        <div className="space-y-12 animate-pulse">
+                          {[1,2,3].map(i => (
+                            <div key={i} className="bg-white/5 rounded-3xl p-8 border border-white/10">
+                               <div className="h-4 bg-white/10 rounded-full w-full mb-4" />
+                               <div className="h-4 bg-white/10 rounded-full w-5/6 mb-4" />
+                               <div className="h-4 bg-white/10 rounded-full w-4/6" />
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="space-y-12">
+                           {cinematicParagraphs.length === 0 && (
+                             <p className="text-xl sm:text-2xl leading-relaxed text-white/90 font-serif whitespace-pre-wrap">
+                               Seeking wisdom...
+                             </p>
+                           )}
+                           {cinematicParagraphs.map((paragraph, index) => (
+                              <React.Fragment key={index}>
+                                <div className="group relative bg-transparent hover:bg-white/[0.02] p-6 sm:p-10 rounded-[3rem] transition-all duration-700 border border-transparent hover:border-white/5 tilt-on-hover">
+                                   <p className={`text-xl sm:text-2xl leading-[1.8] text-gray-200 font-serif transition-colors duration-500 group-hover:text-white ${index === 0 ? 'drop-cap' : ''}`}>
+                                      {renderCinematicText(paragraph)}
+                                   </p>
+                                </div>
+                                
+                                {/* Content Breaks */}
+                                {index > 0 && index % 3 === 0 && index !== cinematicParagraphs.length - 1 && (
+                                   <div className="py-12 flex justify-center">
+                                      <div className="w-24 h-[1px] bg-gradient-to-r from-transparent via-devotion-gold to-transparent shadow-[0_0_10px_rgba(255,215,0,0.5)]" />
+                                   </div>
+                                )}
+                                {index > 0 && index % 5 === 0 && index !== cinematicParagraphs.length - 1 && (
+                                   <div className="my-16 relative bg-gradient-to-br from-blue-900/40 to-purple-900/40 border border-blue-500/30 rounded-[3rem] p-10 overflow-hidden text-center holographic-glow">
+                                      <Sparkles className="w-8 h-8 text-devotion-gold mx-auto mb-6 opacity-80" />
+                                      <p className="text-2xl font-serif text-white italic leading-relaxed max-w-2xl mx-auto">
+                                        "{paragraph.substring(0, 100)}..."
+                                      </p>
+                                      <p className="text-devotion-gold text-[10px] font-black uppercase tracking-[0.3em] mt-6">Divine Highlight</p>
+                                   </div>
+                                )}
+                              </React.Fragment>
+                           ))}
                         </div>
                       )}
                    </div>
-                </div>
 
-                {/* Right: Chapter Navigation */}
-                <div className="lg:col-span-4 space-y-6">
+                   {/* Takeaways */}
+                   {getLocalizedContent(activeStory.chapters?.[activeChapterIndex])?.takeaways?.length > 0 && (
+                     <div className="mt-20 pt-16 border-t border-white/10 px-4 sm:px-10">
+                        <h4 className="flex items-center gap-4 text-devotion-gold font-black text-sm uppercase tracking-[0.3em] mb-12">
+                           <Sparkles className="w-6 h-6 animate-pulse" /> Spiritual Takeaways
+                        </h4>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
+                           {getLocalizedContent(activeStory.chapters[activeChapterIndex]).takeaways.map((item, i) => (
+                             <div key={i} className="bg-glass-cinematic p-8 rounded-[2rem] flex items-start gap-6 group hover:border-devotion-gold/30 transition-colors">
+                                <div className="w-12 h-12 rounded-full bg-devotion-gold/10 flex items-center justify-center text-devotion-gold shrink-0 group-hover:bg-devotion-gold group-hover:text-[#06101E] transition-colors shadow-[0_0_15px_rgba(255,215,0,0.2)]">
+                                   {i === 0 ? <Heart className="w-5 h-5" /> : i === 1 ? <Star className="w-5 h-5" /> : <Award className="w-5 h-5" />}
+                                </div>
+                                <p className="text-base text-gray-300 leading-relaxed font-serif pt-1">{item}</p>
+                             </div>
+                           ))}
+                        </div>
+                     </div>
+                   )}
+                </div>                {/* Right: Chapter Navigation */}
+                <div className="lg:col-span-4 space-y-6 sticky top-32 h-fit">
                    <div className="bg-[#0B1F3A]/40 backdrop-blur-xl border border-white/10 rounded-[2.5rem] p-8">
                       <h4 className="text-white font-black text-xs uppercase tracking-widest mb-6 flex items-center justify-between">
                          Chapters
@@ -720,7 +786,7 @@ export default function Stories() {
                             <button
                               key={chapter._id || index}
                               onClick={() => setActiveChapterIndex(index)}
-                              className={`w-full text-left p-5 rounded-2xl border transition-all flex items-center justify-between group ${activeChapterIndex === index ? 'bg-devotion-gold/10 border-devotion-gold/40 text-devotion-gold' : 'bg-white/5 border-white/5 text-gray-400 hover:bg-white/10'}`}
+                              className={`w-full text-left p-5 rounded-2xl border transition-all flex items-center justify-between group tv-focusable ${activeChapterIndex === index ? 'bg-devotion-gold/10 border-devotion-gold/40 text-devotion-gold' : 'bg-white/5 border-white/5 text-gray-400 hover:bg-white/10'}`}
                             >
                                <div className="flex items-center gap-4">
                                   <span className={`w-8 h-8 rounded-full border flex items-center justify-center text-[10px] font-black ${activeChapterIndex === index ? 'border-devotion-gold bg-devotion-gold text-[#06101E]' : 'border-white/20 text-white/40'}`}>
@@ -734,16 +800,35 @@ export default function Stories() {
                       </div>
                    </div>
 
-                   <div className="bg-gradient-to-br from-blue-600/20 to-purple-600/20 backdrop-blur-xl border border-white/10 rounded-[2.5rem] p-8">
+                   <div className="bg-gradient-to-br from-blue-600/20 to-purple-600/20 backdrop-blur-xl border border-white/10 rounded-[2.5rem] p-8 holographic-glow">
                       <h4 className="text-white font-black text-xs uppercase tracking-widest mb-4">AI Mentor Tip</h4>
-                      <p className="text-xs text-blue-200 leading-relaxed mb-6">"Did you know? Each chapter in this epic holds a specific vibration that can help balance your mind. Try listening to the AI narration with your eyes closed."</p>
+                      <p className="text-xs text-blue-200 leading-relaxed mb-6 font-serif italic">"Did you know? Each chapter in this epic holds a specific vibration that can help balance your mind. Try listening to the AI narration with your eyes closed."</p>
                       <button 
                         onClick={() => setShowChat(true)}
-                        className="w-full py-4 bg-white/10 border border-white/20 rounded-xl text-[10px] font-black uppercase tracking-widest text-white hover:bg-white/20 transition-all flex items-center justify-center gap-2"
+                        className="w-full py-4 bg-white/10 border border-white/20 rounded-xl text-[10px] font-black uppercase tracking-widest text-white hover:bg-white/20 transition-all flex items-center justify-center gap-2 tv-focusable"
                       >
                          <MessageCircle className="w-4 h-4 text-blue-400" /> Ask AI Mentor About This Story
                       </button>
                    </div>
+                </div>
+             </div>
+
+             {/* Mobile Sticky Audio & Progress Bar */}
+             <div className="fixed bottom-0 left-0 right-0 sm:hidden bg-[#06101E]/90 backdrop-blur-xl border-t border-white/10 p-4 pb-safe z-50 flex flex-col gap-2 transform transition-transform animate-fade-in-up">
+                <div className="w-full h-1 bg-white/10 rounded-full overflow-hidden">
+                   <div className="h-full bg-devotion-gold transition-all duration-300" style={{ width: `${scrollProgress}%` }} />
+                </div>
+                <div className="flex items-center justify-between mt-2">
+                   <div className="flex-1 truncate pr-4">
+                      <h5 className="text-[10px] font-black uppercase tracking-widest text-devotion-gold truncate">{getLocalizedContent(activeStory.chapters?.[activeChapterIndex], 'chapter')?.title || getLocalizedContent(activeStory)?.title}</h5>
+                      <p className="text-[9px] text-gray-400 uppercase tracking-widest">Chapter {activeChapterIndex + 1}</p>
+                   </div>
+                   <button
+                     onClick={() => handleToggleAudio(getLocalizedContent(activeStory.chapters?.[activeChapterIndex], 'chapter')?.content || getLocalizedContent(activeStory)?.content)}
+                     className="w-12 h-12 rounded-full bg-devotion-gold text-[#06101E] flex items-center justify-center shrink-0 shadow-[0_0_20px_rgba(255,215,0,0.3)]"
+                   >
+                     {isSpeaking ? <PauseCircle className="w-5 h-5" /> : <PlayCircle className="w-5 h-5 ml-1" />}
+                   </button>
                 </div>
              </div>
 

@@ -185,6 +185,17 @@
   .animate-bounce-slow {
     animation: bounce-slow 4s ease-in-out infinite;
   }
+  /* Reading Layout Utilities */
+  .drop-cap::first-letter {
+    @apply float-left text-6xl text-devotion-gold font-serif mr-3 mt-1 leading-none;
+  }
+  .hide-scrollbar {
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;  /* Firefox */
+  }
+  .hide-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
 }
 
 @layer base {
