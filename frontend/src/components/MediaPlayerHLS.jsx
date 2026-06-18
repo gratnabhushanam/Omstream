@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { getYoutubeEmbedUrl, getYoutubeVideoId, isYoutubeUrl } from '../utils/media';
 import Hls from 'hls.js';
 import { Play, Pause, Volume2, VolumeX, Maximize, Minimize, SkipBack, SkipForward } from 'lucide-react';
+import ReactPlayer from 'react-player';
 
 function extractVideoId(url) {
   if (!url) return null;
@@ -220,36 +221,54 @@ export default function MediaPlayer({
     if (isPlaying) setShowControls(false);
   };
 
+  const reactPlayerRef = useRef(null);
+
   // Custom Player Actions
   const togglePlay = () => {
+    if (reactPlayerRef.current) {
+      setIsPlaying(!isPlaying);
+      return;
+    }
     if (!videoRef.current) return;
     if (videoRef.current.paused) videoRef.current.play();
     else videoRef.current.pause();
   };
 
   const toggleMute = () => {
-    if (!videoRef.current) return;
-    videoRef.current.muted = !videoRef.current.muted;
-    setIsMuted(videoRef.current.muted);
+    setIsMuted(!isMuted);
+    if (videoRef.current) {
+      videoRef.current.muted = !isMuted;
+    }
   };
 
   const handleVolumeChange = (e) => {
-    if (!videoRef.current) return;
     const vol = parseFloat(e.target.value);
-    videoRef.current.volume = vol;
     setVolume(vol);
     if (vol === 0) setIsMuted(true);
     else setIsMuted(false);
+    
+    if (videoRef.current) {
+      videoRef.current.volume = vol;
+    }
   };
 
   const skip = (amount) => {
+    if (reactPlayerRef.current) {
+      reactPlayerRef.current.seekTo(reactPlayerRef.current.getCurrentTime() + amount, 'seconds');
+      return;
+    }
     if (!videoRef.current) return;
     videoRef.current.currentTime += amount;
   };
 
   const handleSeek = (e) => {
+    const newTime = parseFloat(e.target.value);
+    if (reactPlayerRef.current) {
+      reactPlayerRef.current.seekTo(newTime, 'seconds');
+      return;
+    }
     if (!videoRef.current) return;
-    videoRef.current.currentTime = parseFloat(e.target.value);
+    videoRef.current.currentTime = newTime;
   };
 
   const toggleFullscreen = async () => {
@@ -320,24 +339,7 @@ export default function MediaPlayer({
     );
   }
 
-  if (isYoutubeUrl(secureVideoUrl || cdnVideoUrl)) {
-    const embedUrl = getYoutubeEmbedUrl(secureVideoUrl || cdnVideoUrl);
-    const videoId = getYoutubeVideoId(cdnVideoUrl);
-    const params = new URLSearchParams(youtubeParams);
-    if (loop && videoId && !params.has('playlist')) params.set('playlist', videoId);
-    
-    if (effectiveShouldPlay) params.set('autoplay', '1');
-    if (muted) params.set('mute', '1');
-    params.set('playsinline', '1');
-    params.set('controls', controls ? '1' : '0');
-
-    return (
-      <div ref={containerRef} className={`relative bg-black overflow-hidden ${className}`}>
-        <iframe className="w-full h-full absolute inset-0" src={`${embedUrl}?${params.toString()}`} title={title} frameBorder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowFullScreen />
-      </div>
-    );
-  }
-
+  const isYoutube = isYoutubeUrl(secureVideoUrl || cdnVideoUrl);
   const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
 
   return (
@@ -354,21 +356,48 @@ export default function MediaPlayer({
         </div>
       )}
 
-      {/* HTML5 Video */}
-      <video
-        ref={videoRef}
-        className={`w-full h-full ${instagramMode ? 'object-cover' : 'object-contain'} transition-opacity duration-700 cursor-pointer ${loadingToken ? 'opacity-0' : 'opacity-100'}`}
-        crossOrigin="anonymous"
-        muted={isMuted}
-        loop={loop}
-        poster={thumbnail}
-        playsInline={playsInline}
-        preload={preload}
-        onEnded={onEnded}
-        onClick={!instagramMode ? togglePlay : undefined}
-        // Force native controls only on iOS because custom full-screen APIs are restricted by Apple
-        controls={isIOS && controls} 
-      />
+      {/* Video Element (ReactPlayer for YouTube, HTML5 for Native) */}
+      {isYoutube ? (
+        <ReactPlayer
+          ref={reactPlayerRef}
+          url={secureVideoUrl || cdnVideoUrl}
+          className={`react-player-wrapper w-full h-full ${instagramMode ? 'object-cover' : 'object-contain'} transition-opacity duration-700 cursor-pointer ${loadingToken ? 'opacity-0' : 'opacity-100'}`}
+          width="100%"
+          height="100%"
+          playing={isPlaying}
+          muted={isMuted}
+          volume={volume}
+          loop={loop}
+          playsinline={playsInline}
+          controls={false} // ALWAYS use our custom controls
+          onProgress={({ playedSeconds }) => setProgress(playedSeconds)}
+          onDuration={(d) => setDuration(d)}
+          onPlay={() => setIsPlaying(true)}
+          onPause={() => setIsPlaying(false)}
+          onEnded={onEnded}
+          config={{
+            youtube: {
+              playerVars: { modestbranding: 1, rel: 0, iv_load_policy: 3, disablekb: 1 }
+            }
+          }}
+          style={{ pointerEvents: 'none' }} // Prevent clicking raw iframe to pause, so our overlay catches it
+        />
+      ) : (
+        <video
+          ref={videoRef}
+          className={`w-full h-full ${instagramMode ? 'object-cover' : 'object-contain'} transition-opacity duration-700 cursor-pointer ${loadingToken ? 'opacity-0' : 'opacity-100'}`}
+          crossOrigin="anonymous"
+          muted={isMuted}
+          loop={loop}
+          poster={thumbnail}
+          playsInline={playsInline}
+          preload={preload}
+          onEnded={onEnded}
+          onClick={!instagramMode ? togglePlay : undefined}
+          // Force native controls only on iOS because custom full-screen APIs are restricted by Apple
+          controls={isIOS && controls} 
+        />
+      )}
 
       {/* Custom Netflix/JioHotstar UI Overlay */}
       {!instagramMode && controls && !isIOS && (

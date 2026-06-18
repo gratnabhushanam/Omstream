@@ -357,7 +357,7 @@ export default function Movies() {
             <div className="relative w-full min-h-screen flex flex-col pb-24">
               
               {/* Player Area */}
-              <div className="w-full lg:w-[90%] lg:mx-auto lg:mt-10 lg:aspect-video h-[50vh] lg:h-[70vh] ott-player-container group tv-focusable">
+              <div className="w-full h-[60vh] lg:h-[75vh] ott-player-container group tv-focusable">
                 <MediaPlayerHLS 
                   url={selectedMovie.videoUrl} 
                   hlsUrl={selectedMovie.hlsUrl}
