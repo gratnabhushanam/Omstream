@@ -82,16 +82,52 @@ export default function KidsMode() {
       // Fetch separately to be resilient
       let vRes = [];
       let sRes = [];
+      let moviesKids = [];
       
       try {
         const videoRes = await axios.get('/api/videos');
         vRes = (videoRes.data || []).filter(v => v.isKids || v.category === 'animated');
-      } catch (e) { console.error('Video fetch failed', e); }
+      } catch (e) { 
+        console.error('Video fetch failed, trying local', e); 
+        const localVids = localStorage.getItem('gita_videos');
+        if (localVids) vRes = JSON.parse(localVids).filter(v => v.isKids || v.category === 'animated');
+      }
       
       try {
         const storyRes = await axios.get('/api/stories/kids');
         sRes = storyRes.data || [];
-      } catch (e) { console.error('Story fetch failed', e); }
+      } catch (e) { 
+        console.error('Story fetch failed, trying local', e);
+        const localStories = localStorage.getItem('gita_stories');
+        if (localStories) sRes = JSON.parse(localStories).filter(s => s.isKids || s.category === 'animated');
+      }
+
+      // Also fetch movies marked as kids from the movies collection
+      try {
+        let allMoviesData = [];
+        try {
+           const moviesRes = await axios.get('/api/movies');
+           allMoviesData = moviesRes.data || [];
+        } catch (err) {
+           const localMovies = localStorage.getItem('gita_movies');
+           if (localMovies) allMoviesData = JSON.parse(localMovies);
+           else throw err;
+        }
+        moviesKids = allMoviesData.filter(m => m.isKids);
+        // Merge into vRes avoiding duplicates
+        const existingIds = new Set(vRes.map(v => v._id));
+        moviesKids.forEach(m => {
+          if (!existingIds.has(m._id)) {
+            // Map movie fields to video-like shape
+            vRes.push({
+              ...m,
+              videoUrl: m.videoUrl || m.youtubeUrl || '',
+              category: m.genre || 'animated',
+              isKids: true
+            });
+          }
+        });
+      } catch (e) { console.error('Kids movies fetch failed', e); }
       
       setVideos(vRes);
       setStories(sRes);

@@ -80,12 +80,10 @@ export default function TvHome() {
     : fallbackHeroScenes;
 
   const tvMovies = movies.filter(m => !m.isKids);
-  const kidsMovies = movies.filter(m => m.isKids);
-  const trendingMovies = [...movies].sort((a, b) => (b.views || 0) - (a.views || 0));
+  const trendingMovies = [...tvMovies].sort((a, b) => (b.views || 0) - (a.views || 0));
 
   const contentRows = [
     ...(tvMovies.length > 0 ? [{ title: "Divine Movies", cards: tvMovies }] : []),
-    ...(kidsMovies.length > 0 ? [{ title: "Kids Special", cards: kidsMovies }] : []),
     ...(trendingMovies.length > 0 ? [{ title: "Trending Now", cards: trendingMovies }] : [])
   ];
 

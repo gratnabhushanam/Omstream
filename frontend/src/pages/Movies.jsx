@@ -103,9 +103,19 @@ export default function Movies() {
     const fetchData = async () => {
       setLoading(true);
       try {
-        // Fetch movies first as they are critical
-        const moviesRes = await axios.get('/api/movies');
-        const moviesData = Array.isArray(moviesRes.data) ? moviesRes.data : [];
+        let allMoviesData = [];
+        try {
+          const moviesRes = await axios.get('/api/movies');
+          allMoviesData = Array.isArray(moviesRes.data) ? moviesRes.data : [];
+        } catch (err) {
+          console.error("Network fetch failed, trying local storage", err);
+          const localMovies = localStorage.getItem('gita_movies');
+          if (localMovies) allMoviesData = JSON.parse(localMovies);
+          else throw err;
+        }
+        
+        // Movies page only shows non-kids content
+        const moviesData = allMoviesData.filter(m => !m.isKids);
         setMovies(moviesData);
         if (moviesData.length > 0) {
           setFeaturedMovies(moviesData.slice(0, 5)); // Top 5 movies for Hero Carousel
@@ -180,7 +190,7 @@ export default function Movies() {
 
   if (loading) return <MoviesSkeleton />;
 
-  if (movies.length === 0) {
+  if (movies.length === 0 && downloadedMovies.length === 0) {
     return (
       <div className="min-h-screen bg-[#0B0F1A] text-white selection:bg-[#FF7A00]/30 font-sans flex flex-col">
          <div className="flex-1 flex flex-col items-center justify-center p-8 mt-24">
@@ -199,7 +209,7 @@ export default function Movies() {
     );
   }
 
-  const heroMovie = featuredMovies[currentHeroIndex] || featuredMovies[0];
+  const heroMovie = featuredMovies[currentHeroIndex] || featuredMovies[0] || downloadedMovies[0];
 
   return (
     <div className="min-h-screen bg-[#0B0F1A] text-white selection:bg-[#FF7A00]/30 font-sans overflow-x-hidden">
