@@ -262,3 +262,79 @@
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
+
+/* Premium OTT Streaming Cinematic Player */
+.ott-player-container {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+  background-color: #000;
+}
+
+@media (min-width: 1024px) {
+  .ott-player-container {
+    border-radius: 12px;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+  }
+}
+
+.ott-video-overlay {
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+  height: 50%;
+  background: linear-gradient(to top, rgba(11, 15, 26, 1) 0%, rgba(11, 15, 26, 0.8) 20%, transparent 100%);
+  pointer-events: none;
+  z-index: 10;
+}
+
+.ott-blurred-bg {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center;
+  filter: blur(40px) brightness(0.3);
+  z-index: -1;
+  transform: scale(1.1); /* Prevents white edges on blur */
+}
+
+.ott-play-button {
+  background: linear-gradient(135deg, #F5A623 0%, #D48806 100%);
+  box-shadow: 0 0 20px rgba(245, 166, 35, 0.4);
+  color: #0B0F1A;
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+.ott-play-button:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 30px rgba(245, 166, 35, 0.6);
+}
+
+.ott-secondary-button {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: white;
+  transition: all 0.3s ease;
+}
+
+.ott-secondary-button:hover {
+  background: rgba(255, 255, 255, 0.2);
+  transform: scale(1.05);
+  border-color: rgba(245, 166, 35, 0.5);
+}
+
+.ott-card-hover {
+  transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+.ott-card-hover:hover {
+  transform: scale(1.08);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5), 0 0 20px rgba(245, 166, 35, 0.2);
+  z-index: 20;
+}
+
+.ott-progress-bar {
+  transition: width 0.1s linear;
+  box-shadow: 0 0 10px rgba(245, 166, 35, 0.8);
+}

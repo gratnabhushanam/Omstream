@@ -339,44 +339,100 @@ export default function Movies() {
          </div>
       </footer>
 
-      {/* Immersive Video Player Modal */}
-      {selectedMovie && (
-        <div className="fixed inset-0 z-[1000] flex items-center justify-center bg-[#0F172A] animate-in fade-in duration-500 overflow-hidden">
-          <button 
-            onClick={() => setSelectedMovie(null)} 
-            className="absolute top-6 right-6 lg:top-12 lg:right-12 p-5 rounded-full bg-white/5 border border-white/10 hover:bg-white/10 hover:border-[#FF7A00]/50 transition-all z-[1010] group shadow-2xl backdrop-blur-3xl"
-          >
-             <ChevronLeft className="w-10 h-10 group-hover:-translate-x-1 transition-transform" />
-          </button>
-          
-          <div className="w-full h-full flex flex-col">
-            <div className="flex-1 relative bg-black">
-              <MediaPlayerHLS 
-                url={selectedMovie.videoUrl} 
-                hlsUrl={selectedMovie.hlsUrl}
-                title={selectedMovie.title}
-                className="w-full h-full"
-                autoPlay={true}
-                controls={true}
-              />
-            </div>
-            <div className="p-8 lg:p-16 bg-[#0F172A] flex flex-col gap-4 border-t border-white/5">
-               <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-4">
-                     <span className="px-4 py-1 bg-[#FF7A00] text-navy-deep text-[10px] font-black rounded-full uppercase tracking-widest">Premium 4K</span>
-                     <span className="text-white/40 font-black text-xs uppercase tracking-[0.3em]">{selectedMovie.genre} • {selectedMovie.duration}m</span>
-                  </div>
-                  <button onClick={() => toggleWatchlist(selectedMovie._id)} className="flex items-center gap-3 text-[#FF7A00] font-black uppercase tracking-widest text-xs hover:scale-105 transition-transform">
-                     {watchlist.some(w => (w._id || w) === selectedMovie._id) ? <Check className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
-                     {watchlist.some(w => (w._id || w) === selectedMovie._id) ? 'Saved' : 'Add to Watchlist'}
-                  </button>
-               </div>
-               <h2 className="text-4xl lg:text-6xl font-black uppercase tracking-tighter premium-text-gradient italic">{selectedMovie.title}</h2>
-               <p className="text-white/50 max-w-5xl text-base lg:text-xl font-serif italic leading-relaxed">{selectedMovie.description}</p>
+        {/* Cinematic OTT Video Player Experience */}
+        {selectedMovie && (
+          <div className="fixed inset-0 z-[1000] bg-[#0B0F1A] animate-in fade-in duration-500 overflow-y-auto no-scrollbar">
+            
+            {/* Blurred Poster Background */}
+            <div className="ott-blurred-bg" style={{ backgroundImage: `url(${selectedMovie.thumbnail})` }} />
+            
+            {/* Back Button */}
+            <button 
+              onClick={() => setSelectedMovie(null)} 
+              className="absolute top-6 left-6 lg:top-10 lg:left-10 p-3 rounded-full bg-black/40 backdrop-blur-md border border-white/10 hover:bg-black/60 hover:border-[#FF7A00]/50 transition-all z-[1010] group shadow-2xl tv-focusable"
+            >
+               <ChevronLeft className="w-8 h-8 text-white group-hover:-translate-x-1 transition-transform" />
+            </button>
+            
+            <div className="relative w-full min-h-screen flex flex-col pb-24">
+              
+              {/* Player Area */}
+              <div className="w-full lg:w-[90%] lg:mx-auto lg:mt-10 lg:aspect-video h-[50vh] lg:h-[70vh] ott-player-container group tv-focusable">
+                <MediaPlayerHLS 
+                  url={selectedMovie.videoUrl} 
+                  hlsUrl={selectedMovie.hlsUrl}
+                  title={selectedMovie.title}
+                  className="w-full h-full object-cover"
+                  autoPlay={true}
+                  controls={true}
+                  youtubeParams="controls=0&modestbranding=1&rel=0&disablekb=1&iv_load_policy=3"
+                />
+                {/* Gradient Overlay linking player to page */}
+                <div className="ott-video-overlay pointer-events-none" />
+              </div>
+              
+              {/* Movie Details overlaying bottom of player on desktop */}
+              <div className="px-6 lg:px-16 relative z-30 lg:-mt-24 pt-6 lg:pt-0">
+                 
+                 <div className="flex flex-wrap items-center gap-3 mb-4">
+                    <span className="px-3 py-1 bg-[#F5A623] text-[#0B0F1A] text-[9px] font-black rounded-sm uppercase tracking-widest shadow-[0_0_10px_rgba(245,166,35,0.4)]">Premium 4K</span>
+                    <span className="text-white/70 font-bold text-xs uppercase tracking-widest">{selectedMovie.genre || 'Divine'}</span>
+                    <span className="text-white/50 text-xs font-bold">•</span>
+                    <span className="text-white/70 font-bold text-xs">{selectedMovie.duration || 120}m</span>
+                 </div>
+                 
+                 <h1 className="text-5xl lg:text-[5rem] font-black uppercase tracking-tighter text-white drop-shadow-2xl leading-none mb-6">
+                   {selectedMovie.title}
+                 </h1>
+                 
+                 <div className="flex flex-wrap items-center gap-4 mb-8">
+                    <button className="ott-play-button tv-focusable flex items-center gap-2 px-8 py-4 rounded-md font-bold text-base uppercase tracking-widest">
+                       <Play className="w-6 h-6 fill-current" /> Play Again
+                    </button>
+                    <button 
+                      onClick={() => toggleWatchlist(selectedMovie._id)} 
+                      className="ott-secondary-button tv-focusable flex items-center gap-2 px-6 py-4 rounded-md font-bold text-sm uppercase tracking-widest"
+                    >
+                       {watchlist.some(w => (w._id || w) === selectedMovie._id) ? <Check className="w-5 h-5 text-[#F5A623]" /> : <Plus className="w-5 h-5" />}
+                       {watchlist.some(w => (w._id || w) === selectedMovie._id) ? 'Saved' : 'Add to Watchlist'}
+                    </button>
+                    <button className="ott-secondary-button tv-focusable p-4 rounded-full">
+                       <Heart className="w-5 h-5" />
+                    </button>
+                 </div>
+                 
+                 <p className="text-white/80 max-w-3xl text-sm lg:text-lg font-serif leading-relaxed" style={{ textShadow: '0 2px 4px rgba(0,0,0,0.8)' }}>
+                   {selectedMovie.description}
+                 </p>
+              </div>
+
+              {/* Discovery Section - More Like This */}
+              <div className="px-6 lg:px-16 mt-16 relative z-30">
+                 <h3 className="text-xl lg:text-2xl font-bold text-white mb-6 border-l-4 border-[#F5A623] pl-4">More Like This</h3>
+                 <div className="flex gap-6 overflow-x-auto no-scrollbar pb-8 pt-4">
+                    {movies.filter(m => m.genre === selectedMovie.genre && m._id !== selectedMovie._id).slice(0, 6).map((movie) => (
+                       <button 
+                         key={movie._id} 
+                         onClick={() => setSelectedMovie(movie)}
+                         className="flex-shrink-0 w-[240px] lg:w-[320px] aspect-video rounded-xl overflow-hidden relative group ott-card-hover tv-focusable cursor-pointer border border-white/10 text-left"
+                       >
+                         <img src={movie.thumbnail || movie.coverImage} alt={movie.title} className="w-full h-full object-cover" />
+                         <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent opacity-80 group-hover:opacity-100 transition-opacity flex items-end p-4">
+                            <h4 className="text-white font-bold text-sm truncate w-full">{movie.title}</h4>
+                         </div>
+                         <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                            <div className="w-12 h-12 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center border border-white/50">
+                               <Play className="w-5 h-5 text-white fill-current" />
+                            </div>
+                         </div>
+                       </button>
+                    ))}
+                 </div>
+              </div>
+              
             </div>
           </div>
-        </div>
-      )}
+        )}
     </div>
   );
 }
