@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { BookOpen, Book, Menu, X, BrainCircuit, User, Star, Heart, Search, Film, Shield, Users, Bell, Download, CheckCheck, Info, Megaphone, Gift, Sparkles, ChevronRight, Music, Tv } from 'lucide-react';
+import { BookOpen, Book, Menu, X, BrainCircuit, User, Star, Heart, Search, Film, Shield, Users, Bell, Download, CheckCheck, Info, Megaphone, Gift, Sparkles, ChevronRight, Music, Tv, LayoutGrid } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useInstallPrompt } from '../hooks/useInstallPrompt';
 import { DesktopNotificationPanel, MobileNotificationSheet } from './Notifications';
@@ -15,13 +15,19 @@ export default function Navbar() {
   const { isInstallable, showInstallModal, setShowInstallModal, handleInstallClick } = useInstallPrompt();
   const { notifications, showNotifications, setShowNotifications, unreadCount, handleMarkAsRead } = useNotifications(user);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 1024);
+  const [isScrolled, setIsScrolled] = useState(false);
   const { language, setLanguage, languages } = useLanguage();
   const [showLangDropdown, setShowLangDropdown] = useState(false);
 
   useEffect(() => {
     const onResize = () => setIsMobile(window.innerWidth < 1024);
+    const onScroll = () => setIsScrolled(window.scrollY > 20);
     window.addEventListener('resize', onResize);
-    return () => window.removeEventListener('resize', onResize);
+    window.addEventListener('scroll', onScroll);
+    return () => {
+      window.removeEventListener('resize', onResize);
+      window.removeEventListener('scroll', onScroll);
+    };
   }, []);
 
   const getInitials = (name) => {
@@ -31,14 +37,11 @@ export default function Navbar() {
 
   const navLinks = [
     { name: 'Home', path: '/home', icon: <BookOpen className="w-4 h-4 mr-2" /> },
-    { name: 'Community', path: '/satsangs', icon: <Users className="w-4 h-4 mr-2" /> },
-    { name: 'Mentor', path: '/mentor', icon: <Heart className="w-4 h-4 mr-2" /> },
-    { name: 'Kids', path: '/kids', icon: <Star className="w-4 h-4 mr-2" /> },
+    { name: 'TV', path: '/tv', icon: <Tv className="w-4 h-4 mr-2" /> },
     { name: 'Movies', path: '/movies', icon: <Film className="w-4 h-4 mr-2" /> },
-    { name: 'Songs', path: '/songs', icon: <Music className="w-4 h-4 mr-2" /> },
-    { name: 'Quizzes', path: '/quizzes', icon: <BrainCircuit className="w-4 h-4 mr-2" /> },
-    { name: 'Daily Sloka', path: '/daily-sloka', icon: <Star className="w-4 h-4 mr-2" /> },
-    { name: 'Library', path: '/stories', icon: <Book className="w-4 h-4 mr-2" /> },
+    { name: 'Sports', path: '/sports', icon: <Users className="w-4 h-4 mr-2" /> },
+    { name: 'Kids', path: '/kids', icon: <Star className="w-4 h-4 mr-2" /> },
+    { name: 'Categories', path: '/categories', icon: <LayoutGrid className="w-4 h-4 mr-2" /> },
     ...(user?.role === 'admin' ? [{ name: 'Admin', path: '/admin', icon: <Shield className="w-4 h-4 mr-2" /> }] : []),
   ];
 
@@ -46,7 +49,8 @@ export default function Navbar() {
   const toggleNotifications = () => { setIsOpen(false); setShowNotifications(prev => !prev); };
 
   return (
-    <nav className="sticky top-0 w-full z-50 bg-[#0F1014]/95 backdrop-blur-2xl border-b border-white/5 shadow-[0_10px_30px_rgba(0,0,0,0.5)] tv:h-24 transition-all duration-500 mb-6 sm:mb-10" style={{ paddingTop: 'env(safe-area-inset-top)' }}>
+    <>
+    <nav className={`fixed top-0 w-full z-50 ott-nav ${isScrolled ? 'scrolled shadow-[0_10px_30px_rgba(0,0,0,0.5)] border-b border-white/5' : ''} tv:h-24 mb-6 sm:mb-10`} style={{ paddingTop: 'env(safe-area-inset-top)' }}>
       <div className="max-w-[1920px] mx-auto px-4 sm:px-8 lg:px-12">
         <div className="flex items-center justify-between h-16 tv:h-24">
           <Link to="/home" tabIndex={0} className="tv-focusable focus:outline-none focus:ring-4 focus:ring-devotion-gold rounded-2xl group flex items-center gap-2 sm:gap-3 hover:opacity-80 transition-all flex-shrink-0">
@@ -64,18 +68,6 @@ export default function Navbar() {
             <Link to="/search" className="tv-focusable shrink-0 w-9 h-9 tv:w-14 tv:h-14 rounded-xl flex items-center justify-center text-gray-400 hover:bg-white/5 hover:text-white transition-all active:scale-110 mr-1">
               <Search className="w-5 h-5 tv:w-6 tv:h-6" />
             </Link>
-
-            {navLinks.map((link) => (
-              <Link 
-                key={link.name} 
-                to={link.path} 
-                tabIndex={0}
-                className={`tv-focusable flex items-center shrink-0 px-2 lg:px-2.5 xl:px-3 py-2 tv:px-5 tv:py-3.5 rounded-xl font-black text-[9px] xl:text-[10px] tv:text-sm uppercase tracking-wider tv:tracking-widest transition-all duration-300 ${isActive(link.path) ? 'bg-[#00A8FF]/15 text-[#00A8FF] border border-[#00A8FF]/30 shadow-[0_0_20px_rgba(0,168,255,0.15)]' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}
-              >
-                {link.icon}
-                <span className="whitespace-nowrap">{link.name}</span>
-              </Link>
-            ))}
             </div>
             
             <div className="flex items-center gap-1 xl:gap-2 shrink-0">
@@ -84,8 +76,11 @@ export default function Navbar() {
             
 
             
-            <button onClick={handleInstallClick} className="tv-focusable group relative px-4 py-2 tv:px-8 tv:py-4 bg-gradient-to-br from-[#00A8FF] to-[#7B2FF7] text-white text-[9px] tv:text-sm font-black uppercase tracking-widest rounded-xl shadow-[0_0_20px_rgba(0,168,255,0.2)] hover:shadow-[0_0_30px_rgba(0,168,255,0.4)] transition-all flex items-center gap-2 overflow-hidden active:scale-95">
-               <Download className="w-4 h-4 tv:w-5 h-5 group-hover:translate-y-0.5 transition-transform" /> GET APP
+            <button className="tv-focusable px-4 py-2 tv:px-8 tv:py-4 bg-gradient-to-r from-[#FF8A00] to-[#FFD700] text-[#06101E] text-[9px] tv:text-sm font-black uppercase tracking-widest rounded-xl shadow-[0_0_20px_rgba(255,138,0,0.3)] hover:shadow-[0_0_30px_rgba(255,138,0,0.5)] transition-all flex items-center gap-2 overflow-hidden hover:scale-105">
+               SUBSCRIBE
+            </button>
+            <button onClick={handleInstallClick} className="tv-focusable group relative px-4 py-2 tv:px-8 tv:py-4 bg-white/10 hover:bg-white/20 text-white text-[9px] tv:text-sm font-black uppercase tracking-widest rounded-xl transition-all flex items-center gap-2 overflow-hidden active:scale-95">
+               <Download className="w-4 h-4 tv:w-5 h-5 group-hover:translate-y-0.5 transition-transform" /> APP
             </button>
           
             <div className="flex items-center gap-2 ml-2">
@@ -259,5 +254,26 @@ export default function Navbar() {
         </div>
       )}
     </nav>
+
+    {/* Mobile Bottom Navigation */}
+    <div className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-[#0B0F1A]/95 backdrop-blur-xl border-t border-white/10 pb-[env(safe-area-inset-bottom)] px-4 py-2 flex justify-between items-center shadow-[0_-10px_30px_rgba(0,0,0,0.8)]">
+       <Link to="/home" className={`flex flex-col items-center gap-1 p-2 ${isActive('/home') ? 'text-white' : 'text-gray-500'}`}>
+          <BookOpen className="w-6 h-6" />
+          <span className="text-[9px] font-bold">Home</span>
+       </Link>
+       <Link to="/search" className={`flex flex-col items-center gap-1 p-2 ${isActive('/search') ? 'text-white' : 'text-gray-500'}`}>
+          <Search className="w-6 h-6" />
+          <span className="text-[9px] font-bold">Search</span>
+       </Link>
+       <Link to="/downloads" className={`flex flex-col items-center gap-1 p-2 ${isActive('/downloads') ? 'text-white' : 'text-gray-500'}`}>
+          <Download className="w-6 h-6" />
+          <span className="text-[9px] font-bold">Downloads</span>
+       </Link>
+       <Link to="/profile" className={`flex flex-col items-center gap-1 p-2 ${isActive('/profile') ? 'text-white' : 'text-gray-500'}`}>
+          <User className="w-6 h-6" />
+          <span className="text-[9px] font-bold">Profile</span>
+       </Link>
+    </div>
+    </>
   );
 }

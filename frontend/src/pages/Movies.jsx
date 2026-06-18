@@ -23,7 +23,8 @@ export default function Movies() {
   const [recommendations, setRecommendations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedMovie, setSelectedMovie] = useState(null);
-  const [featuredMovie, setFeaturedMovie] = useState(null);
+  const [featuredMovies, setFeaturedMovies] = useState([]);
+  const [currentHeroIndex, setCurrentHeroIndex] = useState(0);
   const [scrolled, setScrolled] = useState(false);
   const [hoveredMovieId, setHoveredMovieId] = useState(null);
 
@@ -106,7 +107,7 @@ export default function Movies() {
         const moviesData = Array.isArray(moviesRes.data) ? moviesRes.data : [];
         setMovies(moviesData);
         if (moviesData.length > 0) {
-          setFeaturedMovie(moviesData[0]);
+          setFeaturedMovies(moviesData.slice(0, 5)); // Top 5 movies for Hero Carousel
         }
         
         // Fetch watchlist and recommendations separately
@@ -135,7 +136,15 @@ export default function Movies() {
     const handleScroll = () => setScrolled(window.scrollY > 50);
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
-  }, [user]);
+  }, [user, navigate]);
+
+  useEffect(() => {
+    if (featuredMovies.length === 0 || selectedMovie) return;
+    const interval = setInterval(() => {
+      setCurrentHeroIndex((prev) => (prev + 1) % featuredMovies.length);
+    }, 6000); // Rotate every 6 seconds
+    return () => clearInterval(interval);
+  }, [featuredMovies, selectedMovie]);
 
   const toggleWatchlist = async (movieId) => {
     if (!user) {
@@ -159,89 +168,72 @@ export default function Movies() {
 
   const categories = [
     ...(downloadedMovies.length > 0 ? [{ title: 'My Downloads', icon: <Download className="w-5 h-5 text-[#FF7A00]"/>, customMovies: downloadedMovies }] : []),
-    ...(recommendations.length > 0 ? [{ title: 'Recommended for You', icon: <Sparkles className="w-5 h-5 text-[#FF7A00]"/>, customMovies: recommendations }] : []),
-    { title: 'Divine Selection', icon: <Sparkles className="w-5 h-5 text-[#FF7A00]"/>, filter: () => true },
-    { title: 'Your Divine Watchlist', icon: <Bookmark className="w-5 h-5 text-[#FF7A00]"/>, filter: (m) => watchlist.some(w => (w._id || w) === m._id) },
-    { title: 'Trending Spiritual Videos', icon: <TrendingUp className="w-5 h-5"/>, filter: (m) => m.views >= 0 }, // Show even with 0 views if no others
-    { title: 'Bhagavad Gita Chapters', icon: <LayoutGrid className="w-5 h-5"/>, filter: (m) => m.genre?.toLowerCase().includes('gita') || m.genre?.toLowerCase().includes('chapter') || m.genre?.toLowerCase().includes('divine') },
-    { title: 'Meditation & Peace', icon: <Sparkles className="w-5 h-5"/>, filter: (m) => m.genre?.toLowerCase().includes('meditation') || m.genre?.toLowerCase().includes('peace') },
-    { title: 'Motivational Wisdom', icon: <History className="w-5 h-5"/>, filter: (m) => m.genre?.toLowerCase().includes('motivation') || m.genre?.toLowerCase().includes('wisdom') },
-    { title: 'Devotional Content', icon: <Heart className="w-5 h-5"/>, filter: (m) => m.genre?.toLowerCase().includes('devotional') || m.genre?.toLowerCase().includes('bhakti') || m.genre?.toLowerCase().includes('divine') },
+    ...(recommendations.length > 0 ? [{ title: 'Continue Watching', icon: <Play className="w-5 h-5 text-[#FF7A00]"/>, customMovies: recommendations }] : []),
+    { title: 'Latest Releases', icon: <Sparkles className="w-5 h-5 text-[#FF7A00]"/>, filter: () => true },
+    { title: 'Trending Now', icon: <TrendingUp className="w-5 h-5 text-[#FF7A00]"/>, filter: (m) => m.views >= 0 },
+    { title: 'Your Watchlist', icon: <Bookmark className="w-5 h-5 text-[#FF7A00]"/>, filter: (m) => watchlist.some(w => (w._id || w) === m._id) },
+    { title: 'Action & Epic', icon: <LayoutGrid className="w-5 h-5 text-[#FF7A00]"/>, filter: (m) => m.genre?.toLowerCase().includes('gita') || m.genre?.toLowerCase().includes('chapter') },
+    { title: 'Drama & Devotion', icon: <Heart className="w-5 h-5 text-[#FF7A00]"/>, filter: (m) => m.genre?.toLowerCase().includes('devotional') || m.genre?.toLowerCase().includes('bhakti') || m.genre?.toLowerCase().includes('divine') },
+    { title: 'Peace & Meditation', icon: <Sparkles className="w-5 h-5 text-[#FF7A00]"/>, filter: (m) => m.genre?.toLowerCase().includes('meditation') || m.genre?.toLowerCase().includes('peace') },
   ];
 
   if (loading) return <MoviesSkeleton />;
 
+  if (movies.length === 0) {
+    return (
+      <div className="min-h-screen bg-[#0B0F1A] text-white selection:bg-[#FF7A00]/30 font-sans flex flex-col">
+         <div className="flex-1 flex flex-col items-center justify-center p-8 mt-24">
+            <div className="w-32 h-32 mb-8 bg-white/5 rounded-full flex items-center justify-center border border-white/10 shadow-[0_0_50px_rgba(255,122,0,0.1)]">
+               <Play className="w-16 h-16 text-[#FF7A00]/60 ml-2" />
+            </div>
+            <h2 className="text-3xl lg:text-5xl font-black mb-4 uppercase tracking-widest text-center text-white/90">No Content Found</h2>
+            <p className="text-white/50 text-center max-w-lg leading-relaxed mb-10 text-lg font-medium">
+               It looks like the platform currently has no videos available. Please verify that your backend server is running and the database contains movies.
+            </p>
+            <button onClick={() => window.location.reload()} className="px-10 py-4 bg-gradient-to-r from-[#FF7A00] to-[#F5C542] text-black font-black uppercase tracking-widest rounded-xl hover:scale-105 transition-transform shadow-[0_0_30px_rgba(255,122,0,0.3)]">
+               Refresh Page
+            </button>
+         </div>
+      </div>
+    );
+  }
+
+  const heroMovie = featuredMovies[currentHeroIndex] || featuredMovies[0];
+
   return (
-    <div className="min-h-screen bg-[#0F172A] text-white selection:bg-[#FF7A00]/30 font-sans overflow-x-hidden">
+    <div className="min-h-screen bg-[#0B0F1A] text-white selection:bg-[#FF7A00]/30 font-sans overflow-x-hidden">
       {/* Premium OTT Navbar */}
-      <nav className={`fixed top-0 w-full z-[100] transition-all duration-700 px-6 lg:px-12 flex items-center justify-between ${scrolled ? 'bg-[#0F172A]/90 backdrop-blur-2xl py-3 border-b border-white/5 shadow-2xl' : 'bg-transparent py-6'}`}>
-        <div className="flex items-center gap-10">
-          <div onClick={() => navigate('/')} className="cursor-pointer flex items-center gap-2 group">
-             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#FF7A00] to-[#F5C542] flex items-center justify-center shadow-[0_0_20px_rgba(255,122,0,0.6)] group-hover:scale-110 transition-transform">
-                <Play className="w-6 h-6 text-navy-deep fill-current" />
-             </div>
-             <span className="text-2xl font-black tracking-tight premium-text-gradient uppercase italic">Omstream</span>
-          </div>
-          <div className="hidden lg:flex items-center gap-10 text-xs font-black uppercase tracking-[0.25em] text-white/50">
-             {['Home', 'Movies', 'Library'].map(m => (
-               <button key={m} onClick={() => navigate(m === 'Library' ? '/stories' : `/${m.toLowerCase()}`)} className={`hover:text-white transition-all hover:tracking-[0.4em] relative group ${m === 'Movies' ? 'text-white' : ''}`}>
-                 {m}
-                 {m === 'Movies' && <div className="absolute -bottom-2 left-0 w-full h-1 bg-[#FF7A00] rounded-full shadow-[0_0_10px_#FF7A00]" />}
-               </button>
-             ))}
-          </div>
-        </div>
-
-        <div className="flex items-center gap-6">
-           <div onClick={() => navigate('/search')} className="hidden sm:flex items-center bg-white/5 border border-white/10 rounded-2xl px-5 py-2.5 hover:border-[#FF7A00]/50 transition-all cursor-pointer group">
-              <Search className="w-4 h-4 text-white/40 group-hover:text-[#FF7A00]" />
-              <span className="px-4 text-sm font-medium text-white/20">Search divine wisdom...</span>
-           </div>
-           <div 
-             onClick={() => navigate('/profile')}
-             className="w-11 h-11 rounded-2xl bg-gradient-to-br from-[#FF7A00] to-[#7B2FF7] p-[2px] cursor-pointer hover:rotate-12 transition-transform shadow-lg"
-           >
-              <div className="w-full h-full rounded-[0.9rem] bg-[#0F172A] flex items-center justify-center">
-                 <User className="w-5 h-5 text-white" />
-              </div>
-           </div>
-        </div>
-      </nav>
-
-       <section className="relative h-[85vh] lg:h-[90vh] w-full px-4 lg:px-24 pt-20 lg:pt-28 mb-16 flex flex-col items-center">
-          <div className="relative w-full h-full rounded-[2.5rem] lg:rounded-[4rem] border-2 border-white/10 overflow-hidden shadow-[0_40px_100px_rgba(0,0,0,0.6)] group">
+      {/* Cinematic Edge-to-Edge Hero Carousel */}
+       <section className="relative h-[80vh] lg:h-[90vh] w-full flex flex-col justify-end pb-20 mb-10 overflow-hidden">
+          <div className="absolute inset-0 w-full h-full">
              {/* Navigation Arrows */}
-             <div className="absolute inset-y-0 left-6 lg:left-12 z-40 flex items-center">
+             <div className="absolute inset-y-0 left-4 z-40 flex items-center">
                 <button 
                   onClick={(e) => {
                     e.stopPropagation();
-                    const idx = movies.indexOf(featuredMovie);
-                    const prevIdx = (idx - 1 + movies.length) % movies.length;
-                    setFeaturedMovie(movies[prevIdx]);
+                    setCurrentHeroIndex((prev) => (prev - 1 + featuredMovies.length) % featuredMovies.length);
                   }}
-                  className="w-14 h-14 lg:w-20 lg:h-20 rounded-full bg-black/30 backdrop-blur-xl border border-white/10 text-white flex items-center justify-center hover:bg-[#FF7A00] hover:text-navy-deep hover:scale-110 transition-all shadow-2xl group/nav"
+                  className="w-12 h-12 rounded-full bg-black/50 border border-white/10 text-white flex items-center justify-center hover:bg-[#FF7A00] hover:scale-110 transition-all shadow-2xl group/nav"
                 >
-                   <ChevronLeft className="w-8 h-8 lg:w-10 lg:h-10 group-hover/nav:-translate-x-1 transition-transform" />
+                   <ChevronLeft className="w-8 h-8 group-hover/nav:-translate-x-1 transition-transform" />
                 </button>
              </div>
-             <div className="absolute inset-y-0 right-6 lg:right-12 z-40 flex items-center">
+             <div className="absolute inset-y-0 right-4 z-40 flex items-center">
                 <button 
                   onClick={(e) => {
                     e.stopPropagation();
-                    const idx = movies.indexOf(featuredMovie);
-                    const nextIdx = (idx + 1) % movies.length;
-                    setFeaturedMovie(movies[nextIdx]);
+                    setCurrentHeroIndex((prev) => (prev + 1) % featuredMovies.length);
                   }}
-                  className="w-14 h-14 lg:w-20 lg:h-20 rounded-full bg-black/30 backdrop-blur-xl border border-white/10 text-white flex items-center justify-center hover:bg-[#FF7A00] hover:text-navy-deep hover:scale-110 transition-all shadow-2xl group/nav"
+                  className="w-12 h-12 rounded-full bg-black/50 border border-white/10 text-white flex items-center justify-center hover:bg-[#FF7A00] hover:scale-110 transition-all shadow-2xl group/nav"
                 >
-                   <ChevronRight className="w-8 h-8 lg:w-10 lg:h-10 group-hover/nav:translate-x-1 transition-transform" />
+                   <ChevronRight className="w-8 h-8 group-hover/nav:translate-x-1 transition-transform" />
                 </button>
              </div>
 
              <AnimatePresence mode="wait">
-                {featuredMovie && (
+                {heroMovie && (
                    <motion.div 
-                     key={featuredMovie._id || featuredMovie.id}
+                     key={heroMovie._id || heroMovie.id}
                      initial={{ opacity: 0 }}
                      animate={{ opacity: 1 }}
                      exit={{ opacity: 0 }}
@@ -251,16 +243,16 @@ export default function Movies() {
                    {/* Full Card Background: Visual/Teaser Section */}
                    <div className="absolute inset-0 z-0">
                       <motion.div 
-                        initial={{ scale: 1.1, opacity: 0 }}
+                        initial={{ scale: 1.05, opacity: 0 }}
                         animate={{ scale: 1, opacity: 1 }}
-                        transition={{ duration: 2 }}
+                        transition={{ duration: 1.5 }}
                         className="w-full h-full overflow-hidden"
                       >
-                        {featuredMovie.trailerUrl ? (
+                        {heroMovie.trailerUrl ? (
                           <div className="w-full h-full pointer-events-none">
                              <MediaPlayerHLS 
-                                url={featuredMovie.trailerUrl} 
-                                className="w-full h-full object-cover scale-110 premium-video-refinement" 
+                                url={heroMovie.trailerUrl} 
+                                className="w-full h-full object-cover premium-video-refinement" 
                                 autoPlay={true} 
                                 muted={true} 
                                 loop={true} 
@@ -269,106 +261,98 @@ export default function Movies() {
                           </div>
                         ) : (
                           <img 
-                            src={featuredMovie.thumbnail || "/scene-krishna.svg"} 
-                            className="w-full h-full object-cover scale-105 premium-video-refinement"
+                            src={heroMovie.thumbnail || "/scene-krishna.svg"} 
+                            className="w-full h-full object-cover premium-video-refinement"
                             alt=""
                           />
                         )}
                         
-                        {/* Smart Cinematic Overlay System */}
-                        <div className="smart-cinematic-mask" />
-                        <div className="absolute inset-0 bg-gradient-to-t from-navy-deep via-transparent to-transparent z-10 opacity-60" />
+                        {/* Netflix-style Bottom Gradient Overlay */}
+                        <div className="absolute inset-0 bg-gradient-to-t from-[#0B0F1A] via-[#0B0F1A]/60 to-transparent z-10" />
+                        <div className="absolute inset-0 bg-gradient-to-r from-[#0B0F1A] via-transparent to-transparent z-10 w-2/3" />
                       </motion.div>
                    </div>
 
                    {/* Hero Metadata Overlay Content */}
-                   <div className="relative z-20 h-full flex flex-col justify-center px-10 lg:px-24 max-w-5xl">
+                   <div className="relative z-20 h-full flex flex-col justify-end pb-12 lg:pb-24 px-6 lg:px-24 max-w-4xl">
                       <motion.div 
                         initial={{ x: -40, opacity: 0 }}
                         animate={{ x: 0, opacity: 1 }}
-                        transition={{ delay: 0.5, duration: 0.8 }}
-                        className="flex flex-wrap items-center gap-4 mb-8 lg:mb-12"
+                        transition={{ delay: 0.3, duration: 0.8 }}
+                        className="flex flex-wrap items-center gap-3 mb-4"
                       >
-                         <span className="px-6 py-2 bg-gradient-to-r from-devotion-saffron to-devotion-gold text-navy-deep text-[10px] font-black rounded-lg uppercase tracking-[0.25em] shadow-[0_10px_30px_rgba(255,138,0,0.4)] border border-white/20">
-                            {featuredMovie.genre || 'Divine Series'}
+                         <span className="px-3 py-1 bg-[#FF7A00]/20 text-[#FF7A00] text-[10px] font-black rounded uppercase tracking-widest border border-[#FF7A00]/30">
+                            {heroMovie.genre || 'Divine Series'}
                          </span>
-                         <div className="flex items-center gap-3 bg-white/5 backdrop-blur-2xl px-5 py-2 rounded-xl border border-white/10 glass-morphism">
-                            <Star className="w-4 h-4 text-devotion-gold fill-current" />
-                            <span className="text-devotion-gold font-black text-xs">9.8</span>
-                         </div>
-                         <span className="flex items-center gap-2 text-white/70 font-black text-[10px] uppercase tracking-widest bg-white/5 px-4 py-2 rounded-xl border border-white/5">
-                            <Clock className="w-4 h-4" /> {featuredMovie.duration || '2:45:00'}
+                         <span className="flex items-center gap-1 text-white font-bold text-xs uppercase tracking-widest">
+                            {heroMovie.duration || '2:45:00'}
                          </span>
-                         <span className="px-4 py-2 bg-green-500/10 text-green-400 border border-green-500/20 rounded-xl text-[10px] font-black uppercase tracking-widest">
-                            U/A ALL AGES
-                         </span>
-                         <span className="hidden md:inline-flex text-white/40 font-black text-[10px] uppercase tracking-widest">
-                            {featuredMovie.views || '425K'} WATCHED
+                         <span className="px-2 py-1 bg-white/10 text-white rounded text-[10px] font-black uppercase tracking-widest">
+                            U/A
                          </span>
                       </motion.div>
 
                       <motion.h1 
-                        initial={{ y: 50, opacity: 0 }}
+                        initial={{ y: 20, opacity: 0 }}
                         animate={{ y: 0, opacity: 1 }}
-                        transition={{ delay: 0.6, duration: 1 }}
-                        className="text-5xl lg:text-[7rem] font-black uppercase tracking-tighter leading-[0.8] mb-10 italic premium-text-gradient drop-shadow-3xl"
+                        transition={{ delay: 0.4, duration: 0.8 }}
+                        className="text-4xl lg:text-[6rem] font-black uppercase tracking-tighter leading-none mb-4 text-white drop-shadow-2xl"
                       >
-                         {t(featuredMovie, 'title')}
+                         {heroMovie.title}
                       </motion.h1>
 
                       <motion.p 
-                        initial={{ y: 30, opacity: 0 }}
+                        initial={{ y: 20, opacity: 0 }}
                         animate={{ y: 0, opacity: 1 }}
-                        transition={{ delay: 0.8 }}
-                        className="text-lg lg:text-2xl text-white/60 font-serif italic leading-relaxed max-w-3xl line-clamp-2 mb-12 lg:mb-16 cinematic-text-shadow"
+                        transition={{ delay: 0.5 }}
+                        className="text-sm lg:text-lg text-white/80 font-medium leading-relaxed max-w-2xl line-clamp-3 mb-8 text-shadow-md"
                       >
-                         {t(featuredMovie, 'description') || "Experience the timeless wisdom of the Gita reimagined with state-of-the-art cinematic storytelling."}
+                         {heroMovie.description || "Experience the timeless wisdom of the Gita reimagined with state-of-the-art cinematic storytelling."}
                       </motion.p>
 
                       <motion.div 
-                        initial={{ scale: 0.9, opacity: 0 }}
+                        initial={{ scale: 0.95, opacity: 0 }}
                         animate={{ scale: 1, opacity: 1 }}
-                        transition={{ delay: 1 }}
-                        className="flex flex-wrap items-center gap-6"
+                        transition={{ delay: 0.6 }}
+                        className="flex flex-wrap items-center gap-4"
                       >
                          <button 
-                           tabIndex="0"
-                           onClick={() => setSelectedMovie(featuredMovie)}
-                           className="tv-focusable premium-btn-primary px-8 lg:px-12 py-5 lg:py-6 rounded-[1.5rem] lg:rounded-[2rem] font-black text-lg lg:text-xl uppercase tracking-[0.2em] flex items-center justify-center gap-5 group shadow-2xl relative z-30"
+                           onClick={() => setSelectedMovie(heroMovie)}
+                           className="tv-focusable flex items-center gap-2 px-8 py-3 bg-white text-black rounded font-bold text-lg hover:bg-gray-200 transition-colors shadow-xl hover:scale-105 active:scale-95"
                          >
-                            <Play className="w-6 h-6 lg:w-8 lg:h-8 fill-current" /> 
-                            <span className="whitespace-nowrap">Watch Now</span>
+                            <Play className="w-6 h-6 fill-current" /> Watch Now
                          </button>
                          <button 
-                           tabIndex="0"
-                           onClick={() => toggleWatchlist(featuredMovie._id)}
-                           className={`tv-focusable premium-btn-secondary w-16 h-16 lg:w-20 lg:h-20 rounded-[1.5rem] lg:rounded-[2rem] flex items-center justify-center transition-all group border-2 relative z-30 ${watchlist.some(w => (w._id || w) === featuredMovie._id) ? 'bg-devotion-saffron border-devotion-saffron text-navy-deep' : 'border-white/10 text-white hover:border-devotion-saffron/50'}`}
+                           onClick={() => toggleWatchlist(heroMovie._id)}
+                           className="tv-focusable flex items-center gap-2 px-6 py-3 bg-[#333]/80 backdrop-blur-md text-white rounded font-bold text-lg border border-white/10 hover:bg-[#444]/80 transition-colors shadow-xl hover:scale-105 active:scale-95"
                          >
-                            {watchlist.some(w => (w._id || w) === featuredMovie._id) ? <Check className="w-9 h-9" /> : <Plus className="w-9 h-9 group-hover:rotate-90 transition-transform" />}
+                            {watchlist.some(w => (w._id || w) === heroMovie._id) ? (
+                              <><Check className="w-6 h-6" /> Watchlisted</>
+                            ) : (
+                              <><Plus className="w-6 h-6" /> Watchlist</>
+                            )}
                          </button>
                       </motion.div>
                    </div>
-
-                   {/* Hero Teasers Section */}
-                   <div className="absolute bottom-8 lg:bottom-12 right-10 lg:right-24 z-30 hidden md:flex items-center gap-6 max-w-2xl overflow-x-auto no-scrollbar py-4 px-4">
-                      {movies.slice(0, 5).map((m) => (
-                         <motion.div
-                           key={m._id || m.id}
-                           whileHover={{ scale: 1.1, y: -5 }}
-                           onClick={() => setFeaturedMovie(m)}
-                           className={`w-40 lg:w-56 aspect-video rounded-2xl overflow-hidden border-2 cursor-pointer transition-all duration-500 flex-shrink-0 shadow-2xl ${featuredMovie?._id === m._id ? 'border-[#FF7A00] scale-105 shadow-[0_0_30px_rgba(255,122,0,0.5)]' : 'border-white/10 grayscale hover:grayscale-0'}`}
-                         >
-                            <img src={m.thumbnail || "/scene-krishna.svg"} alt="" className="w-full h-full object-cover" />
-                            <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
-                               <Play className="w-8 h-8 text-[#FF7A00]" />
-                            </div>
-                         </motion.div>
-                      ))}
-                   </div>
-                </motion.div>
+                   </motion.div>
                 )}
              </AnimatePresence>
           </div>
+          <div className="absolute bottom-8 lg:bottom-12 right-10 lg:right-24 z-30 hidden md:flex items-center gap-6 max-w-2xl overflow-x-auto no-scrollbar py-4 px-4">
+            {featuredMovies.map((m, idx) => (
+               <motion.div
+                 key={m._id || m.id}
+                 whileHover={{ scale: 1.1, y: -5 }}
+                 onClick={() => setCurrentHeroIndex(idx)}
+                 className={`w-40 lg:w-56 aspect-video rounded-2xl overflow-hidden border-2 cursor-pointer transition-all duration-500 flex-shrink-0 shadow-2xl ${currentHeroIndex === idx ? 'border-[#FF7A00] scale-105 shadow-[0_0_30px_rgba(255,122,0,0.5)]' : 'border-white/10 grayscale hover:grayscale-0'}`}
+               >
+                  <img src={m.thumbnail || "/scene-krishna.svg"} alt="" className="w-full h-full object-cover" />
+                  <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
+                     <Play className="w-8 h-8 text-[#FF7A00]" />
+                  </div>
+               </motion.div>
+            ))}
+         </div>
        </section>
 
 
@@ -440,8 +424,8 @@ export default function Movies() {
               {/* Player Area */}
               <div className="w-full h-[60vh] lg:h-[75vh] ott-player-container group tv-focusable relative">
                 <MediaPlayerHLS 
-                  key={selectedMovie._id || selectedMovie.id || selectedMovie.videoUrl}
-                  url={selectedMovie.videoUrl} 
+                  key={selectedMovie._id || selectedMovie.id || selectedMovie.videoUrl || selectedMovie.youtubeUrl}
+                  url={selectedMovie.videoUrl || selectedMovie.youtubeUrl} 
                   hlsUrl={selectedMovie.hlsUrl}
                   title={selectedMovie.title}
                   className="w-full h-full object-cover"
@@ -650,7 +634,7 @@ function MovieCardComponent({ movie, onSelect, setFeaturedMovie, isActive, setHo
           onSelect(movie);
         }
       }}
-      className={`relative flex-shrink-0 w-64 lg:w-80 h-[450px] rounded-[2rem] overflow-hidden cursor-pointer transition-all duration-500 premium-card-shadow premium-focus-ring ${isActive ? 'ring-4 ring-devotion-saffron shadow-[0_0_40px_rgba(255,122,0,0.4)]' : 'border border-white/10'} ${isHovered ? 'brightness-110 saturate-110' : ''}`}
+      className={`relative flex-shrink-0 w-64 lg:w-80 aspect-video rounded-xl overflow-hidden cursor-pointer transition-all duration-500 ott-card-hover ${isActive ? 'ring-4 ring-[#FF7A00] shadow-[0_0_40px_rgba(255,122,0,0.4)] scale-105' : 'border border-white/10'} ${isHovered ? 'brightness-110 saturate-110' : ''}`}
       style={{ perspective: "1000px" }}
     >
         {/* Content Container */}
@@ -675,6 +659,13 @@ function MovieCardComponent({ movie, onSelect, setFeaturedMovie, isActive, setHo
             />
           )}
           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
+          
+          {/* Play Icon Overlay */}
+          <div className={`absolute inset-0 flex items-center justify-center transition-all duration-300 ${isHovered ? 'opacity-100' : 'opacity-0'}`}>
+             <div className="w-16 h-16 rounded-full bg-[#FF7A00]/20 flex items-center justify-center backdrop-blur-md border border-[#FF7A00]/50 shadow-[0_0_30px_rgba(255,122,0,0.4)]">
+                <Play className="w-8 h-8 text-[#FF7A00] ml-1" />
+             </div>
+          </div>
         </div>
 
         {/* Floating Watchlist Button */}

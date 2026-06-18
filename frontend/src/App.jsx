@@ -4,6 +4,7 @@ import { AuthProvider } from './context/AuthContext';
 import { useAuth } from './context/AuthContext';
 import { SubscriptionProvider, useSubscription } from './context/SubscriptionContext';
 import Navbar from './components/Navbar';
+import Sidebar from './components/Sidebar';
 import BottomNav from './components/BottomNav';
 import Footer from './components/Footer';
 import GlobalInstallPrompt from './components/GlobalInstallPrompt';
@@ -129,7 +130,7 @@ function AppShell() {
   };
 
   return (
-    <div className={`app-shell flex justify-center min-h-[100dvh] bg-[#06101E] overflow-x-hidden text-white transition-all duration-1000 relative ${getAuraColor()}`}>
+    <div className={`app-shell ott-mode flex justify-center overflow-x-hidden text-white transition-all duration-1000 relative ${getAuraColor()}`}>
       
       {showSplash && <SplashScreen onComplete={handleSplashComplete} />}
 
@@ -144,17 +145,16 @@ function AppShell() {
 
       {!isAuthRoute && !isTvRoute && (
         <>
-          <div className="fixed inset-0 z-0 bg-[#06101E]"></div>
-          <div className="fixed inset-0 z-0 opacity-30 pointer-events-none dynamic-aura-field"></div>
-          <div className="fixed inset-0 z-0 opacity-10 pointer-events-none bg-[url('/sacred-geometry-pattern.svg')] bg-repeat opacity-[0.03]"></div>
+          <div className="fixed inset-0 z-0 pointer-events-none dynamic-aura-field opacity-20"></div>
         </>
       )}
 
 
       {/* Primary Responsive Layout Container */}
-      <div className="relative z-10 w-full min-h-[100dvh] flex flex-col flex-1">
+      <div className={`relative z-10 w-full min-h-[100dvh] flex flex-col flex-1 ${!isAuthRoute && !isTvRoute ? 'lg:pl-[5.5rem]' : ''}`}>
         
         <div>
+           {!isAuthRoute && !isTvRoute && <Sidebar />}
            {!isAuthRoute && !isTvRoute && <Navbar />}
         </div>
         <GlobalInstallPrompt />

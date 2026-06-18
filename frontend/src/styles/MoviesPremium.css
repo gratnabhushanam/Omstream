@@ -338,3 +338,44 @@
   transition: width 0.1s linear;
   box-shadow: 0 0 10px rgba(245, 166, 35, 0.8);
 }
+
+/* OTT UI Core Styles */
+body.ott-mode {
+  background: linear-gradient(180deg, #0B0F1A 0%, #000 100%) !important;
+  background-attachment: fixed !important;
+  min-height: 100vh;
+  margin: 0;
+  padding: 0;
+  color: white;
+}
+
+/* Navigation Scroll Transition */
+.ott-nav {
+  background-color: transparent;
+  transition: background-color 0.4s ease, backdrop-filter 0.4s ease;
+}
+
+.ott-nav.scrolled {
+  background-color: rgba(11, 15, 26, 0.95);
+  backdrop-filter: blur(20px);
+}
+
+/* Card Zoom & Hover Effects */
+.ott-card-hover {
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s ease;
+}
+
+.ott-card-hover:hover {
+  transform: scale(1.08);
+  z-index: 10;
+  box-shadow: 0 20px 40px rgba(0,0,0,0.8);
+}
+
+/* Clean UI tweaks to remove white space */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}

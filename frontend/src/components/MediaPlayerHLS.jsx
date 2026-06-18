@@ -145,12 +145,15 @@ export default function MediaPlayer({
     if (!v || loadingToken) return;
 
     const attemptPlayback = () => {
-      if (!v || v.readyState < 2) return;
-      v.play().catch(() => {
-        v.muted = true;
-        setIsMuted(true);
-        v.play().catch(() => {});
-      });
+      if (!v) return;
+      const playPromise = v.play();
+      if (playPromise !== undefined) {
+        playPromise.catch(() => {
+          v.muted = true;
+          setIsMuted(true);
+          v.play().catch(() => {});
+        });
+      }
     };
 
     if (effectiveShouldPlay) {
@@ -403,8 +406,17 @@ export default function MediaPlayer({
       {!instagramMode && controls && !isIOS && (
         <div className={`absolute inset-0 pointer-events-none transition-opacity duration-500 ${showControls || !isPlaying ? 'opacity-100' : 'opacity-0'}`}>
           
+          {/* Invisible click catcher to toggle play/pause when tapping video area */}
+          <div className="absolute inset-0 pointer-events-auto" onClick={() => {
+             if (!showControls && isPlaying) {
+               handleMouseMove(); // Just show controls on first tap
+             } else {
+               togglePlay();
+             }
+          }} />
+
           {/* Top Title Overlay */}
-          <div className="absolute top-0 left-0 right-0 h-24 bg-gradient-to-b from-black/80 to-transparent flex items-center px-6">
+          <div className="absolute top-0 left-0 right-0 h-24 bg-gradient-to-b from-black/80 to-transparent flex items-center px-6 pointer-events-none">
              <h2 className="text-white font-bold text-lg md:text-xl drop-shadow-md truncate">{title}</h2>
           </div>
 
