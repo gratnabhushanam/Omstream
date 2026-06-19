@@ -10,6 +10,7 @@ const API_KEY = String(import.meta.env.VITE_APP_API_KEY || import.meta.env.VITE_
 
 const HISTORY_KEY = 'daily_sloka_history_v1';
 const SAVED_VERSES_KEY = 'daily_saved_verses_v1';
+const DAILY_SLOKA_CACHE_KEY = 'gita_daily_sloka';
 const MIN_DAILY_DATE_KEY = '2026-01-01';
 
 const formatLocalDateKey = (date = new Date()) => {
@@ -127,6 +128,27 @@ export const useDailySloka = () => {
     }
   };
 
+  const loadCachedDailySloka = () => {
+    try {
+      const raw = localStorage.getItem(DAILY_SLOKA_CACHE_KEY);
+      if (!raw) return null;
+      const parsed = JSON.parse(raw);
+      return hasValidSloka(parsed) ? parsed : null;
+    } catch (error) {
+      console.error('Failed to load cached daily sloka:', error);
+      return null;
+    }
+  };
+
+  const storeCachedDailySloka = (sloka) => {
+    if (!hasValidSloka(sloka)) return;
+    try {
+      localStorage.setItem(DAILY_SLOKA_CACHE_KEY, JSON.stringify(sloka));
+    } catch (error) {
+      console.error('Failed to cache daily sloka:', error);
+    }
+  };
+
   const getVerseKey = (item) => `${item.chapter || '0'}:${item.verse || '0'}:${String(item.sanskrit || '').trim()}`;
 
   const saveHistory = async (entry) => {
@@ -175,6 +197,7 @@ export const useDailySloka = () => {
       const payload = response.data;
       if (hasValidSloka(payload)) {
         setDailySloka(payload);
+        storeCachedDailySloka(payload);
         await saveHistory({
           id: payload.id,
           chapter: payload.chapter,
@@ -185,11 +208,13 @@ export const useDailySloka = () => {
           viewedAt: new Date().toISOString(),
         });
       } else {
-        setDailySloka(null);
+        const cachedSloka = loadCachedDailySloka();
+        setDailySloka(cachedSloka);
       }
     } catch (error) {
       console.error('Error fetching daily sloka:', error);
-      setDailySloka(null);
+      const cachedSloka = loadCachedDailySloka();
+      setDailySloka(cachedSloka);
     } finally {
       setLoading(false);
     }

@@ -16,6 +16,7 @@ class OtaSyncService {
                 this.mergeIntoStorage('gita_stories', data.deltas.stories);
                 this.mergeIntoStorage('gita_videos', data.deltas.videos);
                 this.mergeIntoStorage('gita_movies', data.deltas.movies);
+                this.mergeIntoStorage('gita_songs', data.deltas.songs);
                 
                 // Update Cursor natively
                 localStorage.setItem('gita_last_sync', data.serverTime);
@@ -24,6 +25,40 @@ class OtaSyncService {
         } catch (error) {
             console.error('[OTA SYNC] Failed to synchronize app content:', error);
             // It fails gracefully in the background without disturbing the user
+        } finally {
+            await this.seedMissingStorage();
+        }
+    }
+
+    async seedMissingStorage() {
+        const seedTargets = [
+            { key: 'gita_songs', endpoint: `/api/songs?_t=${Date.now()}` },
+            { key: 'gita_stories', endpoint: `/api/stories?_t=${Date.now()}` },
+            { key: 'gita_slokas', endpoint: `/api/slokas?_t=${Date.now()}` },
+        ];
+
+        for (const target of seedTargets) {
+            if (this.hasValidStorage(target.key)) continue;
+            try {
+                const { data } = await axios.get(target.endpoint);
+                if (Array.isArray(data) && data.length > 0) {
+                    localStorage.setItem(target.key, JSON.stringify(data));
+                    console.log(`[OTA SYNC] Seeded ${target.key} from ${target.endpoint}`);
+                }
+            } catch (error) {
+                console.warn(`[OTA SYNC] Failed to seed ${target.key}:`, error.message || error);
+            }
+        }
+    }
+
+    hasValidStorage(storageKey) {
+        try {
+            const raw = localStorage.getItem(storageKey);
+            if (!raw) return false;
+            const parsed = JSON.parse(raw);
+            return Array.isArray(parsed) && parsed.length > 0;
+        } catch (e) {
+            return false;
         }
     }
 
