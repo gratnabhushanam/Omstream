@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Shield, Sparkles, Monitor, KeyRound, ArrowLeft } from 'lucide-react';
 import axios from 'axios';
-import { io } from 'socket.io-client';
+import { socket } from '../services/socket';
 
 export default function DeviceLimitResolver({ deviceRequestId, onSuccess, onCancel }) {
   const [status, setStatus] = useState('pending');
@@ -11,7 +11,7 @@ export default function DeviceLimitResolver({ deviceRequestId, onSuccess, onCanc
     if (!deviceRequestId) return;
 
     // 1. Setup real-time Socket.IO listener for instantaneous approval
-    const socket = io(window.location.origin || 'http://localhost:8888');
+    // 1. Use the shared singleton socket for instantaneous approval
     
     socket.on('connect', () => {
       // Connect requesting device to the global namespace or specific room
@@ -54,7 +54,8 @@ export default function DeviceLimitResolver({ deviceRequestId, onSuccess, onCanc
 
     return () => {
       clearInterval(interval);
-      socket.disconnect();
+      socket.off('connect');
+      socket.off('device_request_update');
     };
   }, [deviceRequestId, onSuccess]);
 

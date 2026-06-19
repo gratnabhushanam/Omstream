@@ -11,7 +11,7 @@ import PaymentHistory from '../components/subscription/PaymentHistory';
 import { useNavigate } from 'react-router-dom';
 import { requestNotificationPermission } from '../utils/notificationService';
 import JapaCounter from '../components/JapaCounter';
-import { io } from 'socket.io-client';
+import { socket } from '../services/socket';
 
 
 const INTEREST_OPTIONS = ['Karma Yoga', 'Bhakti Yoga', 'Meditation', 'Stress Relief', 'Motivation', 'Leadership'];
@@ -209,7 +209,7 @@ export default function Profile() {
     if (!user) return;
     fetchDeviceRequests();
 
-    const socket = io(window.location.origin || 'http://localhost:8888');
+    // Use the shared singleton socket
     socket.emit('authenticate', user._id || user.id);
 
     socket.on('new_device_request', (req) => {
@@ -221,7 +221,8 @@ export default function Profile() {
     });
 
     return () => {
-      socket.disconnect();
+      socket.off('new_device_request');
+      socket.off('device_request_update');
     };
   }, [user]);
 

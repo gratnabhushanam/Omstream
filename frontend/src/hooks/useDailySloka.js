@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import axios from 'axios';
 import { ENV } from '../config/env';
+import { socket } from '../services/socket';
 import { requestNotificationPermission, sendNotification } from '../utils/notificationService';
 
 // Use Vite proxy in dev, direct URL in prod
@@ -90,6 +91,19 @@ export const useDailySloka = () => {
     checkNotificationStatus();
     loadHistory();
     loadSavedVerses();
+
+    const handleContentUpdate = (data) => {
+      if (data && data.type === 'slokas') {
+        console.log('[SOCKET] Slokas updated, refreshing daily sloka...');
+        fetchDailySloka();
+        loadHistory();
+      }
+    };
+    socket.on('content_updated', handleContentUpdate);
+
+    return () => {
+      socket.off('content_updated', handleContentUpdate);
+    };
   }, [location.state]);
 
   const hasValidSloka = (payload) => Boolean(payload && typeof payload.sanskrit === 'string' && payload.sanskrit.trim().length > 0);

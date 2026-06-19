@@ -1,5 +1,6 @@
 const { Story, Job } = require('../models');
 const mongoose = require('mongoose');
+const { broadcastEvent } = require('../services/socketService');
 const { mapStory } = require('../utils/responseMappers');
 const jwt = require('jsonwebtoken');
 const authController = require('./authController');
@@ -347,6 +348,7 @@ exports.addStory = async (req, res) => {
        });
     }
 
+    broadcastEvent('content_updated', { type: 'stories' });
     return res.status(201).json(mapStory(newStory));
   } catch (error) {
     res.status(400).json({ message: error.message });
@@ -381,6 +383,7 @@ exports.updateStory = async (req, res) => {
     }
 
     await story.save();
+    broadcastEvent('content_updated', { type: 'stories' });
 
     if (story.chapters && Array.isArray(story.chapters)) {
       await syncChapters(story._id, story.chapters, story.title);
@@ -454,6 +457,7 @@ exports.publishStory = async (req, res) => {
 exports.deleteStory = async (req, res) => {
   try {
     await Story.findByIdAndDelete(req.params.id);
+    broadcastEvent('content_updated', { type: 'stories' });
     return res.json({ message: 'Deleted', id: req.params.id });
   } catch (error) {
     return res.status(500).json({ message: error.message });

@@ -1,5 +1,6 @@
 const { Movie } = require('../models');
 const mongoose = require('mongoose');
+const { broadcastEvent } = require('../services/socketService');
 const { mapMovie } = require('../utils/responseMappers');
 
 exports.getMovies = async (req, res) => {
@@ -24,6 +25,7 @@ exports.addMovie = async (req, res) => {
       status: 'pending'
     });
 
+    broadcastEvent('content_updated', { type: 'movies' });
     return res.status(201).json(mapMovie(newMovie));
   } catch (error) {
     res.status(400).json({ message: error.message });
@@ -33,6 +35,7 @@ exports.addMovie = async (req, res) => {
 exports.deleteMovie = async (req, res) => {
   try {
     await Movie.findByIdAndDelete(req.params.id);
+    broadcastEvent('content_updated', { type: 'movies' });
     return res.json({ message: 'Deleted', id: req.params.id });
   } catch (error) {
     return res.status(500).json({ message: error.message });
@@ -43,6 +46,7 @@ exports.updateMovie = async (req, res) => {
   try {
     const movie = await Movie.findByIdAndUpdate(req.params.id, req.body, { new: true });
     if (!movie) return res.status(404).json({ message: 'Not found' });
+    broadcastEvent('content_updated', { type: 'movies' });
     return res.json(mapMovie(movie));
   } catch (error) {
     return res.status(400).json({ message: error.message });

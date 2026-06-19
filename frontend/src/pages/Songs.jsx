@@ -5,6 +5,7 @@ import axios from 'axios';
 import { useLanguage } from '../context/LanguageContext';
 import { useAuth } from '../context/AuthContext';
 import { ENV } from '../config/env';
+import { socket } from '../services/socket';
 
 // Resolve audio URL: prefix backend origin for relative /uploads/ paths
 const BACKEND_ORIGIN = ENV.API_BASE_URL || window.location.origin;
@@ -121,6 +122,18 @@ export default function Songs() {
       }
     };
     fetchSongs();
+
+    const handleContentUpdate = (data) => {
+      if (data && data.type === 'songs') {
+        console.log('[SOCKET] Songs updated, refreshing list...');
+        fetchSongs();
+      }
+    };
+
+    socket.on('content_updated', handleContentUpdate);
+    return () => {
+      socket.off('content_updated', handleContentUpdate);
+    };
   }, []);
 
   // Reset player state whenever song changes

@@ -1,5 +1,6 @@
 const { Sloka, Video, Story } = require('../models');
 const mongoose = require('mongoose');
+const { broadcastEvent } = require('../services/socketService');
 const { mapSloka, mapVideo } = require('../utils/responseMappers');
 
 let mockSlokas = [
@@ -188,6 +189,7 @@ exports.addSloka = async (req, res) => {
       status: 'pending'
     });
 
+    broadcastEvent('content_updated', { type: 'slokas' });
     return res.status(201).json(mapSloka(newSloka));
   } catch (error) {
     res.status(500).json({ message: error.message });

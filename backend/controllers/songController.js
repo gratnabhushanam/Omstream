@@ -1,4 +1,5 @@
 const { Song } = require('../models');
+const { broadcastEvent } = require('../services/socketService');
 
 exports.getAllSongs = async (req, res) => {
   try {
@@ -23,6 +24,7 @@ exports.addSong = async (req, res) => {
   try {
     const song = new Song(req.body);
     await song.save();
+    broadcastEvent('content_updated', { type: 'songs' });
     res.status(201).json(song);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -32,6 +34,7 @@ exports.updateSong = async (req, res) => {
   try {
     const song = await Song.findByIdAndUpdate(req.params.id, req.body, { new: true });
     if (!song) return res.status(404).json({ message: 'Song not found' });
+    broadcastEvent('content_updated', { type: 'songs' });
     res.json(song);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -41,6 +44,7 @@ exports.updateSong = async (req, res) => {
 exports.deleteSong = async (req, res) => {
   try {
     await Song.findByIdAndDelete(req.params.id);
+    broadcastEvent('content_updated', { type: 'songs' });
     res.json({ message: 'Song deleted successfully' });
   } catch (error) {
     res.status(500).json({ message: error.message });

@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { useLocation } from 'react-router-dom';
-import { BookOpenText, ChevronRight, PlayCircle, Volume2, PauseCircle, Sparkles, Book, Heart, Star, Award, ArrowRight, MessageCircle, Send, X as CloseX, VolumeX, Bookmark, Folder, Search, SlidersHorizontal } from 'lucide-react';
+import { BookOpenText, ChevronRight, PlayCircle, Volume2, PauseCircle, Sparkles, Book, Heart, Star, Award, ArrowRight, MessageCircle, Send, X as CloseX, VolumeX, Bookmark, Folder, Search, SlidersHorizontal, Play, Share2, ArrowLeft, Headphones, BookOpen, Pause, FastForward, Rewind, Lock, ShieldAlert } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import { useAuth } from '../context/AuthContext';
+import { socket } from '../services/socket';
 
 const CHAPTER_BACKGROUND_SCENES = [
   { image: '/scene-ram.svg', label: 'Ram' },
@@ -92,9 +93,19 @@ export default function Stories() {
     const handleFocus = () => fetchStories();
     document.addEventListener('visibilitychange', handleVisible);
     window.addEventListener('focus', handleFocus);
+
+    const handleContentUpdate = (data) => {
+      if (data && data.type === 'stories') {
+        console.log('[SOCKET] Stories updated, refreshing list...');
+        fetchStories();
+      }
+    };
+    socket.on('content_updated', handleContentUpdate);
+
     return () => {
       document.removeEventListener('visibilitychange', handleVisible);
       window.removeEventListener('focus', handleFocus);
+      socket.off('content_updated', handleContentUpdate);
     };
   }, []);
 

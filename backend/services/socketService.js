@@ -62,8 +62,21 @@ const sendRealtimeEvent = (userId, event, data) => {
   }
 };
 
+/**
+ * Broadcasts an event to ALL connected clients
+ * @param {string} event - Event name (e.g. 'content_updated')
+ * @param {Object} data - Payload
+ */
+const broadcastEvent = (event, data) => {
+  if (io) {
+    io.emit(event, data);
+    console.log(`[SOCKET] Broadcasted global event "${event}"`);
+  }
+};
+
 module.exports = {
   initSocket,
   getIO,
-  sendRealtimeEvent
+  sendRealtimeEvent,
+  broadcastEvent
 };
