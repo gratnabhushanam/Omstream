@@ -4,28 +4,33 @@ import { useNavigate } from 'react-router-dom';
 const SplashScreen = ({ onComplete }) => {
   const [stage, setStage] = useState(0); // 0: init, 1: om zoom, 2: text shimmer, 3: pulse & fadeout, 4: complete
   const audioRef = useRef(null);
+  const isMobile = typeof window !== 'undefined' ? window.innerWidth < 768 : false;
 
   useEffect(() => {
+    const timings = isMobile
+      ? { t1: 120, t2: 420, t3: 760, t4: 1000 }
+      : { t1: 500, t2: 2500, t3: 4500, t4: 6000 };
+
     // Stage 1: Ambient Bass and Dark Glow (0 - 1s)
     const t1 = setTimeout(() => {
       setStage(1);
-    }, 500);
+    }, timings.t1);
 
     // Stage 2: Text Shimmer (2.5s)
     const t2 = setTimeout(() => {
       setStage(2);
-    }, 2500);
+    }, timings.t2);
 
     // Stage 3: Pulse & Fade to Black (4.5s)
     const t3 = setTimeout(() => {
       setStage(3);
-    }, 4500);
+    }, timings.t3);
 
     // Stage 4: Finish & Redirect (6.0s)
     const t4 = setTimeout(() => {
       setStage(4);
       if (onComplete) onComplete();
-    }, 6000);
+    }, timings.t4);
 
     return () => {
       clearTimeout(t1);
