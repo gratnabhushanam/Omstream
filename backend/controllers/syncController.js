@@ -9,7 +9,7 @@ exports.getContentUpdates = async (req, res) => {
             Sloka.find({ updatedAt: { $gt: lastSync } }).lean(),
             Story.find({ updatedAt: { $gt: lastSync } }).lean(),
             Video.find({ updatedAt: { $gt: lastSync } }).lean(),
-            Movie.find({ updatedAt: { $gt: lastSync } }).lean()
+            Movie.find({ updatedAt: { $gt: lastSync } }).lean(),
             Song.find({ updatedAt: { $gt: lastSync } }).lean(),
         ]);
 
