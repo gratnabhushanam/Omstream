@@ -3,6 +3,7 @@ import { getYoutubeEmbedUrl, getYoutubeVideoId, isYoutubeUrl } from '../utils/me
 import Hls from 'hls.js';
 import { Play, Pause, Volume2, VolumeX, Maximize, Minimize, SkipBack, SkipForward } from 'lucide-react';
 import ReactPlayer from 'react-player';
+import { ENV } from '../config/env';
 
 function extractVideoId(url) {
   if (!url) return null;
@@ -40,7 +41,7 @@ export default function MediaPlayer({
     if (!inputUrl) return inputUrl;
     if (inputUrl.startsWith('/uploads/') || inputUrl.startsWith('/api/')) {
       const isProd = import.meta.env.MODE === 'production';
-      const baseUrl = isProd ? 'https://gita-wisdom-1.onrender.com' : (import.meta.env.VITE_API_BASE_URL || 'http://localhost:8888');
+      const baseUrl = isProd ? (ENV.API_BASE_URL || 'https://gita-wisdom-1.onrender.com') : '';
       return `${baseUrl}${inputUrl}`;
     }
     return inputUrl;

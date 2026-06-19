@@ -1,12 +1,11 @@
 import { useEffect, useRef, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import axios from 'axios';
+import { ENV } from '../config/env';
 import { requestNotificationPermission, sendNotification } from '../utils/notificationService';
 
 // Use Vite proxy in dev, direct URL in prod
-const SLOKA_API = import.meta.env.MODE === 'production'
-  ? (import.meta.env.VITE_API_BASE_URL || 'https://gita-wisdom-1.onrender.com')
-  : '';
+const SLOKA_API = ENV.API_BASE_URL;
 const API_KEY = String(import.meta.env.VITE_APP_API_KEY || import.meta.env.VITE_PERMANENT_API_KEY || 'spiritual-wisdom-permanent-key-2025').trim();
 
 const HISTORY_KEY = 'daily_sloka_history_v1';

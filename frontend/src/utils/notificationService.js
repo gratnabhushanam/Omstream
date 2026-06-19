@@ -122,6 +122,10 @@ export const scheduleDailyNotification = (hour = 8, minute = 0, sloka = null) =>
 };
 
 export const registerServiceWorker = async () => {
+  if (import.meta.env.DEV) {
+    return null;
+  }
+
   if (!('serviceWorker' in navigator)) {
     console.warn('Service Workers are not supported');
     return null;

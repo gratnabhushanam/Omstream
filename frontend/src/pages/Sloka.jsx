@@ -2,9 +2,10 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Share2, Bookmark, Volume2, Info, Pause } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
+import { ENV } from '../config/env';
 
 export default function Sloka() {
-  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
+  const API_BASE_URL = ENV.API_BASE_URL || '';
   const API_KEY = String(import.meta.env.VITE_APP_API_KEY || import.meta.env.VITE_PERMANENT_API_KEY || '').trim();
   const API_REQUEST_CONFIG = { headers: { 'x-api-key': API_KEY } };
   const { language: globalLanguage } = useLanguage();

@@ -4,9 +4,10 @@ import axios from 'axios';
 
 import { useLanguage } from '../context/LanguageContext';
 import { useAuth } from '../context/AuthContext';
+import { ENV } from '../config/env';
 
 // Resolve audio URL: prefix backend origin for relative /uploads/ paths
-const BACKEND_ORIGIN = import.meta.env.VITE_API_BASE_URL || 'https://gitawisdom.onrender.com';
+const BACKEND_ORIGIN = ENV.API_BASE_URL || 'http://localhost:8888';
 const resolveAudioUrl = (url) => {
   if (!url) return '';
   if (url.startsWith('/uploads/') || url.startsWith('/api/')) {

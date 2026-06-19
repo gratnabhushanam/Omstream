@@ -10,6 +10,7 @@ import confetti from 'canvas-confetti';
 import MediaPlayerHLS from '../components/MediaPlayerHLS';
 import { useLanguage } from '../context/LanguageContext';
 import { useAuth } from '../context/AuthContext';
+import { ENV } from '../config/env';
 import { motion, AnimatePresence } from 'framer-motion';
 import '../styles/MoviesPremium.css'; // Shared cinematic styles
 
@@ -18,7 +19,7 @@ const getKidsContentThumbnail = (item) => {
   if (!item) return 'https://images.unsplash.com/photo-1614850523459-c2f4c699c52e?q=80&w=600&auto=format&fit=crop';
   
   if (item.thumbnail && !item.thumbnail.includes('logo-om') && !item.thumbnail.includes('scene-krishna')) {
-    const baseUrl = import.meta.env.VITE_API_BASE_URL || '';
+    const baseUrl = ENV.API_BASE_URL || '';
     if (item.thumbnail.startsWith('/')) {
       return `${baseUrl}${item.thumbnail}`;
     }

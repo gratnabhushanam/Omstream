@@ -1,6 +1,8 @@
 const { Story, Job } = require('../models');
 const mongoose = require('mongoose');
 const { mapStory } = require('../utils/responseMappers');
+const jwt = require('jsonwebtoken');
+const authController = require('./authController');
 
 /**
  * GET /api/stories
@@ -19,7 +21,7 @@ exports.getStories = async (req, res) => {
     // For public: only published folders.
     const filter = isAdminFetch
       ? { isFolder: { $ne: false } }
-      : { status: 'published', isFolder: true };
+      : { status: 'published', isFolder: true, aiOnly: { $ne: true } };
 
     const folders = await Story.find(filter).lean().sort({ createdAt: -1 }).limit(200);
 
@@ -34,7 +36,7 @@ exports.getStories = async (req, res) => {
       // Admin sees ALL chapters (draft/published); public only sees published chapters
       const chapterFilter = isAdminFetch
         ? { parentFolderId: { $in: folderTitles } }
-        : { parentFolderId: { $in: folderTitles }, status: 'published' };
+        : { parentFolderId: { $in: folderTitles }, status: 'published', aiOnly: { $ne: true } };
 
       const allSubStories = await Story.find(chapterFilter)
         .lean().sort({ sequence: 1, createdAt: 1 }).limit(1000);
@@ -82,6 +84,7 @@ exports.getKidsStories = async (req, res) => {
     const folders = await Story.find({
       status: 'published',
       isFolder: true,
+      aiOnly: { $ne: true },
       $or: [
         { isKids: true },
         { tags: { $regex: 'kids', $options: 'i' } },
@@ -99,7 +102,8 @@ exports.getKidsStories = async (req, res) => {
       const folderTitles = folders.map(f => f.title);
       const allSubStories = await Story.find({ 
         parentFolderId: { $in: folderTitles }, 
-        status: 'published' 
+        status: 'published',
+        aiOnly: { $ne: true }
       }).lean().sort({ sequence: 1, createdAt: 1 }).limit(1000);
       
       const subStoriesByFolder = {};
@@ -148,6 +152,28 @@ exports.getStoryById = async (req, res) => {
       { new: true }
     );
     if (!story) return res.status(404).json({ message: 'Story not found' });
+
+    // If this story is marked AI-only, try to authenticate optionally and allow admins to view
+    if (story.aiOnly) {
+      let user = null;
+      try {
+        const authHeader = String(req.headers.authorization || '');
+        if (authHeader.startsWith('Bearer ')) {
+          const token = authHeader.split(' ')[1];
+          const secret = String(process.env.JWT_SECRET || 'gita_wisdom_super_secret_key').trim();
+          const decoded = jwt.verify(token, secret);
+          if (decoded && decoded.id) {
+            user = await authController.getUserByIdForAuth(decoded.id);
+          }
+        }
+      } catch (err) {
+        // ignore token errors — proceed as unauthenticated
+      }
+
+      if (!(user && user.role === 'admin')) {
+        return res.status(404).json({ message: 'Story not found' });
+      }
+    }
 
     if (story.isFolder) {
       const subStories = await Story.find({ parentFolderId: story.title, status: 'published' }).lean().sort({ sequence: 1, createdAt: 1 });
@@ -400,7 +426,20 @@ exports.getWatchlistStories = async (req, res) => {
     const user = await User.findById(req.user.id).populate('storyWatchlist');
     if (!user) return res.status(404).json({ message: 'User not found' });
 
-    res.json(user.storyWatchlist.map(mapStory));
+    // If any watchlist entries are AI-only, filter them out for non-admin users
+    const isAdmin = req.user && req.user.role === 'admin';
+    const stories = Array.isArray(user.storyWatchlist) ? user.storyWatchlist : [];
+    const filtered = stories.filter(s => {
+      try {
+        if (!s) return false;
+        if (isAdmin) return true;
+        return !s.aiOnly;
+      } catch (e) {
+        return false;
+      }
+    }).map(mapStory);
+
+    res.json(filtered);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
