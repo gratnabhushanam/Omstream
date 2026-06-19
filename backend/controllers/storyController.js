@@ -426,7 +426,20 @@ exports.getWatchlistStories = async (req, res) => {
     const user = await User.findById(req.user.id).populate('storyWatchlist');
     if (!user) return res.status(404).json({ message: 'User not found' });
 
-    res.json(user.storyWatchlist.map(mapStory));
+    // If any watchlist entries are AI-only, filter them out for non-admin users
+    const isAdmin = req.user && req.user.role === 'admin';
+    const stories = Array.isArray(user.storyWatchlist) ? user.storyWatchlist : [];
+    const filtered = stories.filter(s => {
+      try {
+        if (!s) return false;
+        if (isAdmin) return true;
+        return !s.aiOnly;
+      } catch (e) {
+        return false;
+      }
+    }).map(mapStory);
+
+    res.json(filtered);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
