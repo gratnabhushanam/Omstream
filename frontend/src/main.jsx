@@ -7,8 +7,9 @@ import './styles/mobile.css'
 import { ENV } from './config/env';
 
 const isProd = import.meta.env.MODE === 'production';
-// Use explicit API_BASE_URL if configured; otherwise rely on same-origin /api proxy routing.
-axios.defaults.baseURL = ENV.API_BASE_URL || '';
+// Always explicitly point to the Render backend. Vercel only serves static files.
+const RENDER_BACKEND = 'https://gitawisdom.onrender.com';
+axios.defaults.baseURL = ENV.API_BASE_URL || RENDER_BACKEND;
 
 const getOrCreateDeviceId = () => {
   let deviceId = localStorage.getItem('gita_wisdom_device_id');

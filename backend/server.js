@@ -102,15 +102,17 @@ const allowedOrigins = [
   'https://gita-wisdom.vercel.app',
   'https://gitawisdom.vercel.app',
   'https://gita-wisdom-devotion.vercel.app',
+  'https://omstream.vercel.app',
+  'https://ratnagowd14-7035s-projects.vercel.app',
 ];
 
 const isOriginAllowed = (origin) => {
   if (!origin) return true;
   // Allow all localhost origins
   if (origin.startsWith('http://localhost:')) return true;
-  // Allow all Vercel preview deployments (*.vercel.app)
+  // Allow ALL Vercel preview deployments (*.vercel.app) - covers all branch/PR deploys
   if (origin && origin.endsWith('.vercel.app')) return true;
-  return allowedOrigins.some(o => origin.startsWith(o));
+  return allowedOrigins.some(o => origin === o || origin.startsWith(o));
 };
 
 app.use('/api', cors({
