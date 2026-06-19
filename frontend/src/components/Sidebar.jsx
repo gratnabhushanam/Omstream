@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { BookOpen, Tv, Film, Users, Star, LayoutGrid, Shield, User, Search } from 'lucide-react';
+import { BookOpen, Tv, Film, Users, Star, LayoutGrid, Shield, User, Search, Music } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 export default function Sidebar() {
@@ -13,6 +13,10 @@ export default function Sidebar() {
     { name: 'TV', path: '/tv', icon: Tv },
     { name: 'Movies', path: '/movies', icon: Film },
     { name: 'Kids', path: '/kids', icon: Star },
+    { name: 'Library', path: '/videos', icon: BookOpen },
+    { name: 'Songs', path: '/songs', icon: Music },
+    { name: 'Daily Sloka', path: '/daily-sloka', icon: BookOpen },
+    { name: 'Community', path: '/satsangs', icon: Users },
     { name: 'Search', path: '/search', icon: Search },
     { name: 'Profile', path: '/profile', icon: User },
     ...(user?.role === 'admin' ? [{ name: 'Admin', path: '/admin', icon: Shield }] : []),
