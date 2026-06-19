@@ -13,6 +13,7 @@ import { useAuth } from '../context/AuthContext';
 import { ENV } from '../config/env';
 import { motion, AnimatePresence } from 'framer-motion';
 import '../styles/MoviesPremium.css'; // Shared cinematic styles
+import { socket } from '../services/socket';
 
 // Utility to get kid-friendly content-related thumbnails
 const getKidsContentThumbnail = (item) => {
@@ -50,7 +51,7 @@ const getKidsContentThumbnail = (item) => {
   if (title.includes('shiva') || title.includes('mahadev') || tags.includes('shiva') || title.includes('shivaya')) {
     return 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?q=80&w=600&auto=format&fit=crop'; // Majestic mountains theme
   }
-  if (title.includes('panchatantra') || tags.includes('panchatantra') || title.includes('moral') || tags.includes('moral') || title.includes('folklore')) {
+  if (title.includes('panchatantra') || tags.includes('panchatantra') || title.includes('moral') || title.includes('moral') || title.includes('folklore')) {
     return 'https://images.unsplash.com/photo-1500622944204-b135684e99fd?q=80&w=600&auto=format&fit=crop'; // Whimsical jungle theme
   }
   if (title.includes('educational') || tags.includes('educational') || title.includes('learning') || title.includes('kids')) {
@@ -161,6 +162,18 @@ export default function KidsMode() {
 
   useEffect(() => {
     fetchKidsContent();
+
+    const handleContentUpdate = (data) => {
+      if (data && (data.type === 'movies' || data.type === 'stories' || data.type === 'videos')) {
+        console.log('[SOCKET] Kids content updated, refreshing...');
+        fetchKidsContent();
+      }
+    };
+    socket.on('content_updated', handleContentUpdate);
+
+    return () => {
+      socket.off('content_updated', handleContentUpdate);
+    };
   }, []);
 
   const toggleWatchlist = async (videoId) => {

@@ -11,6 +11,7 @@ import { useLanguage } from '../context/LanguageContext';
 import { useAuth } from '../context/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import '../styles/MoviesPremium.css';
+import { socket } from '../services/socket';
 
 
 
@@ -144,9 +145,20 @@ export default function Movies() {
     };
     fetchData();
 
+    const handleContentUpdate = (data) => {
+      if (data && data.type === 'movies') {
+        console.log('[SOCKET] Movies updated, refreshing...');
+        fetchData();
+      }
+    };
+    socket.on('content_updated', handleContentUpdate);
+
     const handleScroll = () => setScrolled(window.scrollY > 50);
     window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      socket.off('content_updated', handleContentUpdate);
+    };
   }, [user, navigate]);
 
   useEffect(() => {

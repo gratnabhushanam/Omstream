@@ -3,6 +3,7 @@ import axios from 'axios';
 import { Share2, Bookmark, Volume2, Info, Pause } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import { ENV } from '../config/env';
+import { socket } from '../services/socket';
 
 export default function Sloka() {
   const API_BASE_URL = ENV.API_BASE_URL || '';
@@ -266,6 +267,18 @@ export default function Sloka() {
       }
     };
     fetchSloka();
+
+    const handleContentUpdate = (data) => {
+      if (data && data.type === 'slokas') {
+        console.log('[SOCKET] Slokas updated, refreshing Sloka.jsx...');
+        fetchSloka();
+      }
+    };
+    socket.on('content_updated', handleContentUpdate);
+
+    return () => {
+      socket.off('content_updated', handleContentUpdate);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

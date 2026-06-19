@@ -4,6 +4,7 @@ import { useLocation } from 'react-router-dom';
 import { useLanguage } from '../context/LanguageContext';
 import MediaPlayerHLS from '../components/MediaPlayerHLS';
 import VideoCard from '../components/VideoCard';
+import { socket } from '../services/socket';
 
 export default function Videos() {
   const { t } = useLanguage();
@@ -30,6 +31,18 @@ export default function Videos() {
       }
     };
     fetchVideos();
+
+    const handleContentUpdate = (data) => {
+      if (data && (data.type === 'videos' || data.type === 'movies')) {
+        console.log('[SOCKET] Videos updated, refreshing...');
+        fetchVideos();
+      }
+    };
+    socket.on('content_updated', handleContentUpdate);
+
+    return () => {
+      socket.off('content_updated', handleContentUpdate);
+    };
   }, []);
 
   useEffect(() => {

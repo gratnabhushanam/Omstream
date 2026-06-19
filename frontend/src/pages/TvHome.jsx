@@ -8,6 +8,7 @@ import { useLanguage } from '../context/LanguageContext';
 import { useAuth } from '../context/AuthContext';
 import axios from 'axios';
 import MediaPlayerHLS from '../components/MediaPlayerHLS';
+import { socket } from '../services/socket';
 
 export default function TvHome() {
   const navigate = useNavigate();
@@ -101,6 +102,18 @@ export default function TvHome() {
       }
     };
     fetchMovies();
+
+    const handleContentUpdate = (data) => {
+      if (data && data.type === 'movies') {
+        console.log('[SOCKET] Movies updated, refreshing TV home...');
+        fetchMovies();
+      }
+    };
+    socket.on('content_updated', handleContentUpdate);
+
+    return () => {
+      socket.off('content_updated', handleContentUpdate);
+    };
   }, []);
 
   // Rotate hero content every 10 seconds automatically unless playing
