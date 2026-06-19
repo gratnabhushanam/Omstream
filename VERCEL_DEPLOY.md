@@ -1,39 +1,39 @@
 # Deployment Guide (Vercel Frontend + Render Backend)
 
-Use this deployment model:
-1. Frontend website/mobile web on Vercel
-2. Backend API on Render
+✅ **LIVE PRODUCTION DEPLOYMENTS** (Updated via git push 2ff5e05)
 
-## 0) Your deployment consoles
+**Frontend (Vercel):** https://gitawisdom.vercel.app
+**Backend (Render):** https://gita-wisdom-1.onrender.com
 
-- Render project dashboard: https://dashboard.render.com/project/prj-d7akej14tr6s73ed6po0
-- Vercel new project (team): https://vercel.com/new?teamSlug=vullampavan13-2895s-projects
+## Dashboards
+- Render: https://dashboard.render.com/project/prj-d7akej14tr6s73ed6po0
+- Vercel: vercel.com/teams/.../gitawisdom (check your account)
 
-Important:
-- These are dashboard links, not live production app links.
-- After deployment, copy the generated production URLs and replace placeholders in this document.
+## Backend Env Vars (Render)
+Ensure these are set (critical: MONGO_URI, JWT_SECRET):
+```
+NODE_ENV=production
+PORT=10000
+USE_MONGODB=true
+MONGO_URI=your_mongodb_atlas_uri
+MONGO_REQUIRED=true
+SQL_FALLBACK_WHEN_MONGO=false
+CORS_ALLOWED_ORIGINS=https://gitawisdom.vercel.app
+JWT_SECRET=your_64_char_secret
+ADMIN_EMAIL=gitawisdom143@gmail.com
+ADMIN_PASSWORD=your_strong_password
+EMAIL_USER=yourgmail@gmail.com
+EMAIL_PASS=your_gmail_app_password
+```
 
-## 1) Final deploy links (fill after deployment)
+## Frontend Env (Vercel)
+```
+VITE_API_BASE_URL=https://gita-wisdom-1.onrender.com
+```
 
-- Frontend (Vercel): `https://YOUR_FRONTEND_PROJECT.vercel.app`
-- Backend (Render): `https://YOUR_BACKEND_SERVICE.onrender.com`
-
-These are the two links you will use in production.
-
-## 2) Deploy backend on Render
-
-- Create a new **Web Service** in Render
-- Connect this repository
-- Set root directory to `backend`
-- Runtime: `Node`
-- Build command: `npm install`
-- Start command: `npm run start`
-
-Quick path using your Render dashboard:
-1. Open https://dashboard.render.com/project/prj-d7akej14tr6s73ed6po0
-2. Click `New` -> `Web Service`
-3. Choose your GitHub repo and branch
-4. Set root directory `backend`
+## Smoke Tests
+```
+curl https://gita-wisdom-1.onrender.com/api/videos
 5. Build command `npm install`
 6. Start command `npm run start`
 7. Add env vars from section 2 and deploy
