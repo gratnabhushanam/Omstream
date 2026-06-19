@@ -240,15 +240,33 @@ function App() {
   });
 
   useEffect(() => {
+    if (!import.meta.env.DEV || !('serviceWorker' in navigator)) return;
+
+    navigator.serviceWorker.getRegistrations().then((registrations) => {
+      registrations.forEach((registration) => registration.unregister());
+    });
+
+    if ('caches' in window) {
+      caches.keys().then((cacheNames) => {
+        cacheNames.forEach((cacheName) => caches.delete(cacheName));
+      });
+    }
+  }, []);
+
+  useEffect(() => {
+    if (import.meta.env.DEV) return;
+
     if (needRefresh) {
       updateServiceWorker(true).then(() => {
-        window.location.reload(true);
+        window.location.reload();
       });
     }
   }, [needRefresh, updateServiceWorker]);
 
   useEffect(() => {
-      OtaSyncService.syncContent();
+      if (import.meta.env.PROD) {
+        OtaSyncService.syncContent();
+      }
   }, []);
 
   return (

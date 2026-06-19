@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { Search as SearchIcon, X, Book, Video, BookOpen, ExternalLink, Film, Mic, MicOff, Sparkles } from 'lucide-react';
@@ -18,6 +18,8 @@ export default function Search() {
   const [isListening, setIsListening] = useState(false);
   const [aiInsight, setAiInsight] = useState(null);
   const [isAiLoading, setIsAiLoading] = useState(false);
+  const searchRequestIdRef = useRef(0);
+  const aiRequestIdRef = useRef(0);
 
   useEffect(() => {
     try {
@@ -28,7 +30,7 @@ export default function Search() {
     }
   }, []);
 
-  const getAIWisdom = async (searchTerm) => {
+  const getAIWisdom = async (searchTerm, requestId) => {
     if (!searchTerm || searchTerm.length < 5) {
       setAiInsight(null);
       return;
@@ -40,17 +42,23 @@ export default function Search() {
         message: `Summarize what the Bhagavad Gita or other scriptures say about: ${searchTerm}. Keep it concise (max 3 sentences) and provide a key takeaway.`,
         language: language || 'en'
       });
+      if (requestId !== aiRequestIdRef.current) return;
       setAiInsight(response.data.reply);
     } catch (err) {
+      if (requestId !== aiRequestIdRef.current) return;
       console.error('AI Insight error:', err);
       setAiInsight(null);
     } finally {
+      if (requestId !== aiRequestIdRef.current) return;
       setIsAiLoading(false);
     }
   };
 
   useEffect(() => {
     const trimmed = query.trim();
+    const searchRequestId = ++searchRequestIdRef.current;
+    const aiRequestId = ++aiRequestIdRef.current;
+
     // Don't fire search on empty query — show the landing UI instead
     if (!trimmed) {
       setResults({ slokas: [], stories: [], videos: [], movies: [] });
@@ -60,21 +68,26 @@ export default function Search() {
     }
 
     const delayDebounceFn = setTimeout(() => {
-      performSearch();
-      if (trimmed.length > 5) getAIWisdom(trimmed);
+      performSearch(trimmed, searchRequestId);
+      if (trimmed.length > 5) {
+        getAIWisdom(trimmed, aiRequestId);
+      } else {
+        setAiInsight(null);
+      }
     }, 500);
 
     return () => clearTimeout(delayDebounceFn);
   }, [query]);
 
-  const performSearch = async () => {
-    const normalizedQuery = query.trim();
+  const performSearch = async (normalizedQuery, requestId) => {
     if (!normalizedQuery) return;
 
     setLoading(true);
     try {
       const searchUrl = `/api/search?q=${encodeURIComponent(normalizedQuery)}&lang=${language}`;
       const response = await axios.get(searchUrl);
+      if (requestId !== searchRequestIdRef.current) return;
+
       setResults({
         slokas: Array.isArray(response.data?.slokas) ? response.data.slokas : [],
         stories: Array.isArray(response.data?.stories) ? response.data.stories : [],
@@ -82,17 +95,21 @@ export default function Search() {
         movies: Array.isArray(response.data?.movies) ? response.data.movies : [],
       });
 
-      const updatedRecentSearches = [
-        normalizedQuery,
-        ...recentSearches.filter((item) => item.toLowerCase() !== normalizedQuery.toLowerCase()),
-      ].slice(0, MAX_RECENT_SEARCHES);
+      setRecentSearches((currentRecentSearches) => {
+        const updatedRecentSearches = [
+          normalizedQuery,
+          ...currentRecentSearches.filter((item) => item.toLowerCase() !== normalizedQuery.toLowerCase()),
+        ].slice(0, MAX_RECENT_SEARCHES);
 
-      setRecentSearches(updatedRecentSearches);
-      localStorage.setItem(RECENT_SEARCHES_KEY, JSON.stringify(updatedRecentSearches));
+        localStorage.setItem(RECENT_SEARCHES_KEY, JSON.stringify(updatedRecentSearches));
+        return updatedRecentSearches;
+      });
     } catch (error) {
+      if (requestId !== searchRequestIdRef.current) return;
       console.error('Search error:', error);
       setResults({ slokas: [], stories: [], videos: [], movies: [] });
     } finally {
+      if (requestId !== searchRequestIdRef.current) return;
       setLoading(false);
     }
   };
