@@ -74,6 +74,9 @@ function AdminDashboardContent() {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [showAddModal, setShowAddModal] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [backendReady, setBackendReady] = useState(false);
+  const [backendWaking, setBackendWaking] = useState(false);
+  const [wakeAttempt, setWakeAttempt] = useState(0);
   const [data, setData] = useState({ users: [], stats: null, movies: [], stories: [], videos: [], quizQuestions: [], quizSets: [], aiJobs: [], songs: [] });
   const [translationJobs, setTranslationJobs] = useState([]);
   const [pendingUserReels, setPendingUserReels] = useState([]);
@@ -281,6 +284,31 @@ function AdminDashboardContent() {
     ? (data.videos || [])
     : (data.videos || []).filter((item) => String(item.collectionTitle || 'Bhagavad Gita').trim() === videoCollectionFilter);
   
+  // Wake up the backend (Render free tier spins down after inactivity)
+  const wakeBackend = React.useCallback(async () => {
+    const MAX_ATTEMPTS = 6;
+    const RETRY_DELAY_MS = 5000;
+    setBackendWaking(true);
+    setBackendReady(false);
+    for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+      setWakeAttempt(attempt);
+      try {
+        await axios.get('/api/health', { timeout: 8000 });
+        setBackendReady(true);
+        setBackendWaking(false);
+        return true;
+      } catch {
+        if (attempt < MAX_ATTEMPTS) {
+          await new Promise(r => setTimeout(r, RETRY_DELAY_MS));
+        }
+      }
+    }
+    // All retries failed — mark as ready anyway, fetchAdminData will surface the real error
+    setBackendReady(true);
+    setBackendWaking(false);
+    return false;
+  }, []);
+
   const fetchAdminData = React.useCallback(async () => {
     try {
       const token = localStorage.getItem('token');
@@ -326,13 +354,18 @@ function AdminDashboardContent() {
         const { data: songs } = await axios.get('/api/songs', { headers });
         setData(prev => ({ ...prev, songs: Array.isArray(songs) ? songs : [] }));
       }
+      // Clear any previous error on success
+      setMessage(prev => prev.type === 'error' ? { type: '', text: '' } : prev);
     } catch (error) {
       if (error.response?.status === 401) {
         setMessage({ type: 'error', text: 'Session expired or unauthorized. Please log in again.' });
         setTimeout(() => navigate('/login'), 3000);
+      } else if (!error.response) {
+        // Network error — backend unreachable
+        setMessage({ type: 'error', text: 'Cannot reach the server. Please check your internet connection or try again in a moment.' });
       } else {
-        const errorMsg = error.response?.data?.message || error.response?.data?.error || 'System error while fetching admin records';
-        setMessage({ type: 'error', text: `${errorMsg}. Please check your backend connection.` });
+        const errorMsg = error.response?.data?.message || error.response?.data?.error || 'Failed to load data';
+        setMessage({ type: 'error', text: errorMsg });
       }
       console.error('Error fetching admin data:', error);
     }
@@ -343,10 +376,19 @@ function AdminDashboardContent() {
       console.warn('Unauthorized access to admin dashboard');
       navigate('/');
     } else if (user?.role === 'admin') {
+      // First wake the backend, then load data
+      wakeBackend().then(() => fetchAdminData());
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, authLoading, navigate]);
+
+  // Re-fetch when tab or filter changes (only if backend is ready)
+  useEffect(() => {
+    if (backendReady && user?.role === 'admin') {
       fetchAdminData();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user, authLoading, activeTab, pendingContentFilter, navigate]);
+  }, [activeTab, pendingContentFilter]);
 
   const handleModerateUserReel = async (id, status) => {
     try {
