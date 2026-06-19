@@ -7,7 +7,7 @@ import { useAuth } from '../context/AuthContext';
 import { ENV } from '../config/env';
 
 // Resolve audio URL: prefix backend origin for relative /uploads/ paths
-const BACKEND_ORIGIN = ENV.API_BASE_URL || 'http://localhost:8888';
+const BACKEND_ORIGIN = ENV.API_BASE_URL || window.location.origin;
 const resolveAudioUrl = (url) => {
   if (!url) return '';
   if (url.startsWith('/uploads/') || url.startsWith('/api/')) {

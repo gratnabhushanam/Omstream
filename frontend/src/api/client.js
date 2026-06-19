@@ -2,7 +2,7 @@ import axios from 'axios';
 import { ENV } from '../config/env';
 
 export const apiClient = axios.create({
-  baseURL: ENV.API_BASE_URL,
+  baseURL: ENV.API_BASE_URL || '',
   headers: {
     'Content-Type': 'application/json',
     ...(ENV.API_KEY ? { 'x-api-key': ENV.API_KEY } : {})
@@ -11,7 +11,7 @@ export const apiClient = axios.create({
 
 // For authenticated requests
 export const authApiClient = axios.create({
-  baseURL: ENV.API_BASE_URL,
+  baseURL: ENV.API_BASE_URL || '',
   headers: {
     'Content-Type': 'application/json',
     ...(ENV.API_KEY ? { 'x-api-key': ENV.API_KEY } : {})

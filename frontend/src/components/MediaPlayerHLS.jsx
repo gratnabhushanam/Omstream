@@ -41,7 +41,7 @@ export default function MediaPlayer({
     if (!inputUrl) return inputUrl;
     if (inputUrl.startsWith('/uploads/') || inputUrl.startsWith('/api/')) {
       const isProd = import.meta.env.MODE === 'production';
-      const baseUrl = isProd ? (ENV.API_BASE_URL || 'https://gita-wisdom-1.onrender.com') : '';
+      const baseUrl = ENV.API_BASE_URL || window.location.origin;
       return `${baseUrl}${inputUrl}`;
     }
     return inputUrl;
