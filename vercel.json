@@ -9,6 +9,10 @@
       "dest": "https://gitawisdom.onrender.com/api/$1"
     },
     {
+      "src": "/socket.io/(.*)",
+      "dest": "https://gitawisdom.onrender.com/socket.io/$1"
+    },
+    {
       "handle": "filesystem"
     },
     {
