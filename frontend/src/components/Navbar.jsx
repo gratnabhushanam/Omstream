@@ -40,7 +40,7 @@ export default function Navbar() {
     { name: 'TV', path: '/tv', icon: <Tv className="w-4 h-4 mr-2" /> },
     { name: 'Movies', path: '/movies', icon: <Film className="w-4 h-4 mr-2" /> },
     { name: 'Kids', path: '/kids', icon: <Star className="w-4 h-4 mr-2" /> },
-    { name: 'Library', path: '/videos', icon: <BookOpen className="w-4 h-4 mr-2" /> },
+    { name: 'Library', path: '/stories', icon: <BookOpen className="w-4 h-4 mr-2" /> },
     { name: 'Songs', path: '/songs', icon: <Music className="w-4 h-4 mr-2" /> },
     { name: 'Daily Sloka', path: '/daily-sloka', icon: <BookOpen className="w-4 h-4 mr-2" /> },
     { name: 'Community', path: '/satsangs', icon: <Users className="w-4 h-4 mr-2" /> },

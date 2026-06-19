@@ -94,7 +94,7 @@ export default function Songs() {
         setLoading(true);
         let allSongs = [];
         try {
-          const { data } = await axios.get('/api/songs');
+          const { data } = await axios.get('/api/songs?_t=' + Date.now());
           if (data && data.length > 0) {
             allSongs = data;
             // Cache locally for offline use

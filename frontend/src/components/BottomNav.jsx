@@ -12,7 +12,7 @@ export default function BottomNav() {
     { name: 'TV',      path: '/tv',          icon: Tv       },
     { name: 'Movies',  path: '/movies',      icon: Film     },
     { name: 'Kids',    path: '/kids',        icon: Star     },
-    { name: 'Library', path: '/videos',      icon: Library  },
+    { name: 'Library', path: '/stories',     icon: Library  },
     { name: 'Songs',   path: '/songs',       icon: Music    },
     { name: 'Slokas',  path: '/daily-sloka', icon: BookOpen },
     { name: 'Profile', path: '/profile',     icon: User     },

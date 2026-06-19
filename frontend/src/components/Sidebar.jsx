@@ -13,7 +13,7 @@ export default function Sidebar() {
     { name: 'TV', path: '/tv', icon: Tv },
     { name: 'Movies', path: '/movies', icon: Film },
     { name: 'Kids', path: '/kids', icon: Star },
-    { name: 'Library', path: '/videos', icon: BookOpen },
+    { name: 'Library', path: '/stories', icon: BookOpen },
     { name: 'Songs', path: '/songs', icon: Music },
     { name: 'Daily Sloka', path: '/daily-sloka', icon: BookOpen },
     { name: 'Community', path: '/satsangs', icon: Users },
