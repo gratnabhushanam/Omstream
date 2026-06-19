@@ -1,6 +1,8 @@
 const { Story, Job } = require('../models');
 const mongoose = require('mongoose');
 const { mapStory } = require('../utils/responseMappers');
+const jwt = require('jsonwebtoken');
+const authController = require('./authController');
 
 /**
  * GET /api/stories
@@ -151,10 +153,24 @@ exports.getStoryById = async (req, res) => {
     );
     if (!story) return res.status(404).json({ message: 'Story not found' });
 
-    // If this story is marked AI-only, do not expose it to public requests
+    // If this story is marked AI-only, try to authenticate optionally and allow admins to view
     if (story.aiOnly) {
-      // Allow admins (when authenticated) to access — check user role if available
-      if (!(req.user && req.user.role === 'admin')) {
+      let user = null;
+      try {
+        const authHeader = String(req.headers.authorization || '');
+        if (authHeader.startsWith('Bearer ')) {
+          const token = authHeader.split(' ')[1];
+          const secret = String(process.env.JWT_SECRET || 'gita_wisdom_super_secret_key').trim();
+          const decoded = jwt.verify(token, secret);
+          if (decoded && decoded.id) {
+            user = await authController.getUserByIdForAuth(decoded.id);
+          }
+        }
+      } catch (err) {
+        // ignore token errors — proceed as unauthenticated
+      }
+
+      if (!(user && user.role === 'admin')) {
         return res.status(404).json({ message: 'Story not found' });
       }
     }

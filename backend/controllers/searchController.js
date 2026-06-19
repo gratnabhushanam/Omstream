@@ -31,8 +31,8 @@ exports.searchAll = async (req, res) => {
     // Empty query — return a small set of trending/featured content
     if (!normalizedQuery) {
       const [slokas, stories, videos, movies] = await Promise.all([
-        Sloka.find({}).limit(10).lean(),
-        Story.find({ isFolder: true }).limit(10).lean(),
+          Sloka.find({}).limit(10).lean(),
+          Story.find({ isFolder: true, aiOnly: { $ne: true } }).limit(10).lean(),
         Video.find({ isUserReel: { $ne: true } }).limit(10).lean(),
         Movie.find({}).limit(10).lean(),
       ]);
@@ -66,6 +66,7 @@ exports.searchAll = async (req, res) => {
       Story.find({
         $and: [
           { isFolder: true },
+          { aiOnly: { $ne: true } },
           {
             $or: [
               { title: qRegex },
