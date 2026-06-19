@@ -296,6 +296,8 @@ app.use('/api/content', require('./routes/syncRoutes'));
 app.use('/api/admin', require('./routes/adminRoutes'));
 console.log('Loading storyRoutes...');
 app.use('/api/stories', require('./routes/storyRoutes'));
+app.use('/api/story', require('./routes/storyRoutes'));
+app.use('/api/chapters', require('./routes/chapterRoutes'));
 app.use('/api/movies', require('./routes/movieRoutes'));
 app.use('/api/videos', require('./routes/videoRoutes'));
 app.use('/api/songs', require('./routes/songRoutes'));

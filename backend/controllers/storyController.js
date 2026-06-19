@@ -141,6 +141,104 @@ exports.getKidsStories = async (req, res) => {
 };
 
 /**
+ * GET /api/chapters
+ * Returns all published story chapters as a flat list for mobile/web chapter browsing.
+ */
+exports.getChapters = async (req, res) => {
+  try {
+    const baseFilter = {
+      status: 'published',
+      aiOnly: { $ne: true },
+      parentFolderId: { $exists: true, $ne: '' }
+    };
+
+    if (req.query.category) {
+      baseFilter.category = { $regex: req.query.category, $options: 'i' };
+    }
+
+    const chapterDocs = await Story.find(baseFilter)
+      .lean()
+      .sort({ sequence: 1, createdAt: 1 })
+      .limit(1000);
+
+    const embeddedFolderFilter = {
+      status: 'published',
+      isFolder: true,
+      'chapters.0': { $exists: true }
+    };
+
+    if (req.query.category) {
+      embeddedFolderFilter.category = { $regex: req.query.category, $options: 'i' };
+    }
+
+    const folderDocs = await Story.find(embeddedFolderFilter).lean().limit(200);
+
+    const chapterMap = new Map();
+
+    const addChapter = (chapter) => {
+      const key = `${chapter.parentFolderId || chapter.parentFolder || ''}||${chapter.title || ''}`;
+      if (!chapterMap.has(key)) {
+        chapterMap.set(key, chapter);
+      }
+    };
+
+    chapterDocs.forEach((story, index) => {
+      addChapter({
+        id: story._id || story.id,
+        _id: story._id || story.id,
+        title: story.title,
+        description: story.description || story.summary || (story.content || '').slice(0, 240),
+        content: story.content || '',
+        chapterNumber: story.sequence || index + 1,
+        sequence: story.sequence || index + 1,
+        thumbnail: story.thumbnail || '',
+        audioUrl: story.audioUrl || '',
+        duration: story.duration || 0,
+        category: story.category || '',
+        tags: story.tags || [],
+        parentFolder: story.parentFolder || story.parentFolderId || '',
+        parentFolderId: story.parentFolderId || '',
+        translations: story.translations || {},
+        createdAt: story.createdAt,
+        updatedAt: story.updatedAt,
+      });
+    });
+
+    folderDocs.forEach((folder) => {
+      const chapters = Array.isArray(folder.chapters) ? folder.chapters : [];
+      chapters.forEach((chapter, index) => {
+        addChapter({
+          id: chapter._id || `${folder._id || folder.id}-${index}`,
+          _id: chapter._id || `${folder._id || folder.id}-${index}`,
+          title: chapter.title || `Chapter ${index + 1}`,
+          description: chapter.summary || chapter.description || (chapter.content || '').slice(0, 240),
+          content: chapter.content || '',
+          chapterNumber: chapter.sequence || index + 1,
+          sequence: chapter.sequence || index + 1,
+          thumbnail: chapter.thumbnail || folder.thumbnail || '',
+          audioUrl: chapter.audioUrl || '',
+          duration: chapter.duration || 0,
+          category: folder.category || '',
+          tags: folder.tags || [],
+          parentFolder: folder.title || folder.parentFolder || '',
+          parentFolderId: folder.title || folder.parentFolderId || '',
+          translations: chapter.translations || {},
+          createdAt: chapter.createdAt || folder.createdAt,
+          updatedAt: chapter.updatedAt || folder.updatedAt,
+        });
+      });
+    });
+
+    const chapters = Array.from(chapterMap.values())
+      .sort((a, b) => (a.sequence || 0) - (b.sequence || 0) || new Date(a.createdAt || 0) - new Date(b.createdAt || 0));
+
+    return res.json(chapters);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+/**
  * GET /api/stories/:id
  * Returns a single story by ID and increments its view count.
  */

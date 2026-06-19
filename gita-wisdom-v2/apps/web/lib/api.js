@@ -1,7 +1,12 @@
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE || 'https://api.yourdomain.com';
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE ? process.env.NEXT_PUBLIC_API_BASE.trim().replace(/\/+$/, '') : '';
+
+function buildUrl(path) {
+  if (!API_BASE) return path;
+  return `${API_BASE}${path}`;
+}
 
 export async function apiGet(path, token) {
-  const response = await fetch(`${API_BASE}${path}`, {
+  const response = await fetch(buildUrl(path), {
     headers: {
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
     },
@@ -11,7 +16,7 @@ export async function apiGet(path, token) {
 }
 
 export async function apiPost(path, body, token) {
-  const response = await fetch(`${API_BASE}${path}`, {
+  const response = await fetch(buildUrl(path), {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -25,7 +30,7 @@ export async function apiPost(path, body, token) {
 }
 
 export async function apiPut(path, body, token) {
-  const response = await fetch(`${API_BASE}${path}`, {
+  const response = await fetch(buildUrl(path), {
     method: 'PUT',
     headers: {
       'Content-Type': 'application/json',
@@ -39,7 +44,7 @@ export async function apiPut(path, body, token) {
 }
 
 export async function apiDelete(path, token) {
-  const response = await fetch(`${API_BASE}${path}`, {
+  const response = await fetch(buildUrl(path), {
     method: 'DELETE',
     headers: {
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
