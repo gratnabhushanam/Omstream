@@ -85,6 +85,7 @@ function AdminDashboardContent() {
   const [storyLanguageFilter, setStoryLanguageFilter] = useState('all');
   const [quickFillStoryId, setQuickFillStoryId] = useState(null);
   const [moderationNotes, setModerationNotes] = useState({});
+  const [broadcastNotifications, setBroadcastNotifications] = useState([]);
   const [message, setMessage] = useState({ type: '', text: '' });
   const [movieForm, setMovieForm] = useState({ title: '', description: '', videoUrl: '', hlsUrl: '', trailerUrl: '', thumbnail: '', releaseYear: 2025, ownerHistory: '', tags: '', views: 0, isComingSoon: false, isKids: false, genre: 'Divine', duration: 0 });
   const [storyForm, setStoryForm] = useState({
@@ -96,6 +97,7 @@ function AdminDashboardContent() {
     thumbnail: '',
     tags: '',
     isKids: false,
+    aiOnly: false,
     chapters: [],
     translations: {},
     selectedLang: 'en',
@@ -191,6 +193,26 @@ function AdminDashboardContent() {
       setMessage({ type: 'error', text: 'Failed to send broadcast.' });
     } finally {
       setTimeout(() => setMessage({ type: '', text: '' }), 3000);
+    }
+  };
+
+  const handleDeleteBroadcastNotification = async (broadcastId, title) => {
+    const confirmed = window.confirm(`Delete notification broadcast: "${title}"? This removes it from all users.`);
+    if (!confirmed) return;
+
+    try {
+      setLoading(true);
+      const token = localStorage.getItem('token');
+      await axios.delete(`/api/admin/notifications/${broadcastId}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setMessage({ type: 'success', text: 'Notification deleted successfully!' });
+      await fetchAdminData();
+    } catch (error) {
+      setMessage({ type: 'error', text: error.response?.data?.message || 'Failed to delete notification' });
+    } finally {
+      setLoading(false);
+      setTimeout(() => setMessage({ type: '', text: '' }), 4000);
     }
   };
 
@@ -353,6 +375,9 @@ function AdminDashboardContent() {
       } else if (activeTab === 'songs') {
         const { data: songs } = await axios.get('/api/songs', { headers });
         setData(prev => ({ ...prev, songs: Array.isArray(songs) ? songs : [] }));
+      } else if (activeTab === 'notifications') {
+        const { data: notifications } = await axios.get('/api/admin/notifications', { headers });
+        setBroadcastNotifications(Array.isArray(notifications) ? notifications : []);
       }
       // Clear any previous error on success
       setMessage(prev => prev.type === 'error' ? { type: '', text: '' } : prev);
@@ -869,6 +894,7 @@ function AdminDashboardContent() {
       content: '',
       category: 'Bhagavad Gita',
       status: 'published',
+      aiOnly: false,
       thumbnail: '',
       tags: '',
       isKids: false,
@@ -2490,6 +2516,38 @@ function AdminDashboardContent() {
                         </button>
                      </form>
                   </div>
+
+                      <div className="mt-10 bg-black/20 p-8 rounded-3xl border border-devotion-gold/20">
+                        <div className="flex items-center justify-between mb-5">
+                          <h4 className="text-xl font-black uppercase tracking-widest text-white">Recent Broadcasts</h4>
+                          <span className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-500">{broadcastNotifications.length} items</span>
+                        </div>
+
+                        {broadcastNotifications.length === 0 ? (
+                          <p className="text-gray-500 text-sm">No broadcast notifications found.</p>
+                        ) : (
+                          <div className="space-y-4">
+                            {broadcastNotifications.map((notification) => (
+                              <div key={notification.id} className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between bg-white/5 border border-white/10 rounded-2xl p-4">
+                                <div>
+                                  <div className="flex items-center gap-3 mb-1">
+                                    <p className="font-bold text-white">{notification.title}</p>
+                                    <span className="text-[10px] uppercase tracking-widest px-2 py-1 rounded-full bg-devotion-gold/10 text-devotion-gold border border-devotion-gold/20">{notification.type}</span>
+                                  </div>
+                                  <p className="text-sm text-gray-400 line-clamp-2">{notification.body}</p>
+                                  <p className="text-[10px] uppercase tracking-widest text-gray-500 mt-2">{new Date(notification.createdAt).toLocaleString()} • {notification.recipients} recipients</p>
+                                </div>
+                                <button
+                                  onClick={() => handleDeleteBroadcastNotification(notification.id, notification.title)}
+                                  className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl border border-red-500/30 text-red-300 hover:text-red-200 hover:bg-red-500/10 transition-all text-[10px] font-black uppercase tracking-widest"
+                                >
+                                  <Trash2 className="w-4 h-4" /> Delete
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
                </div>
             )}
 
@@ -2962,6 +3020,12 @@ function AdminDashboardContent() {
                                <option value="published" className="bg-[#0B1F3A]">Published</option>
                              </select>
                            </div>
+                            <div className="space-y-2 flex items-center gap-4">
+                              <label className="flex items-center gap-3 cursor-pointer">
+                                <input type="checkbox" checked={!!storyForm.aiOnly} onChange={e => setStoryForm({...storyForm, aiOnly: e.target.checked})} className="w-4 h-4" />
+                                <span className="text-[10px] font-black uppercase tracking-widest text-gray-300">AI Only (hidden from users)</span>
+                              </label>
+                            </div>
                          </div>
 
                          {/* Chapters Editor */}

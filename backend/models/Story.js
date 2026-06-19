@@ -30,6 +30,7 @@ const StorySchema = new mongoose.Schema({
   isKids:    { type: Boolean, default: false },
   viewCount: { type: Number, default: 0 },
   aiProcessed:  { type: Boolean, default: false },
+  aiOnly: { type: Boolean, default: false },
   publishedAt:  { type: Date },
   status: { type: String, enum: ['draft', 'processing', 'published'], default: 'draft' }
 }, {

@@ -19,7 +19,7 @@ exports.getStories = async (req, res) => {
     // For public: only published folders.
     const filter = isAdminFetch
       ? { isFolder: { $ne: false } }
-      : { status: 'published', isFolder: true };
+      : { status: 'published', isFolder: true, aiOnly: { $ne: true } };
 
     const folders = await Story.find(filter).lean().sort({ createdAt: -1 }).limit(200);
 
@@ -34,7 +34,7 @@ exports.getStories = async (req, res) => {
       // Admin sees ALL chapters (draft/published); public only sees published chapters
       const chapterFilter = isAdminFetch
         ? { parentFolderId: { $in: folderTitles } }
-        : { parentFolderId: { $in: folderTitles }, status: 'published' };
+        : { parentFolderId: { $in: folderTitles }, status: 'published', aiOnly: { $ne: true } };
 
       const allSubStories = await Story.find(chapterFilter)
         .lean().sort({ sequence: 1, createdAt: 1 }).limit(1000);
@@ -82,6 +82,7 @@ exports.getKidsStories = async (req, res) => {
     const folders = await Story.find({
       status: 'published',
       isFolder: true,
+      aiOnly: { $ne: true },
       $or: [
         { isKids: true },
         { tags: { $regex: 'kids', $options: 'i' } },
@@ -99,7 +100,8 @@ exports.getKidsStories = async (req, res) => {
       const folderTitles = folders.map(f => f.title);
       const allSubStories = await Story.find({ 
         parentFolderId: { $in: folderTitles }, 
-        status: 'published' 
+        status: 'published',
+        aiOnly: { $ne: true }
       }).lean().sort({ sequence: 1, createdAt: 1 }).limit(1000);
       
       const subStoriesByFolder = {};
@@ -148,6 +150,14 @@ exports.getStoryById = async (req, res) => {
       { new: true }
     );
     if (!story) return res.status(404).json({ message: 'Story not found' });
+
+    // If this story is marked AI-only, do not expose it to public requests
+    if (story.aiOnly) {
+      // Allow admins (when authenticated) to access — check user role if available
+      if (!(req.user && req.user.role === 'admin')) {
+        return res.status(404).json({ message: 'Story not found' });
+      }
+    }
 
     if (story.isFolder) {
       const subStories = await Story.find({ parentFolderId: story.title, status: 'published' }).lean().sort({ sequence: 1, createdAt: 1 });
