@@ -71,6 +71,7 @@ exports.broadcastNotification = async (req, res) => {
     const safeTitle = String(title || '').trim() || 'Gita Wisdom Update';
     const safeBody = String(body || '').trim() || 'You have a new update from Gita Wisdom.';
     const safeType = String(type || 'system').trim() || 'system';
+    const broadcastId = `${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
     const { sendPush } = require('../utils/notificationService');
     const users = await User.find({}, { _id: 1, email: 1, settings: 1, pushSubscriptions: 1 }).lean();
 
@@ -81,7 +82,8 @@ exports.broadcastNotification = async (req, res) => {
       title: safeTitle,
       body: safeBody,
       message: safeBody,
-      isRead: false
+      isRead: false,
+      metadata: { broadcastId, source: 'admin-broadcast' }
     }));
     
     if (notificationsToInsert.length > 0) {
@@ -100,6 +102,52 @@ exports.broadcastNotification = async (req, res) => {
     Promise.allSettled(pushPromises); // Background execution
 
     res.json({ success: true, message: 'Broadcast initiated successfully' });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+exports.getAdminBroadcastNotifications = async (req, res) => {
+  try {
+    const broadcasts = await Notification.aggregate([
+      { $match: { 'metadata.broadcastId': { $exists: true, $ne: null } } },
+      { $sort: { createdAt: -1, _id: -1 } },
+      {
+        $group: {
+          _id: '$metadata.broadcastId',
+          title: { $first: '$title' },
+          body: { $first: '$body' },
+          type: { $first: '$type' },
+          createdAt: { $first: '$createdAt' },
+          recipients: { $sum: 1 },
+        },
+      },
+      { $sort: { createdAt: -1 } },
+      { $limit: 50 },
+    ]);
+
+    res.json(broadcasts.map((item) => ({
+      id: item._id,
+      title: item.title,
+      body: item.body,
+      type: item.type,
+      createdAt: item.createdAt,
+      recipients: item.recipients,
+    })));
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+exports.deleteAdminBroadcastNotification = async (req, res) => {
+  try {
+    const broadcastId = String(req.params.id || '').trim();
+    if (!broadcastId) {
+      return res.status(400).json({ message: 'Broadcast id is required' });
+    }
+
+    const result = await Notification.deleteMany({ 'metadata.broadcastId': broadcastId });
+    res.json({ success: true, deletedCount: result.deletedCount || 0 });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

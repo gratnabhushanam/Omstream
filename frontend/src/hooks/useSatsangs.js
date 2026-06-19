@@ -18,7 +18,7 @@ export const useSatsangs = () => {
   useEffect(() => {
     const fetchGroups = async () => {
       try {
-        const { data } = await axios.get(`${ENV.API_BASE_URL}/api/forums/groups`, { headers: { 'x-api-key': ENV.API_KEY } });
+        const { data } = await axios.get(`${ENV.API_BASE_URL}/api/forum/groups`, { headers: { 'x-api-key': ENV.API_KEY } });
         setGroups(data);
         if (data.length > 0 && !activeGroupId) {
           setActiveGroupId(data[0]._id);
@@ -38,7 +38,7 @@ export const useSatsangs = () => {
 
   const fetchPosts = async (groupId) => {
     try {
-      const { data } = await axios.get(`${ENV.API_BASE_URL}/api/forums/groups/${groupId}/posts`, { headers: { 'x-api-key': ENV.API_KEY } });
+      const { data } = await axios.get(`${ENV.API_BASE_URL}/api/forum/groups/${groupId}/posts`, { headers: { 'x-api-key': ENV.API_KEY } });
       setActiveGroupPosts(data);
     } catch (error) {
       console.error('Failed to fetch posts', error);
@@ -49,7 +49,7 @@ export const useSatsangs = () => {
     e.preventDefault();
     try {
       const token = localStorage.getItem('token');
-      const { data } = await axios.post(`${ENV.API_BASE_URL}/api/forums/groups`, newGroupForm, {
+      const { data } = await axios.post(`${ENV.API_BASE_URL}/api/forum/groups`, newGroupForm, {
         headers: { 
             Authorization: `Bearer ${token}`,
             'x-api-key': ENV.API_KEY
@@ -70,7 +70,7 @@ export const useSatsangs = () => {
     if (!window.confirm('Are you sure you want to delete this community?')) return;
     try {
       const token = localStorage.getItem('token');
-      await axios.delete(`${ENV.API_BASE_URL}/api/forums/groups/${groupId}`, {
+      await axios.delete(`${ENV.API_BASE_URL}/api/forum/groups/${groupId}`, {
         headers: { 
             Authorization: `Bearer ${token}`,
             'x-api-key': ENV.API_KEY
@@ -91,7 +91,7 @@ export const useSatsangs = () => {
     if (!postContent.trim() || !activeGroupId) return;
     try {
       const token = localStorage.getItem('token');
-      const { data } = await axios.post(`${ENV.API_BASE_URL}/api/forums/groups/${activeGroupId}/posts`, {
+      const { data } = await axios.post(`${ENV.API_BASE_URL}/api/forum/groups/${activeGroupId}/posts`, {
         content: postContent
       }, {
         headers: { 
@@ -110,7 +110,7 @@ export const useSatsangs = () => {
   const handleLike = async (postId) => {
     try {
       const token = localStorage.getItem('token');
-      const { data } = await axios.patch(`${ENV.API_BASE_URL}/api/forums/posts/${postId}/like`, {}, {
+      const { data } = await axios.patch(`${ENV.API_BASE_URL}/api/forum/posts/${postId}/like`, {}, {
         headers: { 
             Authorization: `Bearer ${token}`,
             'x-api-key': ENV.API_KEY
@@ -128,7 +128,7 @@ export const useSatsangs = () => {
     if (!text) return;
     try {
       const token = localStorage.getItem('token');
-      const { data } = await axios.post(`${ENV.API_BASE_URL}/api/forums/posts/${postId}/comment`, { text }, {
+      const { data } = await axios.post(`${ENV.API_BASE_URL}/api/forum/posts/${postId}/comment`, { text }, {
         headers: { 
             Authorization: `Bearer ${token}`,
             'x-api-key': ENV.API_KEY
@@ -157,7 +157,7 @@ export const useSatsangs = () => {
     if (!window.confirm('Delete comment?')) return;
     try {
       const token = localStorage.getItem('token');
-      const { data } = await axios.delete(`${ENV.API_BASE_URL}/api/forums/posts/${postId}/comment/${commentId}`, {
+      const { data } = await axios.delete(`${ENV.API_BASE_URL}/api/forum/posts/${postId}/comment/${commentId}`, {
         headers: { 
             Authorization: `Bearer ${token}`,
             'x-api-key': ENV.API_KEY
@@ -174,7 +174,7 @@ export const useSatsangs = () => {
     if (!window.confirm('Delete this post?')) return;
     try {
       const token = localStorage.getItem('token');
-      await axios.delete(`${ENV.API_BASE_URL}/api/forums/posts/${postId}`, {
+      await axios.delete(`${ENV.API_BASE_URL}/api/forum/posts/${postId}`, {
         headers: { 
             Authorization: `Bearer ${token}`,
             'x-api-key': ENV.API_KEY

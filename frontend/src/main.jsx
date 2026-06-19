@@ -4,13 +4,12 @@ import axios from 'axios'
 import App from './App.jsx'
 import './index.css'
 import './styles/mobile.css'
+import { ENV } from './config/env';
 
 const isProd = import.meta.env.MODE === 'production';
 // In dev, use '' so requests go through Vite proxy → localhost:8888
 // In prod, use the deployed backend URL
-axios.defaults.baseURL = isProd 
-  ? (import.meta.env.VITE_API_BASE_URL || 'https://gita-wisdom-1.onrender.com') 
-  : '';
+axios.defaults.baseURL = isProd ? ENV.API_BASE_URL : '';
 
 const getOrCreateDeviceId = () => {
   let deviceId = localStorage.getItem('gita_wisdom_device_id');
