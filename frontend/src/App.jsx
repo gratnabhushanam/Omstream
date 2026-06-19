@@ -205,7 +205,7 @@ function AppShell() {
         </main>
         
         {!isAuthRoute && !isTvRoute && <Footer />}
-        {!isAuthRoute && !isTvRoute && <BottomNav />}
+        {!isAuthRoute && <BottomNav />}
         
         {/* Global Immersive Notification Overlay */}
         <ImmersiveNotification 

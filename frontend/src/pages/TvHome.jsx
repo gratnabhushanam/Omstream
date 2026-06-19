@@ -262,7 +262,8 @@ export default function TvHome() {
   return (
     <div 
       ref={containerRef}
-      className="min-h-screen text-white bg-gradient-to-br from-[#060B12] via-[#091522] to-[#04080D] font-sans overflow-x-hidden relative pb-16"
+      className={`relative min-h-screen bg-black text-white overflow-x-hidden overflow-y-auto md:overflow-hidden tv:overflow-hidden select-none font-sans ${isSidebarFocused ? 'sidebar-focused' : ''} pb-24 md:pb-0`}
+      style={{ WebkitTapHighlightColor: 'transparent' }}
     >
       {/* 10-foot overlay scale utility */}
       <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(circle_at_top,rgba(245,166,35,0.04),transparent_40%)]"></div>
