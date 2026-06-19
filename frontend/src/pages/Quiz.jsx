@@ -3,9 +3,10 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import KrishnaSVG from '../assets/krishna-scene.svg';
 import axios from 'axios';
 import { Trophy, CheckCircle, XCircle, ArrowRight, RefreshCcw, Loader, Clock, BrainCircuit } from 'lucide-react';
+import { ENV } from '../config/env';
 
 export default function Quiz() {
-  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
+  const API_BASE_URL = ENV.API_BASE_URL || '';
   const [quizSet, setQuizSet] = useState(null);
   const [questions, setQuestions] = useState([]);
   const [currentQuestion, setCurrentQuestion] = useState(0);

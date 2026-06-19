@@ -3,9 +3,10 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { BookOpen, Clock, BrainCircuit, Play, Search, Loader } from 'lucide-react';
 import KrishnaSVG from '../assets/krishna-scene.svg';
+import { ENV } from '../config/env';
 
 export default function QuizList() {
-  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
+  const API_BASE_URL = ENV.API_BASE_URL || '';
   const [quizzes, setQuizzes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('all');
