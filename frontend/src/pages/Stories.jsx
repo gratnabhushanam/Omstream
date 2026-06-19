@@ -58,8 +58,20 @@ export default function Stories() {
   const fetchStories = async () => {
     try {
       setLoading(true);
-      const { data } = await axios.get('/api/stories?_t=' + Date.now());
-      setStories(Array.isArray(data) ? data : []);
+      let allStories = [];
+      try {
+         const { data } = await axios.get('/api/stories?_t=' + Date.now());
+         allStories = Array.isArray(data) ? data : [];
+         if (allStories.length > 0) {
+            localStorage.setItem('gita_stories', JSON.stringify(allStories));
+         }
+      } catch (err) {
+         console.error('Network fetch failed, trying local storage', err);
+         const localStories = localStorage.getItem('gita_stories');
+         if (localStories) allStories = JSON.parse(localStories);
+         else throw err;
+      }
+      setStories(allStories);
     } catch (error) {
       console.error('Error fetching stories:', error);
     } finally {

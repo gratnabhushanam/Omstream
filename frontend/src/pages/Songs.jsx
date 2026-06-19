@@ -92,9 +92,23 @@ export default function Songs() {
     const fetchSongs = async () => {
       try {
         setLoading(true);
-        const { data } = await axios.get('/api/songs');
-        if (data && data.length > 0) {
-          setSongs(data);
+        let allSongs = [];
+        try {
+          const { data } = await axios.get('/api/songs');
+          if (data && data.length > 0) {
+            allSongs = data;
+            // Cache locally for offline use
+            localStorage.setItem('gita_songs', JSON.stringify(data));
+          }
+        } catch (err) {
+          console.error('Network fetch failed, trying local storage', err);
+          const localSongs = localStorage.getItem('gita_songs');
+          if (localSongs) allSongs = JSON.parse(localSongs);
+          else throw err;
+        }
+
+        if (allSongs.length > 0) {
+          setSongs(allSongs);
           setCurrentSongIndex(0);
         } else {
           setSongs([]);
