@@ -178,9 +178,14 @@ const initializeApp = async () => {
           }
         }
 
-        // 2. Set isFolder: false for all other stories
+        // 2. Only set isFolder: false on stories that have a parentFolderId (i.e. actual chapters/sub-stories).
+        // Do NOT touch admin-uploaded root-level folders — they should keep their isFolder: true flag.
         await Story.updateMany(
-          { title: { $nin: folderNames } },
+          { 
+            title: { $nin: folderNames },
+            parentFolderId: { $exists: true, $ne: '' },
+            isFolder: { $ne: false }
+          },
           { $set: { isFolder: false } }
         );
 
@@ -313,6 +318,7 @@ const os = require('os');
 
 // Health check & Keep-alive route
 app.get('/ping', (req, res) => res.status(200).send('pong'));
+app.get('/api/health', (req, res) => res.status(200).json({ status: 'ok', timestamp: new Date().toISOString() }));
 
 const startServer = async () => {
   try {

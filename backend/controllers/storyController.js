@@ -13,8 +13,14 @@ exports.getStories = async (req, res) => {
       return res.json(stories.map(mapStory));
     }
 
-    const filter = req.query.all === 'true' ? {} : { status: 'published' };
-    filter.isFolder = true;
+    const isAdminFetch = req.query.all === 'true';
+    // For admin: show ALL stories that are folders (isFolder=true) or where isFolder was never
+    // explicitly set to false (catches stories uploaded before the migration was fixed).
+    // For public: only published folders.
+    const filter = isAdminFetch
+      ? { isFolder: { $ne: false } }
+      : { status: 'published', isFolder: true };
+
     const folders = await Story.find(filter).lean().sort({ createdAt: -1 }).limit(200);
 
     const foldersWithChapters = folders.map(story => {
@@ -25,10 +31,13 @@ exports.getStories = async (req, res) => {
     
     if (folders.length > 0) {
       const folderTitles = folders.map(f => f.title);
-      const allSubStories = await Story.find({ 
-        parentFolderId: { $in: folderTitles }, 
-        status: 'published' 
-      }).lean().sort({ sequence: 1, createdAt: 1 }).limit(1000);
+      // Admin sees ALL chapters (draft/published); public only sees published chapters
+      const chapterFilter = isAdminFetch
+        ? { parentFolderId: { $in: folderTitles } }
+        : { parentFolderId: { $in: folderTitles }, status: 'published' };
+
+      const allSubStories = await Story.find(chapterFilter)
+        .lean().sort({ sequence: 1, createdAt: 1 }).limit(1000);
       
       const subStoriesByFolder = {};
       for (const sub of allSubStories) {
