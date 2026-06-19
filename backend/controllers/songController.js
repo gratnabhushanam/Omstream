@@ -10,6 +10,15 @@ exports.getAllSongs = async (req, res) => {
   }
 };
 
+exports.getAllSongsAdmin = async (req, res) => {
+  try {
+    const songs = await Song.find({}).lean().sort({ createdAt: -1 }).limit(1000);
+    res.json(songs);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
 exports.addSong = async (req, res) => {
   try {
     const song = new Song(req.body);

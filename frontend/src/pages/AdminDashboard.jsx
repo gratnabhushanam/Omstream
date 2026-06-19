@@ -373,7 +373,7 @@ function AdminDashboardContent() {
         const tJobs = Array.isArray(jobs) ? jobs.filter(j => j.type === 'translation' || j.type === 'all') : [];
         setTranslationJobs(tJobs);
       } else if (activeTab === 'songs') {
-        const { data: songs } = await axios.get('/api/songs', { headers });
+        const { data: songs } = await axios.get('/api/songs/admin', { headers });
         setData(prev => ({ ...prev, songs: Array.isArray(songs) ? songs : [] }));
       } else if (activeTab === 'notifications') {
         const { data: notifications } = await axios.get('/api/admin/notifications', { headers });
