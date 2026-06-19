@@ -315,7 +315,7 @@ function AdminDashboardContent() {
     for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
       setWakeAttempt(attempt);
       try {
-        await axios.get('/api/health', { timeout: 8000 });
+        await axios.get('/api/health', { timeout: 60000 });
         setBackendReady(true);
         setBackendWaking(false);
         return true;
