@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const Channel = require('../models/Channel');
-const { protect, admin } = require('../middleware/auth');
+const { protect, admin } = require('../middleware/authMiddleware');
 
 // @route   GET /api/channels
 // @desc    Get all active channels

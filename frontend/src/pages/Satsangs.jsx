@@ -1,5 +1,5 @@
 import React from 'react';
-import { Users, Plus, MessageCircle, Heart, Search, ChevronRight, Trash2 } from 'lucide-react';
+import { Users, Plus, MessageCircle, Heart, Search, ChevronRight, Trash2, Pencil } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useSatsangs } from '../hooks/useSatsangs';
 
@@ -11,6 +11,11 @@ export default function Satsangs() {
     loading,
     showCreateModal,
     setShowCreateModal,
+    showEditModal,
+    setShowEditModal,
+    editingGroup,
+    setEditingGroup,
+    handleEditGroup,
     activeGroupId,
     setActiveGroupId,
     activeGroupPosts,
@@ -94,12 +99,20 @@ export default function Satsangs() {
                      <h4 className={`font-bold ${activeGroupId === group._id ? 'text-devotion-gold' : 'text-white'}`} style={{ transform: 'translateZ(20px)' }}>{group.name}</h4>
                      <p className="text-[10px] text-gray-500 mt-1 uppercase tracking-wider">{group.category}</p>
                      {(user?.role === 'admin' || (user && group.createdBy && String(user.id || user._id) === String(group.createdBy))) && (
-                        <button
-                          onClick={(e) => handleDeleteGroup(e, group._id)}
-                          className="mt-3 inline-flex items-center gap-1.5 text-[10px] text-red-400 hover:text-red-300 uppercase font-black tracking-widest bg-red-400/10 px-2 py-1 rounded-md transition-colors"
-                        >
-                          <Trash2 className="w-3 h-3" /> Delete
-                        </button>
+                        <div className="flex gap-2 mt-3">
+                           <button
+                             onClick={(e) => { e.stopPropagation(); setEditingGroup(group); setShowEditModal(true); }}
+                             className="inline-flex items-center gap-1.5 text-[10px] text-blue-400 hover:text-blue-300 uppercase font-black tracking-widest bg-blue-400/10 px-2 py-1 rounded-md transition-colors"
+                           >
+                             <Pencil className="w-3 h-3" /> Edit
+                           </button>
+                           <button
+                             onClick={(e) => handleDeleteGroup(e, group._id)}
+                             className="inline-flex items-center gap-1.5 text-[10px] text-red-400 hover:text-red-300 uppercase font-black tracking-widest bg-red-400/10 px-2 py-1 rounded-md transition-colors"
+                           >
+                             <Trash2 className="w-3 h-3" /> Delete
+                           </button>
+                        </div>
                      )}
                   </button>
                 ))}
@@ -290,6 +303,45 @@ export default function Satsangs() {
                  </div>
                  <button type="submit" className="w-full bg-devotion-gold text-black font-black uppercase tracking-widest text-xs py-4 rounded-xl hover:bg-yellow-400 transition-colors mt-4">
                     Create Community
+                 </button>
+              </form>
+           </div>
+        </div>
+      )}
+
+      {showEditModal && editingGroup && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+           <div className="bg-[#081426] border border-devotion-gold/30 rounded-3xl p-8 max-w-md w-full shadow-2xl relative">
+              <button 
+                onClick={() => { setShowEditModal(false); setEditingGroup(null); }}
+                className="absolute top-4 right-4 text-gray-400 hover:text-white"
+              >
+                 <ChevronRight className="w-6 h-6 rotate-180" />
+              </button>
+              <h3 className="text-2xl font-bold font-serif text-white mb-6">Edit Satsang</h3>
+              <form onSubmit={(e) => handleEditGroup(e, editingGroup._id, { name: editingGroup.name, description: editingGroup.description })} className="space-y-4">
+                 <div>
+                    <label className="text-[10px] font-black uppercase tracking-widest text-devotion-gold mb-2 block">Community Name</label>
+                    <input 
+                      required
+                      value={editingGroup.name}
+                      onChange={e => setEditingGroup({...editingGroup, name: e.target.value})}
+                      className="w-full bg-black/30 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-devotion-gold focus:outline-none"
+                      placeholder="e.g. Chapter 2 Seekers"
+                    />
+                 </div>
+                 <div>
+                    <label className="text-[10px] font-black uppercase tracking-widest text-devotion-gold mb-2 block">Description</label>
+                    <textarea 
+                      required
+                      value={editingGroup.description}
+                      onChange={e => setEditingGroup({...editingGroup, description: e.target.value})}
+                      className="w-full bg-black/30 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-devotion-gold focus:outline-none min-h-[100px]"
+                      placeholder="What is the purpose of this community?"
+                    />
+                 </div>
+                 <button type="submit" className="w-full bg-devotion-gold text-black font-black uppercase tracking-widest text-xs py-4 rounded-xl hover:bg-yellow-400 transition-colors mt-4">
+                    Save Changes
                  </button>
               </form>
            </div>

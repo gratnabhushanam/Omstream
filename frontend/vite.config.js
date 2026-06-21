@@ -70,11 +70,21 @@ export default defineConfig({
   },
   server: {
     proxy: {
+      '/api/movies': { target: 'http://localhost:8889', changeOrigin: true },
+      '/api/videos': { target: 'http://localhost:8889', changeOrigin: true },
+      '/api/channels': { target: 'http://localhost:8889', changeOrigin: true },
+      '/uploads': { target: 'http://localhost:8889', changeOrigin: true },
+      
+      '/api/songs': { target: 'http://localhost:8890', changeOrigin: true },
+      '/api/stories': { target: 'http://localhost:8890', changeOrigin: true },
+      '/api/story': { target: 'http://localhost:8890', changeOrigin: true },
+      '/api/chapters': { target: 'http://localhost:8890', changeOrigin: true },
+      '/api/slokas': { target: 'http://localhost:8890', changeOrigin: true },
+      '/api/playlists': { target: 'http://localhost:8890', changeOrigin: true },
+      '/api/quiz': { target: 'http://localhost:8890', changeOrigin: true },
+      '/api/chat': { target: 'http://localhost:8890', changeOrigin: true },
+
       '/api': {
-        target: 'http://localhost:8888',
-        changeOrigin: true,
-      },
-      '/uploads': {
         target: 'http://localhost:8888',
         changeOrigin: true,
       },

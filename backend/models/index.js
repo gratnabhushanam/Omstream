@@ -15,6 +15,7 @@ const Song = require('./Song');
 const Subscription = require('./Subscription');
 const Transaction = require('./Transaction');
 const RefreshToken = require('./RefreshToken');
+const Community = require('./Community');
 
 // Performance Indexes
 Story.schema.index({ category: 1, isKids: 1, tags: 1, status: 1 });
@@ -46,6 +47,7 @@ module.exports = {
   AccessRequest,
   Subscription,
   Transaction,
-  RefreshToken
+  RefreshToken,
+  Community
 };
 

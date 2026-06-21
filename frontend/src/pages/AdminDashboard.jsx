@@ -10,7 +10,7 @@ import { useNavigate } from 'react-router-dom';
 import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip as RechartsTooltip } from 'recharts';
 import MediaPlayerHLS from '../components/MediaPlayerHLS';
 import JobTracker from '../components/JobTracker';
-
+import DataStateWrapper from '../components/DataStateWrapper';
 const VIDEO_COLLECTION_PRESETS = ['Bhagavad Gita', 'Ramayanam', 'Mahabharat', 'Puranas'];
 const STORY_CATEGORIES = [
   'Bhagavad Gita', 'Ramayana', 'Mahabharata', 'Shiva Puranas', 'Vishnu Puranas', 
@@ -76,6 +76,8 @@ function AdminDashboardContent() {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [showAddModal, setShowAddModal] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [tabLoading, setTabLoading] = useState(true);
+  const [tabError, setTabError] = useState(null);
   const [backendReady, setBackendReady] = useState(false);
   const [backendWaking, setBackendWaking] = useState(false);
   const [wakeAttempt, setWakeAttempt] = useState(0);
@@ -335,6 +337,8 @@ function AdminDashboardContent() {
 
   const fetchAdminData = React.useCallback(async () => {
     try {
+      setTabLoading(true);
+      setTabError(null);
       const token = localStorage.getItem('token');
       const headers = { Authorization: `Bearer ${token}` };
       
@@ -395,12 +399,14 @@ function AdminDashboardContent() {
         setTimeout(() => navigate('/login'), 3000);
       } else if (!error.response) {
         // Network error — backend unreachable
-        setMessage({ type: 'error', text: 'Cannot reach the server. Please check your internet connection or try again in a moment.' });
+        setTabError('Cannot reach the server. Please check your internet connection or try again in a moment.');
       } else {
         const errorMsg = error.response?.data?.message || error.response?.data?.error || 'Failed to load data';
-        setMessage({ type: 'error', text: errorMsg });
+        setTabError(errorMsg);
       }
       console.error('Error fetching admin data:', error);
+    } finally {
+      setTabLoading(false);
     }
   }, [activeTab, navigate, pendingContentFilter]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -1114,7 +1120,7 @@ function AdminDashboardContent() {
           </div>
           <p className="text-[10px] text-gray-500 font-black uppercase tracking-[0.3em]">Spiritual Management</p>
         </div>
-        <nav className="flex-1 p-6 space-y-3">
+        <nav className="flex-1 p-6 space-y-3 overflow-y-auto custom-scrollbar pb-24">
           {[
             { id: 'dashboard', name: 'Analytics', icon: <Database className="w-5 h-5" /> },
             { id: 'movies', name: 'Movies', icon: <Film className="w-5 h-5" /> },
@@ -1163,7 +1169,7 @@ function AdminDashboardContent() {
             <Menu className="w-6 h-6" />
           </button>
           {showMobileMenu && (
-            <div className="absolute right-0 mt-2 w-48 bg-devotion-darkBlue border border-devotion-gold/20 rounded-2xl shadow-2xl z-50">
+            <div className="absolute right-0 mt-2 w-48 bg-devotion-darkBlue border border-devotion-gold/20 rounded-2xl shadow-2xl z-50 max-h-[80vh] overflow-y-auto custom-scrollbar">
               {[
                 { id: 'dashboard', name: 'Analytics', icon: <Database className="w-4 h-4" /> },
                 { id: 'movies', name: 'Movies', icon: <Film className="w-4 h-4" /> },
@@ -1232,6 +1238,15 @@ function AdminDashboardContent() {
          </div>
 
           <div className="grid grid-cols-1 gap-6">
+            <DataStateWrapper
+              isLoading={tabLoading}
+              error={tabError}
+              onRetry={() => {
+                setTabError(null);
+                setTabLoading(true);
+                fetchAdminData();
+              }}
+            >
             {activeTab === 'dashboard' && !data.stats && (
                <div className="flex flex-col items-center justify-center py-32 space-y-4">
                   <div className="w-16 h-16 border-4 border-devotion-gold/20 border-t-devotion-gold rounded-full animate-spin"></div>
@@ -2729,6 +2744,7 @@ function AdminDashboardContent() {
                    </div>
                 </div>
              )}
+            </DataStateWrapper>
          </div>
       </div>
 

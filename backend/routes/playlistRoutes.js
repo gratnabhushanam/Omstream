@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const Playlist = require('../models/Playlist');
-const { protect, admin } = require('../middleware/auth');
+const { protect, admin } = require('../middleware/authMiddleware');
 
 // @route   GET /api/playlists
 // @desc    Get all featured playlists

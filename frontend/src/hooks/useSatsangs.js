@@ -14,11 +14,32 @@ export const useSatsangs = () => {
   const [newGroupForm, setNewGroupForm] = useState({ name: '', description: '', category: 'General' });
   const [activeCommentsPostId, setActiveCommentsPostId] = useState(null);
   const [commentInputs, setCommentInputs] = useState({});
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editingGroup, setEditingGroup] = useState(null);
+  
+  const handleEditGroup = async (e, groupId, updatedData) => {
+    e.preventDefault();
+    try {
+      const token = localStorage.getItem('token');
+      const { data } = await axios.put(`${ENV.API_BASE_URL}/api/communities/${groupId}`, updatedData, {
+        headers: { 
+            Authorization: `Bearer ${token}`,
+            'x-api-key': ENV.API_KEY
+        }
+      });
+      setGroups(groups.map(g => g._id === groupId ? data : g));
+      setShowEditModal(false);
+      setEditingGroup(null);
+    } catch (error) {
+      console.error('Group edit error:', error);
+      alert('Failed to edit community');
+    }
+  };
 
   useEffect(() => {
     const fetchGroups = async () => {
       try {
-        const { data } = await axios.get(`${ENV.API_BASE_URL}/api/forum/groups`, { headers: { 'x-api-key': ENV.API_KEY } });
+        const { data } = await axios.get(`${ENV.API_BASE_URL}/api/communities`, { headers: { 'x-api-key': ENV.API_KEY } });
         setGroups(data);
         if (data.length > 0 && !activeGroupId) {
           setActiveGroupId(data[0]._id);
@@ -49,7 +70,7 @@ export const useSatsangs = () => {
     e.preventDefault();
     try {
       const token = localStorage.getItem('token');
-      const { data } = await axios.post(`${ENV.API_BASE_URL}/api/forum/groups`, newGroupForm, {
+      const { data } = await axios.post(`${ENV.API_BASE_URL}/api/communities`, newGroupForm, {
         headers: { 
             Authorization: `Bearer ${token}`,
             'x-api-key': ENV.API_KEY
@@ -70,7 +91,7 @@ export const useSatsangs = () => {
     if (!window.confirm('Are you sure you want to delete this community?')) return;
     try {
       const token = localStorage.getItem('token');
-      await axios.delete(`${ENV.API_BASE_URL}/api/forum/groups/${groupId}`, {
+      await axios.delete(`${ENV.API_BASE_URL}/api/communities/${groupId}`, {
         headers: { 
             Authorization: `Bearer ${token}`,
             'x-api-key': ENV.API_KEY
@@ -200,6 +221,11 @@ export const useSatsangs = () => {
     loading,
     showCreateModal,
     setShowCreateModal,
+    showEditModal,
+    setShowEditModal,
+    editingGroup,
+    setEditingGroup,
+    handleEditGroup,
     activeGroupId,
     setActiveGroupId,
     activeGroupPosts,

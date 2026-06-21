@@ -99,8 +99,8 @@ export default function Songs() {
         let allPlaylists = [];
         try {
           const [songsRes, playlistsRes] = await Promise.all([
-            axios.get('/api/songs?_t=' + Date.now()),
-            axios.get('/api/playlists?_t=' + Date.now())
+            axios.get(`${ENV.API_BASE_URL}/api/songs?_t=` + Date.now()),
+            axios.get(`${ENV.API_BASE_URL}/api/playlists?_t=` + Date.now())
           ]);
           if (songsRes.data && songsRes.data.length > 0) {
             allSongs = songsRes.data;

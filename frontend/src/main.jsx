@@ -7,9 +7,10 @@ import './styles/mobile.css'
 import { ENV } from './config/env';
 
 const isProd = import.meta.env.MODE === 'production';
-// Always explicitly point to the Render backend. Vercel only serves static files.
+// Always explicitly point to the Render backend in production.
 const RENDER_BACKEND = 'https://gitawisdom.onrender.com';
-axios.defaults.baseURL = ENV.API_BASE_URL || RENDER_BACKEND;
+// In development, use empty baseURL to hit the Vite proxy (localhost:5173) which routes to the 3 microservices
+axios.defaults.baseURL = isProd ? (ENV.API_BASE_URL || RENDER_BACKEND) : '';
 
 const getOrCreateDeviceId = () => {
   let deviceId = localStorage.getItem('gita_wisdom_device_id');
