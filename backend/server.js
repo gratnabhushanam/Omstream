@@ -293,6 +293,9 @@ app.post('/api/webhook', subscriptionController.handleWebhook);
 
 app.use('/api/auth', require('./routes/authRoutes'));
 app.use('/api/subscription', require('./routes/subscriptionRoutes'));
+app.use('/api/ai', require('./routes/aiRoutes'));
+app.use('/api/channels', require('./routes/channelRoutes'));
+app.use('/api/playlists', require('./routes/playlistRoutes'));
 app.use('/api/payments', require('./routes/payments'));
 app.use('/api/content', require('./routes/syncRoutes'));
 app.use('/api/admin', require('./routes/adminRoutes'));

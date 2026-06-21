@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { ErrorBoundary } from '../components/ErrorBoundary';
 import axios from 'axios';
-import { Database, Upload, Users, BookOpen, Video, LogOut, Settings, Film, Plus, X, Check, AlertCircle, Image as ImageIcon, Link as LinkIcon, FileText, Flame, Trash2, Pencil, Menu, Eye, Sparkles, RefreshCw, Cpu, Bell, BarChart3, Layers, Zap, Folder, FolderPlus, ArrowLeft, GripVertical, Music, Edit2 } from 'lucide-react';
+import { Database, Upload, Users, BookOpen, Video, LogOut, Settings, Film, Plus, X, Check, AlertCircle, Image as ImageIcon, Link as LinkIcon, FileText, Flame, Trash2, Pencil, Menu, Eye, Sparkles, RefreshCw, Cpu, Bell, BarChart3, Layers, Zap, Folder, FolderPlus, ArrowLeft, GripVertical, Music, Edit2, Radio, ListMusic } from 'lucide-react';
+import LiveTVAdmin from '../components/admin/LiveTVAdmin';
+import PlaylistsAdmin from '../components/admin/PlaylistsAdmin';
 import { resumableUpload } from '../utils/resumableUpload';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
@@ -77,7 +79,7 @@ function AdminDashboardContent() {
   const [backendReady, setBackendReady] = useState(false);
   const [backendWaking, setBackendWaking] = useState(false);
   const [wakeAttempt, setWakeAttempt] = useState(0);
-  const [data, setData] = useState({ users: [], stats: null, movies: [], stories: [], videos: [], quizQuestions: [], quizSets: [], aiJobs: [], songs: [] });
+  const [data, setData] = useState({ users: [], stats: null, movies: [], stories: [], videos: [], quizQuestions: [], quizSets: [], aiJobs: [], songs: [], channels: [], playlists: [] });
   const [translationJobs, setTranslationJobs] = useState([]);
   const [pendingUserReels, setPendingUserReels] = useState([]);
   const [pendingContentFilter, setPendingContentFilter] = useState('all');
@@ -375,6 +377,12 @@ function AdminDashboardContent() {
       } else if (activeTab === 'songs') {
         const { data: songs } = await axios.get('/api/songs/admin', { headers });
         setData(prev => ({ ...prev, songs: Array.isArray(songs) ? songs : [] }));
+      } else if (activeTab === 'channels') {
+        const { data: channels } = await axios.get('/api/channels/admin', { headers });
+        setData(prev => ({ ...prev, channels: Array.isArray(channels) ? channels : [] }));
+      } else if (activeTab === 'playlists') {
+        const { data: playlists } = await axios.get('/api/playlists/admin', { headers });
+        setData(prev => ({ ...prev, playlists: Array.isArray(playlists) ? playlists : [] }));
       } else if (activeTab === 'notifications') {
         const { data: notifications } = await axios.get('/api/admin/notifications', { headers });
         setBroadcastNotifications(Array.isArray(notifications) ? notifications : []);
@@ -1118,6 +1126,8 @@ function AdminDashboardContent() {
             { id: 'notifications', name: 'Notifications', icon: <AlertCircle className="w-5 h-5 text-purple-400" /> },
             { id: 'translations', name: 'Translations', icon: <Sparkles className="w-5 h-5 text-devotion-gold" /> },
             { id: 'songs', name: 'Songs', icon: <Music className="w-5 h-5 text-pink-400" /> },
+            { id: 'channels', name: 'Live TV', icon: <Radio className="w-5 h-5 text-red-400" /> },
+            { id: 'playlists', name: 'Playlists', icon: <ListMusic className="w-5 h-5 text-green-400" /> },
           ].map(item => (
             <button
               key={item.id}
@@ -1165,6 +1175,8 @@ function AdminDashboardContent() {
                 { id: 'notifications', name: 'Notifications', icon: <AlertCircle className="w-4 h-4 text-purple-400" /> },
                 { id: 'translations', name: 'Translations', icon: <Sparkles className="w-4 h-4 text-devotion-gold" /> },
                 { id: 'songs', name: 'Songs', icon: <Music className="w-4 h-4 text-pink-400" /> },
+                { id: 'channels', name: 'Live TV', icon: <Radio className="w-4 h-4 text-red-400" /> },
+                { id: 'playlists', name: 'Playlists', icon: <ListMusic className="w-4 h-4 text-green-400" /> },
               ].map(item => (
                 <button
                   key={item.id}
@@ -1494,6 +1506,14 @@ function AdminDashboardContent() {
                 </div>
               </div>
             )}
+            {activeTab === 'channels' && (
+              <LiveTVAdmin channels={data.channels || []} fetchAdminData={fetchAdminData} setMessage={setMessage} />
+            )}
+
+            {activeTab === 'playlists' && (
+              <PlaylistsAdmin playlists={data.playlists || []} songs={data.songs || []} fetchAdminData={fetchAdminData} setMessage={setMessage} />
+            )}
+
             {activeTab === 'users' && (
                <div className="bg-white/5 border border-white/10 rounded-[3rem] p-12 backdrop-blur-3xl">
                   <div className="flex justify-between items-center mb-12">
@@ -2727,7 +2747,7 @@ function AdminDashboardContent() {
               </button>
 
               <h2 className="text-5xl font-serif font-black text-white mb-12 text-center uppercase tracking-tighter">
-                {(editingStoryId || editingMovieId || editingVideoId || editingSongId) ? 'Edit' : 'Publish'} <span className="text-devotion-gold">{activeTab === 'stories' ? 'Story' : activeTab === 'movies' ? 'Movie' : (activeTab === 'videos' && videosUploadType === 'quiz' ? 'Quiz Question' : activeTab === 'songs' ? 'Song' : currentContentLabel)}</span>
+                {(editingStoryId || editingMovieId || editingVideoId || editingSongId) ? 'Edit' : 'Publish'} <span className="text-devotion-gold">{activeTab === 'stories' ? 'Story' : activeTab === 'movies' ? 'Movie' : (activeTab === 'videos' && videosUploadType === 'quiz' ? 'Quiz Question' : activeTab === 'songs' ? 'Song' : activeTab === 'channels' ? 'Channel' : activeTab === 'playlists' ? 'Playlist' : currentContentLabel)}</span>
               </h2>
 
               <form onSubmit={handleAddContent} className="space-y-10">

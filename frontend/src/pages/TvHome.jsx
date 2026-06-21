@@ -25,6 +25,7 @@ export default function TvHome() {
   const [isPlaying, setIsPlaying] = useState(false);
   const [selectedMovie, setSelectedMovie] = useState(null);
   const [movies, setMovies] = useState([]);
+  const [channels, setChannels] = useState([]);
   const [loading, setLoading] = useState(true);
 
   const containerRef = useRef(null);
@@ -84,29 +85,32 @@ export default function TvHome() {
   const trendingMovies = [...tvMovies].sort((a, b) => (b.views || 0) - (a.views || 0));
 
   const contentRows = [
+    ...(channels.length > 0 ? [{ title: "Live TV Channels", cards: channels.map(c => ({ ...c, hlsUrl: c.streamUrl, genre: c.category, isChannel: true })) }] : []),
     ...(tvMovies.length > 0 ? [{ title: "Divine Movies", cards: tvMovies }] : []),
     ...(trendingMovies.length > 0 ? [{ title: "Trending Now", cards: trendingMovies }] : [])
   ];
 
   useEffect(() => {
-    const fetchMovies = async () => {
+    const fetchData = async () => {
       try {
-        const res = await axios.get('/api/movies');
-        if (Array.isArray(res.data)) {
-          setMovies(res.data);
-        }
+        const [moviesRes, channelsRes] = await Promise.all([
+          axios.get('/api/movies'),
+          axios.get('/api/channels')
+        ]);
+        if (Array.isArray(moviesRes.data)) setMovies(moviesRes.data);
+        if (Array.isArray(channelsRes.data)) setChannels(channelsRes.data);
       } catch (err) {
-        console.error('Error fetching movies for TV:', err);
+        console.error('Error fetching TV data:', err);
       } finally {
         setLoading(false);
       }
     };
-    fetchMovies();
+    fetchData();
 
     const handleContentUpdate = (data) => {
       if (data && data.type === 'movies') {
         console.log('[SOCKET] Movies updated, refreshing TV home...');
-        fetchMovies();
+        fetchData();
       }
     };
     socket.on('content_updated', handleContentUpdate);

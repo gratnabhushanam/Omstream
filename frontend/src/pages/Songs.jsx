@@ -73,6 +73,7 @@ export default function Songs() {
   const { language } = useLanguage();
   const { user, setUser } = useAuth();
   const [songs, setSongs] = useState([]);
+  const [playlists, setPlaylists] = useState([]);
   const [currentSongIndex, setCurrentSongIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -91,42 +92,47 @@ export default function Songs() {
   const ytReady  = useRef(false);
   
   useEffect(() => {
-    const fetchSongs = async () => {
+    const fetchData = async () => {
       try {
         setLoading(true);
         let allSongs = [];
+        let allPlaylists = [];
         try {
-          const { data } = await axios.get('/api/songs?_t=' + Date.now());
-          if (data && data.length > 0) {
-            allSongs = data;
-            // Cache locally for offline use
-            localStorage.setItem('gita_songs', JSON.stringify(data));
+          const [songsRes, playlistsRes] = await Promise.all([
+            axios.get('/api/songs?_t=' + Date.now()),
+            axios.get('/api/playlists?_t=' + Date.now())
+          ]);
+          if (songsRes.data && songsRes.data.length > 0) {
+            allSongs = songsRes.data;
+            localStorage.setItem('gita_songs', JSON.stringify(allSongs));
           }
-        } catch (err) {
-          console.error('Network fetch failed, trying local storage', err);
+          if (playlistsRes.data && playlistsRes.data.length > 0) {
+            allPlaylists = playlistsRes.data;
+          }
+        } catch (apiErr) {
+          console.error('Network fetch failed, trying local storage', apiErr);
           const localSongs = localStorage.getItem('gita_songs');
           if (localSongs) allSongs = JSON.parse(localSongs);
-          else throw err;
+          else throw apiErr;
         }
 
+        setSongs(allSongs);
+        setPlaylists(allPlaylists);
         if (allSongs.length > 0) {
-          setSongs(allSongs);
           setCurrentSongIndex(0);
-        } else {
-          setSongs([]);
         }
       } catch (error) {
-        console.error('Error fetching songs:', error);
+        console.error('Error fetching data:', error);
       } finally {
         setLoading(false);
       }
     };
-    fetchSongs();
+    fetchData();
 
     const handleContentUpdate = (data) => {
       if (data && data.type === 'songs') {
         console.log('[SOCKET] Songs updated, refreshing list...');
-        fetchSongs();
+        fetchData();
       }
     };
 
@@ -519,6 +525,27 @@ export default function Songs() {
 
         {/* Right Side: Playlist */}
         <div className="lg:col-span-7 flex flex-col order-1 lg:order-2 w-full">
+          {playlists.length > 0 && (
+            <div className="mb-6">
+              <h3 className="text-sm font-bold text-gray-400 uppercase tracking-widest mb-3">Featured Playlists</h3>
+              <div className="flex gap-4 overflow-x-auto pb-4 custom-scrollbar">
+                {playlists.map(pl => (
+                  <div key={pl._id} onClick={() => { setSongs(pl.songs); setCurrentSongIndex(0); }} className="flex-shrink-0 w-32 cursor-pointer group">
+                    <div className="w-32 h-32 rounded-xl overflow-hidden mb-2 relative">
+                      <img src={pl.coverImage || '/default_playlist.png'} alt={pl.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform" />
+                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                        <div className="w-10 h-10 bg-devotion-gold rounded-full flex items-center justify-center">
+                          <Play className="w-5 h-5 text-black fill-black" />
+                        </div>
+                      </div>
+                    </div>
+                    <p className="text-white font-bold text-sm truncate">{pl.title}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           <div className="mb-3 flex flex-col sm:flex-row items-start sm:items-end justify-between gap-3">
             <div>
               <h2 className="text-xl sm:text-3xl font-serif font-black uppercase tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-white to-gray-400">
