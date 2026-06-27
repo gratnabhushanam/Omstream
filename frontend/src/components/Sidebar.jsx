@@ -40,9 +40,6 @@ export default function Sidebar() {
           <div className="w-12 h-12 rounded-xl overflow-hidden flex-shrink-0 bg-[#00A8FF]/10 border border-[#00A8FF]/30 shadow-[0_0_20px_rgba(0,168,255,0.1)] flex items-center justify-center">
              <img src="/logo-om-v2.png" alt="Logo" className="w-full h-full object-cover scale-90" />
           </div>
-          <span className={`text-xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-[#FFD700] tracking-widest whitespace-nowrap transition-opacity duration-300 ${isHovered ? 'opacity-100' : 'opacity-0'}`}>
-             OMSTREAM
-          </span>
         </Link>
         
         <nav className="flex-1 flex flex-col gap-1 w-full overflow-hidden">
