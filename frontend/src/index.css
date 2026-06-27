@@ -20,7 +20,7 @@
     @apply backdrop-blur-2xl bg-white/5 border border-white/10 shadow-[0_8px_32px_rgba(0,0,0,0.37)];
   }
   .bg-gold-gradient {
-    @apply bg-gradient-to-br from-[#B66A2A] via-[#E6C38A] to-[#B66A2A] text-[#06101E];
+    @apply bg-gradient-to-br from-[#B66A2A] via-[#E6C38A] to-[#B66A2A] text-[#09090C];
   }
   .text-gold-gradient {
     @apply bg-gradient-to-br from-[#B66A2A] via-[#E6C38A] to-[#B66A2A] bg-clip-text text-transparent;
@@ -28,7 +28,7 @@
 
   /* Futuristic Cinematic Design Tokens */
   .bg-cinematic-dark {
-    background: radial-gradient(circle at center, #0B1F3A 0%, #06101E 100%);
+    background: radial-gradient(circle at center, #15151B 0%, #09090C 100%);
   }
   .bg-glass-cinematic {
     @apply backdrop-blur-[40px] bg-black/40 border border-white/5 shadow-[0_30px_100px_rgba(0,0,0,0.8)];
@@ -116,10 +116,10 @@
     animation: aura-pulse 8s infinite alternate;
   }
   
-  .aura-gold { --aura-color: rgba(255, 215, 0, 0.15); }
-  .aura-blue { --aura-color: rgba(0, 168, 255, 0.15); }
-  .aura-purple { --aura-color: rgba(123, 47, 247, 0.15); }
-  .aura-pink { --aura-color: rgba(255, 105, 180, 0.15); }
+  .aura-gold { --aura-color: rgba(251, 192, 45, 0.15); }
+  .aura-blue { --aura-color: rgba(249, 115, 22, 0.12); }
+  .aura-purple { --aura-color: rgba(224, 86, 21, 0.12); }
+  .aura-pink { --aura-color: rgba(194, 65, 12, 0.12); }
 
   @keyframes aura-pulse {
     0% { transform: scale(1) translate(0, 0); opacity: 0.2; }
@@ -161,7 +161,7 @@
     @apply transition-all duration-300;
   }
   .tv-focusable:focus-visible {
-    @apply transform scale-[1.05] ring-4 ring-devotion-gold ring-offset-4 ring-offset-[#06101E] z-50;
+    @apply transform scale-[1.05] ring-4 ring-devotion-gold ring-offset-4 ring-offset-[#09090C] z-50;
     box-shadow: 0 0 50px rgba(255, 215, 0, 0.4);
     outline: none;
   }
@@ -200,7 +200,7 @@
 
 @layer base {
   body {
-    @apply bg-[#06101E] text-white antialiased overflow-x-hidden;
+    @apply bg-[#09090C] text-white antialiased overflow-x-hidden;
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
   }
 
@@ -225,7 +225,7 @@
   button:focus-visible, 
   a:focus-visible, 
   [tabindex]:focus-visible {
-    @apply outline-none ring-4 ring-devotion-gold ring-offset-4 ring-offset-[#06101E] z-50 transition-all scale-105;
+    @apply outline-none ring-4 ring-devotion-gold ring-offset-4 ring-offset-[#09090C] z-50 transition-all scale-105;
     box-shadow: 0 0 40px rgba(255, 215, 0, 0.6);
   }
 }

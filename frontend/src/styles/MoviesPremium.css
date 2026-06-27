@@ -3,16 +3,16 @@
   --saffron-glow: rgba(255, 138, 0, 0.5);
   --gold-accent: #FFD700;
   --gold-glow: rgba(255, 215, 0, 0.4);
-  --navy-deep: #060D1A;
-  --navy-light: #0D1B2E;
+  --navy-deep: #09090C;
+  --navy-light: #15151B;
   --devotion-gold: #FFD700;
   --devotion-saffron: #FF8A00;
-  --glass-bg: rgba(10, 18, 32, 0.65);
+  --glass-bg: rgba(21, 21, 27, 0.65);
   --premium-gradient: linear-gradient(135deg, #FF8A00 0%, #FFD700 100%);
-  --cinematic-overlay: linear-gradient(to right, #060D1A 0%, #060D1A 40%, rgba(6, 13, 26, 0.7) 60%, transparent 100%);
-  --hero-vignette: radial-gradient(circle at center, transparent 0%, rgba(6, 13, 26, 0.3) 100%);
-  --purple-glow: #8B5CF6;
-  --vibrant-blue: #3B82F6;
+  --cinematic-overlay: linear-gradient(to right, #09090C 0%, #09090C 40%, rgba(9, 9, 12, 0.7) 60%, transparent 100%);
+  --hero-vignette: radial-gradient(circle at center, transparent 0%, rgba(9, 9, 12, 0.3) 100%);
+  --purple-glow: #C2410C;
+  --vibrant-blue: #F97316;
 }
 
 .premium-card-shadow {
@@ -283,7 +283,7 @@
   bottom: 0;
   width: 100%;
   height: 50%;
-  background: linear-gradient(to top, rgba(11, 15, 26, 1) 0%, rgba(11, 15, 26, 0.8) 20%, transparent 100%);
+  background: linear-gradient(to top, rgba(9, 9, 12, 1) 0%, rgba(9, 9, 12, 0.8) 20%, transparent 100%);
   pointer-events: none;
   z-index: 10;
 }
@@ -341,7 +341,7 @@
 
 /* OTT UI Core Styles */
 body.ott-mode {
-  background: linear-gradient(180deg, #0B0F1A 0%, #000 100%) !important;
+  background: linear-gradient(180deg, #15151B 0%, #09090C 100%) !important;
   background-attachment: fixed !important;
   min-height: 100vh;
   margin: 0;
@@ -356,7 +356,7 @@ body.ott-mode {
 }
 
 .ott-nav.scrolled {
-  background-color: rgba(11, 15, 26, 0.95);
+  background-color: rgba(21, 21, 27, 0.95);
   backdrop-filter: blur(20px);
 }
 

@@ -4,9 +4,9 @@
   min-height: 100vh;
   overflow: hidden;
   background:
-    radial-gradient(circle at top, rgba(255, 220, 120, 0.12), transparent 34%),
-    radial-gradient(circle at 20% 20%, rgba(255, 180, 70, 0.08), transparent 26%),
-    linear-gradient(180deg, rgba(6, 16, 30, 0.58) 0%, rgba(9, 23, 36, 0.64) 42%, rgba(5, 11, 20, 0.76) 100%);
+    radial-gradient(circle at top, rgba(249, 115, 22, 0.12), transparent 34%),
+    radial-gradient(circle at 20% 20%, rgba(251, 192, 45, 0.08), transparent 26%),
+    linear-gradient(180deg, rgba(21, 21, 27, 0.58) 0%, rgba(15, 15, 20, 0.64) 42%, rgba(9, 9, 12, 0.76) 100%);
 }
 
 .auth-page::before,
@@ -19,9 +19,9 @@
 
 .auth-page::before {
   background-image:
-    radial-gradient(circle at 18% 22%, rgba(255, 215, 120, 0.24), transparent 30%),
-    radial-gradient(circle at 78% 18%, rgba(255, 170, 70, 0.16), transparent 26%),
-    radial-gradient(circle at 76% 76%, rgba(124, 58, 237, 0.16), transparent 24%),
+    radial-gradient(circle at 18% 22%, rgba(251, 192, 45, 0.24), transparent 30%),
+    radial-gradient(circle at 78% 18%, rgba(249, 115, 22, 0.16), transparent 26%),
+    radial-gradient(circle at 76% 76%, rgba(249, 115, 22, 0.16), transparent 24%),
     url('/krishna-symbol.svg'),
     url('/ram-symbol.svg'),
     url('/hanuman-symbol.svg'),
@@ -64,8 +64,8 @@
 .auth-hero {
   position: relative;
   overflow: hidden;
-  border: 1px solid rgba(255, 215, 0, 0.16);
-  background: linear-gradient(160deg, rgba(255, 255, 255, 0.05), rgba(3, 8, 18, 0.78));
+  border: 1px solid rgba(249, 115, 22, 0.16);
+  background: linear-gradient(160deg, rgba(255, 255, 255, 0.05), rgba(9, 9, 12, 0.78));
   box-shadow: 0 30px 90px rgba(0, 0, 0, 0.45);
   backdrop-filter: blur(24px);
 }
@@ -81,8 +81,8 @@
 .auth-card {
   position: relative;
   overflow: hidden;
-  border: 1px solid rgba(255, 215, 0, 0.2);
-  background: linear-gradient(180deg, rgba(15, 20, 30, 0.92), rgba(9, 15, 24, 0.98));
+  border: 1px solid rgba(249, 115, 22, 0.2);
+  background: linear-gradient(180deg, rgba(21, 21, 27, 0.92), rgba(9, 9, 12, 0.98));
   box-shadow: 0 24px 70px rgba(0, 0, 0, 0.48);
   backdrop-filter: blur(20px);
 }
@@ -129,8 +129,8 @@
 .auth-input {
   width: 100%;
   border-radius: 0.95rem;
-  border: 1px solid rgba(255, 215, 0, 0.2);
-  background: rgba(8, 12, 20, 0.82);
+  border: 1px solid rgba(249, 115, 22, 0.2);
+  background: rgba(21, 21, 27, 0.82);
   color: #fff7e3;
   padding: 0.9rem 1rem;
   transition: border-color 180ms ease, transform 180ms ease, box-shadow 180ms ease;
@@ -149,8 +149,8 @@
 .auth-button {
   border: 0;
   border-radius: 1rem;
-  background: linear-gradient(135deg, #f3c24f 0%, #d48a1a 100%);
-  color: #08111f;
+  background: linear-gradient(135deg, #F5A623 0%, #E65100 100%);
+  color: #09090C;
   font-weight: 800;
   letter-spacing: 0.08em;
   text-transform: uppercase;

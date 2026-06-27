@@ -1,12 +1,12 @@
 :root {
-  --ott-bg: #0F1014;
-  --ott-accent: #00A8FF;
-  --ott-purple: #7B2FF7;
+  --ott-bg: #09090C;
+  --ott-accent: #F97316;
+  --ott-purple: #C2410C;
   --ott-text: #FFFFFF;
   --ott-text-muted: #A1A1A1;
   --ott-card-bg: rgba(255, 255, 255, 0.05);
-  --ott-gradient: linear-gradient(180deg, rgba(15, 16, 20, 0) 0%, #0F1014 100%);
-  --ott-glow: 0 0 20px rgba(0, 168, 255, 0.4);
+  --ott-gradient: linear-gradient(180deg, rgba(9, 9, 12, 0) 0%, #09090C 100%);
+  --ott-glow: 0 0 20px rgba(249, 115, 22, 0.35);
 }
 
 .app-shell__background {
@@ -25,26 +25,26 @@
   inset: 0;
   pointer-events: none;
   background:
-    linear-gradient(180deg, rgba(3, 7, 14, 0.18) 0%, rgba(3, 7, 14, 0.4) 100%),
-    radial-gradient(circle at 16% 18%, rgba(255, 214, 102, 0.28), transparent 22%),
-    radial-gradient(circle at 82% 20%, rgba(255, 163, 68, 0.2), transparent 20%),
-    radial-gradient(circle at 72% 78%, rgba(124, 58, 237, 0.14), transparent 20%),
-    radial-gradient(circle at 50% 52%, rgba(255, 255, 255, 0.05), transparent 28%);
+    linear-gradient(180deg, rgba(9, 9, 12, 0.28) 0%, rgba(9, 9, 12, 0.5) 100%),
+    radial-gradient(circle at 16% 18%, rgba(249, 115, 22, 0.2), transparent 22%),
+    radial-gradient(circle at 82% 20%, rgba(251, 192, 45, 0.15), transparent 20%),
+    radial-gradient(circle at 72% 78%, rgba(194, 65, 12, 0.1), transparent 20%),
+    radial-gradient(circle at 50% 52%, rgba(255, 255, 255, 0.03), transparent 28%);
   opacity: 1;
   mix-blend-mode: normal;
   animation: appDivinePulse 20s ease-in-out infinite;
 }
 
 .app-background-0 {
-  background-image: linear-gradient(135deg, #07111f 0%, #111d30 45%, #08111d 100%);
+  background-image: linear-gradient(135deg, #0c0b0e 0%, #1a1921 45%, #09090c 100%);
 }
 
 .app-background-1 {
-  background-image: linear-gradient(135deg, #120e1e 0%, #26151a 48%, #090d18 100%);
+  background-image: linear-gradient(135deg, #170f0d 0%, #291a15 48%, #09090c 100%);
 }
 
 .app-background-2 {
-  background-image: linear-gradient(135deg, #07121a 0%, #0f2330 48%, #080e16 100%);
+  background-image: linear-gradient(135deg, #0f0d0b 0%, #211915 48%, #09090c 100%);
 }
 
 @keyframes appFlowDrift {
@@ -89,9 +89,9 @@
 
 .tv-focusable:focus {
   transform: scale(1.08) translateZ(50px) !important;
-  box-shadow: 0 0 50px rgba(255, 215, 0, 0.4) !important;
-  border-color: #FFD700 !important;
-  background-color: rgba(255, 215, 0, 0.1) !important;
+  box-shadow: 0 0 50px rgba(249, 115, 22, 0.4) !important;
+  border-color: #FF9F1C !important;
+  background-color: rgba(249, 115, 22, 0.1) !important;
   z-index: 50;
 }
 
@@ -163,12 +163,12 @@
 .ott-card:hover {
   transform: scale(1.08) translateY(-10px);
   z-index: 10;
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6), 0 0 20px rgba(0, 168, 255, 0.2);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6), 0 0 20px rgba(249, 115, 22, 0.2);
 }
 
 .ott-glow-hover:hover {
-  box-shadow: 0 0 30px rgba(0, 168, 255, 0.4);
-  border-color: rgba(0, 168, 255, 0.5);
+  box-shadow: 0 0 30px rgba(249, 115, 22, 0.4);
+  border-color: rgba(249, 115, 22, 0.5);
 }
 
 .ott-glass {

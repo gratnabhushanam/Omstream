@@ -17,21 +17,21 @@ export default {
     extend: {
       colors: {
         devotion: {
-          bgYellow: '#FFC815',
-          gold: '#FFD700',
-          maroon: '#4A0E0E',
-          darkMaroon: '#2D0808',
-          textYellow: '#FFECA1',
+          bgYellow: '#FFB703',
+          gold: '#FF9F1C',
+          maroon: '#2D0F0F',
+          darkMaroon: '#1A0909',
+          textYellow: '#FFECD1',
           crimson: '#8B0000',
-          darkBlue: '#0B1F3A',
+          darkBlue: '#15151B',
         },
         spiritual: {
-          darkNavyStart: '#0b1d2a',
-          darkNavyEnd: '#020c15',
-          gold: '#facc15',
-          goldLight: '#fbbf24',
-          cardBg: '#111827',
-          inputBg: '#1f2937',
+          darkNavyStart: '#111116',
+          darkNavyEnd: '#09090C',
+          gold: '#FF9F1C',
+          goldLight: '#F59E0B',
+          cardBg: '#15151B',
+          inputBg: '#1C1C24',
           textLight: '#f3f4f6',
           textMuted: '#9ca3af',
         }
@@ -43,13 +43,13 @@ export default {
       },
       backgroundImage: {
         'glass-gradient': 'linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05))',
-        'gold-glow': 'radial-gradient(circle, rgba(255,215,0,0.15) 0%, rgba(11,31,58,0) 70%)',
-        'spiritual-gradient': 'linear-gradient(135deg, #0b1d2a 0%, #020c15 100%)',
-        'spiritual-card-glow': 'radial-gradient(circle at center, rgba(250, 204, 21, 0.1) 0%, rgba(11, 29, 42, 0) 70%)',
+        'gold-glow': 'radial-gradient(circle, rgba(249,115,22,0.15) 0%, rgba(21,21,27,0) 70%)',
+        'spiritual-gradient': 'linear-gradient(135deg, #111116 0%, #09090C 100%)',
+        'spiritual-card-glow': 'radial-gradient(circle at center, rgba(249, 115, 22, 0.1) 0%, rgba(21, 21, 27, 0) 70%)',
       },
       boxShadow: {
-        'spiritual-glow': '0 0 40px rgba(250, 204, 21, 0.15), 0 0 80px rgba(250, 204, 21, 0.08)',
-        'spiritual-glow-heavy': '0 0 60px rgba(250, 204, 21, 0.2), 0 0 120px rgba(250, 204, 21, 0.1)',
+        'spiritual-glow': '0 0 40px rgba(249, 115, 22, 0.15), 0 0 80px rgba(249, 115, 22, 0.08)',
+        'spiritual-glow-heavy': '0 0 60px rgba(249, 115, 22, 0.2), 0 0 120px rgba(249, 115, 22, 0.1)',
       },
       animation: {
         'fade-in-up': 'fadeInUp 0.8s ease-out forwards',
