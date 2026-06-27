@@ -320,7 +320,15 @@ export default function Login() {
         if (userData?.role === 'admin') {
           navigate('/admin', { replace: true });
         } else {
-          navigate(returnTo, { replace: true });
+          const hasActiveAccess = 
+            userData?.subscriptionStatus === 'Trial Active' || 
+            userData?.subscriptionStatus === 'Subscription Active';
+            
+          if (!hasActiveAccess) {
+            navigate('/subscription', { replace: true });
+          } else {
+            navigate(returnTo, { replace: true });
+          }
         }
       }
     } catch (err) {

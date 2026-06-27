@@ -1,5 +1,5 @@
 import React, { lazy, Suspense, useState, useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { useAuth } from './context/AuthContext';
 import { SubscriptionProvider, useSubscription } from './context/SubscriptionContext';
@@ -50,6 +50,7 @@ const ManageProfile = lazy(() => import('./pages/ManageProfile'));
 
 function AppShell() {
   const location = useLocation();
+  const navigate = useNavigate();
   const { user, loading: authLoading, selectedProfile, selectProfile } = useAuth();
   const { tier, status } = useSubscription();
   const { immersiveNotification, setImmersiveNotification } = useNotifications();
@@ -87,6 +88,7 @@ function AppShell() {
   }, []);
 
   const isAuthRoute = location.pathname === '/login' || location.pathname === '/register' || location.pathname === '/register/verify-otp' || location.pathname === '/forgot-password';
+  const isSubscriptionRoute = location.pathname === '/subscription' || location.pathname === '/payment' || location.pathname === '/subscription/success';
   const isTvRoute = location.pathname === '/tv';
 
 
@@ -97,6 +99,18 @@ function AppShell() {
       selectProfile({ name: user.name || 'Main', _id: 'default' });
     }
   }, [user, selectedProfile, isAuthRoute, selectProfile]);
+
+  useEffect(() => {
+    if (!user || isAuthRoute || isSubscriptionRoute || user.role === 'admin') return;
+
+    const hasActiveAccess = 
+      user.subscriptionStatus === 'Trial Active' || 
+      user.subscriptionStatus === 'Subscription Active';
+
+    if (!hasActiveAccess) {
+      navigate('/subscription', { replace: true });
+    }
+  }, [user, location.pathname, navigate, isAuthRoute, isSubscriptionRoute]);
 
   const pageFallback = (
     <div className="flex min-h-[40vh] items-center justify-center text-white">
